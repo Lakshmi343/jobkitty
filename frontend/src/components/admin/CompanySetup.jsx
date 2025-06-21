@@ -1,9 +1,7 @@
-
-
 import React, { useEffect, useState } from 'react'
 import Navbar from '../shared/Navbar'
 import { Button } from '../ui/button'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
 import { Label } from '../ui/label'
 import { Input } from '../ui/input'
 import axios from 'axios'
@@ -15,7 +13,7 @@ import useGetCompanyById from '@/hooks/useGetCompanyById'
 
 const CompanySetup = () => {
     const params = useParams();
-    useGetCompanyById(params.id);
+    const { loading: fetchingCompany, error } = useGetCompanyById(params.id);
     const [input, setInput] = useState({
         name: "",
         description: "",
@@ -23,7 +21,7 @@ const CompanySetup = () => {
         location: "",
         file: null
     });
-    const {singleCompany} = useSelector(store=>store.company);
+    const { singleCompany } = useSelector(store => store.company);
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
@@ -60,21 +58,59 @@ const CompanySetup = () => {
             }
         } catch (error) {
             console.log(error);
-            toast.error(error.response.data.message);
+            toast.error(error.response?.data?.message || "Failed to update company");
         } finally {
             setLoading(false);
         }
     }
 
     useEffect(() => {
-        setInput({
-            name: singleCompany.name || "",
-            description: singleCompany.description || "",
-            website: singleCompany.website || "",
-            location: singleCompany.location || "",
-            file: singleCompany.file || null
-        })
-    },[singleCompany]);
+        if (singleCompany && singleCompany._id) {
+            setInput({
+                name: singleCompany.name || "",
+                description: singleCompany.description || "",
+                website: singleCompany.website || "",
+                location: singleCompany.location || "",
+                file: singleCompany.file || null
+            });
+        }
+    }, [singleCompany]);
+
+    // Show loading state while fetching company data
+    if (fetchingCompany) {
+        return (
+            <div>
+                <Navbar />
+                <div className='flex items-center justify-center w-screen my-5'>
+                    <div className='text-center'>
+                        <Loader2 className='mr-2 h-8 w-8 animate-spin mx-auto mb-4' />
+                        <p>Loading company data...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Show error state if company not found
+    if (error || !singleCompany) {
+        return (
+            <div>
+                <Navbar />
+                <div className='flex items-center justify-center w-screen my-5'>
+                    <div className='text-center max-w-md mx-auto p-6'>
+                        <AlertCircle className='h-12 w-12 text-red-500 mx-auto mb-4' />
+                        <h2 className='text-xl font-semibold mb-2'>Company Not Found</h2>
+                        <p className='text-gray-600 mb-4'>
+                            The company you're looking for doesn't exist or you don't have permission to access it.
+                        </p>
+                        <Button onClick={() => navigate("/admin/companies")} variant="outline">
+                            Back to Companies
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div>

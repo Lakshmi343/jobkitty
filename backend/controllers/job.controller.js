@@ -15,28 +15,39 @@ export const postJob = async (req, res) => {
             jobType, 
             experienceLevel,  
             position, 
-            company,        
             category         
         } = req.body;
         const userId = req.id;
+
+        // Get user with company information
+        const User = (await import("../models/user.model.js")).User;
+        const user = await User.findById(userId).populate('profile.company');
+        
+        if (!user) {
+            return res.status(404).json({ 
+                message: "User not found", 
+                success: false 
+            });
+        }
+
+        // Get company from user's profile
+        const company = user.profile?.company;
+        if (!company) {
+            return res.status(400).json({ 
+                message: "Company information not found in your profile. Please update your profile with company details.", 
+                success: false 
+            });
+        }
+
         if (!title || !description || !requirements || !salary || !location || 
-            !jobType || !experienceLevel || !position || !company || !category) {
+            !jobType || !experienceLevel || !position || !category) {
             return res.status(400).json({ 
                 message: "All fields are required", 
                 success: false 
             });
         }
 
-      
-        const companyExists = await Company.findById(company);
-        if (!companyExists) {
-            return res.status(404).json({ 
-                message: "Company not found", 
-                success: false 
-            });
-        }
-
-        
+        // Check if category exists
         const categoryExists = await Category.findById(category);
         if (!categoryExists) {
             return res.status(404).json({ 
@@ -45,7 +56,7 @@ export const postJob = async (req, res) => {
             });
         }
 
-   
+        // Create job with employer's company
         const job = await Job.create({
             title,
             description,
@@ -55,7 +66,7 @@ export const postJob = async (req, res) => {
             jobType,
             experienceLevel: Number(experienceLevel),
             position: Number(position),
-            company,    
+            company: company._id,    // Use employer's company
             category,   
             created_by: userId
         });
@@ -158,7 +169,6 @@ export const updateJob = async (req, res) => {
             jobType, 
             experienceLevel,  
             position, 
-            company,        
             category         
         } = req.body;
         
@@ -181,20 +191,31 @@ export const updateJob = async (req, res) => {
             });
         }
 
-        // Validate required fields
-        if (!title || !description || !requirements || !salary || !location || 
-            !jobType || !experienceLevel || !position || !company || !category) {
-            return res.status(400).json({ 
-                message: "All fields are required", 
+        // Get user with company information
+        const User = (await import("../models/user.model.js")).User;
+        const user = await User.findById(userId).populate('profile.company');
+        
+        if (!user) {
+            return res.status(404).json({ 
+                message: "User not found", 
                 success: false 
             });
         }
 
-        // Check if company exists
-        const companyExists = await Company.findById(company);
-        if (!companyExists) {
-            return res.status(404).json({ 
-                message: "Company not found", 
+        // Get company from user's profile
+        const company = user.profile?.company;
+        if (!company) {
+            return res.status(400).json({ 
+                message: "Company information not found in your profile. Please update your profile with company details.", 
+                success: false 
+            });
+        }
+
+        // Validate required fields
+        if (!title || !description || !requirements || !salary || !location || 
+            !jobType || !experienceLevel || !position || !category) {
+            return res.status(400).json({ 
+                message: "All fields are required", 
                 success: false 
             });
         }
@@ -208,7 +229,7 @@ export const updateJob = async (req, res) => {
             });
         }
 
-        // Update the job
+        // Update the job with employer's company
         const updatedJob = await Job.findByIdAndUpdate(jobId, {
             title,
             description,
@@ -218,7 +239,7 @@ export const updateJob = async (req, res) => {
             jobType,
             experienceLevel: Number(experienceLevel),
             position: Number(position),
-            company,    
+            company: company._id,    // Use employer's company
             category
         }, { new: true });
 

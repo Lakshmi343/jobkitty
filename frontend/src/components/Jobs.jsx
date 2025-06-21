@@ -4,10 +4,12 @@ import FilterCard from './FilterCard'
 import Job from './Job';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
+import { Filter, X } from 'lucide-react';
 
 const Jobs = () => {
     const { allJobs, searchedQuery } = useSelector(store => store.job);
     const [filterJobs, setFilterJobs] = useState(allJobs);
+    const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
         if (searchedQuery) {
@@ -23,39 +25,70 @@ const Jobs = () => {
     }, [allJobs, searchedQuery]);
 
     return (
-        <div>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             <Navbar />
-            <div className='max-w-7xl mx-auto mt-5'>
-                <div className='flex gap-5'>
-                    <div className='w-20%'>
+            
+            {/* Mobile Filter Toggle */}
+            <div className="lg:hidden p-4">
+                <button
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+                >
+                    <Filter className="w-4 h-4" />
+                    {showFilters ? 'Hide Filters' : 'Show Filters'}
+                </button>
+            </div>
+
+            <div className='max-w-7xl mx-auto px-4 py-6'>
+                <div className='flex flex-col lg:flex-row gap-6'>
+                    {/* Filter Sidebar */}
+                    <div className={`lg:w-80 ${showFilters ? 'block' : 'hidden lg:block'}`}>
+                        <div className="lg:hidden mb-4 flex justify-between items-center">
+                            <h2 className="text-lg font-semibold">Filters</h2>
+                            <button
+                                onClick={() => setShowFilters(false)}
+                                className="p-1 hover:bg-gray-100 rounded"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
                         <FilterCard />
                     </div>
-                    {
-                        filterJobs.length <= 0 ? <span>Job not found</span> : (
-                            <div className='flex-1 h-[88vh] overflow-y-auto pb-5'>
-                                <div className='grid grid-cols-3 gap-4'>
+
+                    {/* Jobs Grid */}
+                    <div className='flex-1'>
+                        {filterJobs.length <= 0 ? (
+                            <div className="text-center py-12">
+                                <div className="text-gray-500 text-lg mb-2">No jobs found</div>
+                                <div className="text-gray-400">Try adjusting your search criteria</div>
+                            </div>
+                        ) : (
+                            <div className='h-[calc(100vh-200px)] lg:h-[88vh] overflow-y-auto pb-5'>
+                                <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6'>
                                     {
                                         filterJobs.map((job) => (
                                             <motion.div
-                                                initial={{ opacity: 0, x: 100 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                exit={{ opacity: 0, x: -100 }}
+                                                initial={{ opacity: 0, y: 20 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -20 }}
                                                 transition={{ duration: 0.3 }}
-                                                key={job?._id}>
+                                                key={job?._id}
+                                                className="h-fit"
+                                            >
                                                 <Job job={job} />
                                             </motion.div>
                                         ))
                                     }
                                 </div>
                             </div>
-                        )
-                    }
+                        )}
+                    </div>
                 </div>
             </div>
-
-
         </div>
     )
 }
 
 export default Jobs
+
+

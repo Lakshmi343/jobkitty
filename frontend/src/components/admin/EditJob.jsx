@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '../shared/Navbar';
 import { Label } from '../ui/label';
@@ -7,10 +6,10 @@ import { Button } from '../ui/button';
 import { useSelector } from 'react-redux';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import axios from 'axios';
-import { JOB_API_END_POINT, CATEGORY_API_END_POINT } from '@/utils/constant';
+import { JOB_API_END_POINT, CATEGORY_API_END_POINT, USER_API_END_POINT } from '@/utils/constant';
 import { toast } from 'sonner';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Building } from 'lucide-react';
 
 const locations = [
 
@@ -34,18 +33,36 @@ const EditJob = () => {
         location: "",
         jobType: "",
         position: "",
-        company: "",
         category: ""
     });
     
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(true);
     const [categories, setCategories] = useState([]);
+    const [userCompany, setUserCompany] = useState(null);
     const navigate = useNavigate();
 
-    const { companies = [] } = useSelector(store => store.company || {});
+    const { user } = useSelector(store => store.user || {});
 
-   
+    // Get user's company information
+    useEffect(() => {
+        const fetchUserCompany = async () => {
+            try {
+                if (user?._id) {
+                    const response = await axios.get(`${USER_API_END_POINT}/profile`, {
+                        withCredentials: true
+                    });
+                    if (response.data.success && response.data.user.profile?.company) {
+                        setUserCompany(response.data.user.profile.company);
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching user company:", error);
+            }
+        };
+        fetchUserCompany();
+    }, [user]);
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -70,7 +87,6 @@ const EditJob = () => {
                         location: job.location || "",
                         jobType: job.jobType || "",
                         position: job.position?.toString() || "",
-                        company: job.company?._id || "",
                         category: job.category?._id || ""
                     });
                 }
@@ -99,13 +115,18 @@ const EditJob = () => {
         const requiredFields = [
             'title', 'description', 'requirements', 'salary', 
             'experienceLevel', 'location', 'jobType', 
-            'position', 'company', 'category'
+            'position', 'category'
         ];
         
         const missingFields = requiredFields.filter(field => !input[field]);
         
         if (missingFields.length > 0) {
             toast.error(`Missing required fields: ${missingFields.join(', ')}`);
+            return;
+        }
+
+        if (!userCompany) {
+            toast.error("Company information is required. Please update your profile with company details.");
             return;
         }
 
@@ -275,23 +296,20 @@ const EditJob = () => {
                         </div>
 
                         <div>
-                            <Label>Company*</Label>
-                             <Select 
-                                onValueChange={(value) => selectChangeHandler("company", value)}
-                                value={input.company}
-                                required
-                             >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select company" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {companies.map(company => (
-                                        <SelectItem key={company._id} value={company._id}>
-                                            {company.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                            <Label>Company</Label>
+                            <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
+                                <div className="flex items-center gap-2">
+                                    <Building className="w-4 h-4 text-gray-600" />
+                                    <span className="text-gray-900 font-medium">
+                                        {userCompany?.name || 'Company not set'}
+                                    </span>
+                                </div>
+                                {!userCompany && (
+                                    <p className="text-sm text-red-600 mt-1">
+                                        Please update your profile with company information
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
                         <div>

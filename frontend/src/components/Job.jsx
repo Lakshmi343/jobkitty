@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button } from './ui/button'
-import { Bookmark } from 'lucide-react'
+import { Bookmark, MapPin, Clock, Building } from 'lucide-react'
 import { Avatar, AvatarImage } from './ui/avatar'
 import { Badge } from './ui/badge'
 import { useNavigate } from 'react-router-dom'
@@ -16,47 +16,65 @@ const Job = ({job}) => {
     }
     
     return (
-        <div className='p-6 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300 hover:shadow-xl'>
-            <div className='flex items-center justify-between'>
-                <p className='text-sm text-gray-300'>{daysAgoFunction(job?.createdAt) === 0 ? "Today" : `${daysAgoFunction(job?.createdAt)} days ago`}</p>
-                <Button variant="outline" className="rounded-full border-white/20 hover:bg-white/20" size="icon">
-                    <Bookmark className="text-teal-400" />
+        <div className='p-4 lg:p-6 rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-gray-200 h-full flex flex-col'>
+            {/* Header */}
+            <div className='flex items-center justify-between mb-4'>
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <Clock className="w-4 h-4" />
+                    <span>{daysAgoFunction(job?.createdAt) === 0 ? "Today" : `${daysAgoFunction(job?.createdAt)} days ago`}</span>
+                </div>
+                <Button variant="outline" className="rounded-full border-gray-200 hover:bg-gray-50" size="icon">
+                    <Bookmark className="w-4 h-4 text-gray-600" />
                 </Button>
             </div>
 
-            <div className='flex items-center gap-4 my-4'>
-                <Button className="p-6 bg-gradient-to-r from-teal-400/20 to-cyan-400/20 hover:from-teal-400/30 hover:to-cyan-400/30" variant="outline" size="icon">
-                    <Avatar>
-                        <AvatarImage src={job?.company?.logo} />
+            {/* Company Info */}
+            <div className='flex items-start gap-3 mb-4'>
+                <div className="flex-shrink-0">
+                    <Avatar className="w-12 h-12 border-2 border-gray-100">
+                        <AvatarImage src={job?.company?.logo} alt={job?.company?.name} />
                     </Avatar>
-                </Button>
-                <div>
-                    <h1 className='font-medium text-lg bg-gradient-to-r from-teal-400 to-cyan-400 text-transparent bg-clip-text'>{job?.company?.name}</h1>
-                    <p className='text-sm text-gray-300'>India</p>
+                </div>
+                <div className="flex-1 min-w-0">
+                    <h3 className='font-semibold text-lg text-gray-900 truncate'>{job?.company?.name}</h3>
+                    <div className="flex items-center gap-1 text-sm text-gray-500">
+                        <MapPin className="w-4 h-4" />
+                        <span>{job?.location || 'India'}</span>
+                    </div>
                 </div>
             </div>
 
-            <div className='mt-4'>
-                <h2 className='text-xl font-semibold bg-gradient-to-r from-teal-400 to-cyan-400 text-transparent bg-clip-text'>{job?.title}</h2>
-                <p className='text-gray-300 mt-2'>{job?.description}</p>
+            {/* Job Title & Description */}
+            <div className='mb-4 flex-1'>
+                <h2 className='text-xl font-bold text-gray-900 mb-2 line-clamp-2'>{job?.title}</h2>
+                <p className='text-gray-600 text-sm line-clamp-3 leading-relaxed'>{job?.description}</p>
             </div>
 
-            <div className='flex flex-wrap gap-2 mt-4'>
-                {job?.skills?.map((skill, index) => (
-                    <Badge key={index} className="bg-gradient-to-r from-teal-400/20 to-cyan-400/20 text-teal-400 border border-teal-400/20">
-                        {skill}
-                    </Badge>
-                ))}
+            {/* Skills */}
+            <div className='mb-4'>
+                <div className='flex flex-wrap gap-2'>
+                    {job?.skills?.slice(0, 3).map((skill, index) => (
+                        <Badge key={index} className="bg-blue-50 text-blue-700 border border-blue-200 text-xs">
+                            {skill}
+                        </Badge>
+                    ))}
+                    {job?.skills?.length > 3 && (
+                        <Badge className="bg-gray-50 text-gray-600 border border-gray-200 text-xs">
+                            +{job.skills.length - 3} more
+                        </Badge>
+                    )}
+                </div>
             </div>
 
-            <div className='flex items-center justify-between mt-6'>
+            {/* Footer */}
+            <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-auto pt-4 border-t border-gray-100'>
                 <div className='flex items-center gap-2'>
-                    <span className='text-teal-400 font-medium'>${job?.salary}</span>
-                    <span className='text-gray-300'>/year</span>
+                    <span className='text-lg font-bold text-green-600'>₹{job?.salary?.toLocaleString()}</span>
+                    <span className='text-sm text-gray-500'>/year</span>
                 </div>
                 <Button 
                     onClick={() => navigate(`/job/${job?._id}`)}
-                    className="bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white"
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2"
                 >
                     View Details
                 </Button>

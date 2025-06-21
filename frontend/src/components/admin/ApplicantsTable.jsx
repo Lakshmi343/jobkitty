@@ -1,83 +1,211 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { MoreHorizontal } from 'lucide-react';
+import { Badge } from '../ui/badge'
+import { Button } from '../ui/button'
+import { MoreHorizontal, User, Mail, Phone, FileText, Calendar, Download, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import { APPLICATION_API_END_POINT } from '@/utils/constant';
 import axios from 'axios';
 
-const shortlistingStatus = ["Accepted", "Rejected", "Pending"];
+const shortlistingStatus = [
+    { value: "accepted", label: "Accepted", icon: CheckCircle },
+    { value: "rejected", label: "Rejected", icon: XCircle },
+    { value: "pending", label: "Pending", icon: Clock }
+];
 
 const ApplicantsTable = () => {
     const { applicants } = useSelector(store => store.application);
+    const [updatingStatus, setUpdatingStatus] = useState(null);
 
     const statusHandler = async (status, id) => {
-        console.log('called');
         try {
+            setUpdatingStatus(id);
             axios.defaults.withCredentials = true;
             const res = await axios.post(`${APPLICATION_API_END_POINT}/status/${id}/update`, { status });
-            console.log(res);
+            
             if (res.data.success) {
-                toast.success(res.data.message);
+                toast.success(`Application ${status} successfully`);
+                // Refresh the data or update the state
+                window.location.reload();
             }
         } catch (error) {
-            toast.error(error.response.data.message);
+            toast.error(error.response?.data?.message || 'Failed to update status');
+        } finally {
+            setUpdatingStatus(null);
         }
     }
 
+    const getStatusBadge = (status) => {
+        // Status comes from database in lowercase, but we want to display it capitalized
+        const statusLower = (status || 'pending').toLowerCase();
+        
+        const statusConfig = {
+            'pending': { 
+                variant: 'secondary', 
+                icon: Clock, 
+                color: 'text-yellow-600',
+                displayText: 'Pending'
+            },
+            'accepted': { 
+                variant: 'default', 
+                icon: CheckCircle, 
+                color: 'text-green-600',
+                displayText: 'Accepted'
+            },
+            'rejected': { 
+                variant: 'destructive', 
+                icon: XCircle, 
+                color: 'text-red-600',
+                displayText: 'Rejected'
+            }
+        };
+
+        const config = statusConfig[statusLower] || statusConfig['pending'];
+        const IconComponent = config.icon;
+
+        return (
+            <Badge variant={config.variant} className="flex items-center gap-1 text-xs">
+                <IconComponent className="w-3 h-3" />
+                {config.displayText}
+            </Badge>
+        );
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "N/A";
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-IN', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    const getInitials = (name) => {
+        return name?.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2) || 'U';
+    };
+
+    const applications = applicants?.applications || [];
+
     return (
-        <div>
+        <div className="w-full">
             <Table>
-                <TableCaption>A list of your recent applied user</TableCaption>
+                <TableCaption className="py-4 text-gray-600">
+                    {applications.length === 0 ? (
+                        <div className="text-center py-8">
+                            <User className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                            <p className="text-lg font-medium text-gray-900 mb-2">No applicants yet</p>
+                            <p className="text-gray-500">Applications will appear here once candidates apply</p>
+                        </div>
+                    ) : (
+                        `Showing ${applications.length} applicant${applications.length !== 1 ? 's' : ''}`
+                    )}
+                </TableCaption>
                 <TableHeader>
-                    <TableRow>
-                        <TableHead>FullName</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Contact</TableHead>
-                        <TableHead>Resume</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="text-right">Action</TableHead>
+                    <TableRow className="bg-gray-50 hover:bg-gray-50">
+                        <TableHead className="font-semibold text-gray-900">Applicant</TableHead>
+                        <TableHead className="font-semibold text-gray-900">Contact</TableHead>
+                        <TableHead className="font-semibold text-gray-900">Resume</TableHead>
+                        <TableHead className="font-semibold text-gray-900">Applied Date</TableHead>
+                        <TableHead className="font-semibold text-gray-900">Status</TableHead>
+                        <TableHead className="font-semibold text-gray-900 text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-
-                    { applicants && applicants?.applications?.map((item) => (
-                            <tr key={item._id}>
-                                <TableCell>{item?.applicant?.fullname}</TableCell>
-                                <TableCell>{item?.applicant?.email}</TableCell>
-                                <TableCell>{item?.applicant?.phoneNumber}</TableCell>
-                                <TableCell >
-                                    {
-                                        item.applicant?.profile?.resume ? <a className="text-blue-600 cursor-pointer" href={item?.applicant?.profile?.resume} target="_blank" rel="noopener noreferrer">{item?.applicant?.profile?.resumeOriginalName}</a> : <span>NA</span>
-                                    }
-                                </TableCell>
-                                <TableCell>{item?.createdAt ? item.createdAt.split("T")[0] : "NA"}</TableCell>
-                                <TableCell className="float-right cursor-pointer">
-                                    <Popover>
-                                        <PopoverTrigger>
-                                            <MoreHorizontal />
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-32">
-                                            {
-                                                shortlistingStatus.map((status, index) => {
-                                                    return (
-                                                        <div onClick={() => statusHandler(status, item?._id)} key={index} className='flex w-fit items-center my-2 cursor-pointer'>
-                                                            <span>{status}</span>
-                                                        </div>
-                                                    )
-                                                })
-                                            }
-                                        </PopoverContent>
-                                    </Popover>
-
-                                </TableCell>
-
-                            </tr>
-                        ))
-                    }
+                    {applications.map((item) => (
+                        <TableRow key={item._id} className="hover:bg-gray-50 transition-colors duration-200">
+                            <TableCell className="py-4">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="w-10 h-10 border-2 border-gray-200">
+                                        <AvatarImage src={item?.applicant?.profile?.avatar} alt={item?.applicant?.fullname} />
+                                        <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
+                                            {getInitials(item?.applicant?.fullname)}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-semibold text-gray-900 truncate">
+                                            {item?.applicant?.fullname || 'N/A'}
+                                        </h3>
+                                        <p className="text-sm text-gray-600 truncate flex items-center gap-1">
+                                            <Mail className="w-3 h-3" />
+                                            {item?.applicant?.email || 'N/A'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex items-center gap-1 text-gray-600">
+                                    <Phone className="w-4 h-4" />
+                                    <span className="text-sm">{item?.applicant?.phoneNumber || 'N/A'}</span>
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                {item.applicant?.profile?.resume ? (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex items-center gap-2 h-8"
+                                        onClick={() => window.open(item.applicant.profile.resume, '_blank')}
+                                    >
+                                        <Download className="w-3 h-3" />
+                                        <span className="text-xs">View Resume</span>
+                                    </Button>
+                                ) : (
+                                    <span className="text-gray-400 text-sm">No resume</span>
+                                )}
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex items-center gap-1 text-gray-600">
+                                    <Calendar className="w-4 h-4" />
+                                    <span className="text-sm">{formatDate(item?.createdAt)}</span>
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                {getStatusBadge(item?.status || 'Pending')}
+                            </TableCell>
+                            <TableCell className="text-right">
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="h-8 w-8 p-0"
+                                            disabled={updatingStatus === item._id}
+                                        >
+                                            {updatingStatus === item._id ? (
+                                                <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                                            ) : (
+                                                <MoreHorizontal className="w-4 h-4" />
+                                            )}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-48 p-2" align="end">
+                                        <div className="space-y-1">
+                                            {shortlistingStatus.map((status, index) => (
+                                                <Button
+                                                    key={index}
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="w-full justify-start gap-2 h-9"
+                                                    onClick={() => statusHandler(status.value, item._id)}
+                                                    disabled={updatingStatus === item._id}
+                                                >
+                                                    {status.value === 'accepted' && <CheckCircle className="w-4 h-4 text-green-600" />}
+                                                    {status.value === 'rejected' && <XCircle className="w-4 h-4 text-red-600" />}
+                                                    {status.value === 'pending' && <Clock className="w-4 h-4 text-yellow-600" />}
+                                                    {status.label}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            </TableCell>
+                        </TableRow>
+                    ))}
                 </TableBody>
-
             </Table>
         </div>
     )

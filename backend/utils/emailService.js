@@ -201,5 +201,55 @@ export const sendRegistrationReminderEmail = async (studentEmail, studentName) =
         console.error('Error sending registration reminder email:', error);
         return { success: false, error: error.message };
     }
+};
+
+export const sendContactFormEmail = async (contactData) => {
+    try {
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: 'righthuman.rhr@gmail.com',
+            subject: `Contact Form: ${contactData.subject}`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                        <h2 style="color: #007bff; margin: 0;">📧 New Contact Form Submission</h2>
+                    </div>
+                    
+                    <div style="background-color: white; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef;">
+                        <div style="margin-bottom: 20px;">
+                            <h3 style="color: #333; margin: 0 0 10px 0;">Contact Information:</h3>
+                            <p style="margin: 5px 0;"><strong>Name:</strong> ${contactData.name}</p>
+                            <p style="margin: 5px 0;"><strong>Email:</strong> <a href="mailto:${contactData.email}" style="color: #007bff;">${contactData.email}</a></p>
+                            <p style="margin: 5px 0;"><strong>Subject:</strong> ${contactData.subject}</p>
+                        </div>
+                        
+                        <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <h4 style="color: #333; margin: 0 0 10px 0;">Message:</h4>
+                            <p style="margin: 0; white-space: pre-wrap; color: #555;">${contactData.message}</p>
+                        </div>
+                        
+                        <div style="background-color: #e7f3ff; border: 1px solid #b3d9ff; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <h4 style="color: #0066cc; margin: 0 0 10px 0;">Quick Actions:</h4>
+                            <p style="margin: 5px 0;">
+                                <a href="mailto:${contactData.email}?subject=Re: ${contactData.subject}" style="color: #0066cc; text-decoration: underline;">Reply to ${contactData.name}</a>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px; color: #6c757d; font-size: 12px;">
+                        <p>This message was sent from the Right Human Resources contact form.</p>
+                        <p>Time: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
+                    </div>
+                </div>
+            `
+        };
+
+        const result = await transporter.sendMail(mailOptions);
+        console.log('Contact form email sent successfully:', result.messageId);
+        return { success: true, messageId: result.messageId };
+    } catch (error) {
+        console.error('Error sending contact form email:', error);
+        return { success: false, error: error.message };
+    }
 }; 
 

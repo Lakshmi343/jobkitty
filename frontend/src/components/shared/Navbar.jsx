@@ -110,7 +110,7 @@ const Navbar = () => {
                                                 user && user.role === 'Employer' && (
                                                     <div className='flex w-fit items-center gap-2 cursor-pointer'>
                                                         <User2 />
-                                                        <Button variant="link"> <Link to="/employer/profile">Company Profile</Link></Button>
+                                                        <Button variant="link"> <Link to={`/employer/profile/${user._id}`}>Company Profile</Link></Button>
                                                     </div>
                                                 )
                                             }
@@ -178,7 +178,7 @@ const Navbar = () => {
                                     )}
                                     {user && user.role === 'Employer' && (
                                         <Button variant="link" className="w-full flex items-center gap-2 justify-start" onClick={()=>setMobileMenuOpen(false)}>
-                                            <User2 /> <Link to="/employer/profile">Company Profile</Link>
+                                            <User2 /> <Link to={`/employer/profile/${user._id}`}>Company Profile</Link>
                                         </Button>
                                     )}
                                     <Button onClick={()=>{logoutHandler(); setMobileMenuOpen(false);}} variant="link" className="w-full flex items-center gap-2 justify-start">
