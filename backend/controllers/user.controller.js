@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import getDataUri from "../utils/datauri.js";
 import cloudinary from "../utils/cloudinary.js";
-import { sendRegistrationReminderEmail } from "../utils/emailService.js";
+import { sendRegistrationReminderEmail, sendPasswordResetEmail } from "../utils/emailService.js";
+import crypto from "crypto";
 
 // ✅ REGISTER
 export const register = async (req, res) => {
@@ -73,7 +74,7 @@ export const register = async (req, res) => {
     }
 };
 
-// ✅ LOGIN
+
 export const login = async (req, res) => {
     try {
         const { email, password, role } = req.body;
@@ -106,7 +107,6 @@ export const login = async (req, res) => {
             expiresIn: "1d"
         });
 
-        // Populate company data for employers
         if (user.role === 'Employer' && user.profile.company) {
             user = await User.findById(user._id).populate('profile.company');
         }
@@ -183,7 +183,6 @@ export const updateProfile = async (req, res) => {
         user.profile.skills = skillsArray || user.profile.skills;
         user.profile.resume = resumeUrl;
         user.profile.resumeOriginalName = resumeName;
-
         await user.save();
 
         user = {
@@ -243,5 +242,56 @@ export const getUserProfile = async (req, res) => {
             message: "Internal server error",
             success: false
         });
+    }
+};
+
+// FORGOT PASSWORD
+export const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ message: "Email is required.", success: false });
+        }
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found.", success: false });
+        }
+        // Generate token
+        const token = crypto.randomBytes(32).toString("hex");
+        user.resetPasswordToken = token;
+        user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+        await user.save();
+        // Construct reset link (adjust frontend URL as needed)
+        const resetLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${token}`;
+        await sendPasswordResetEmail(user.email, resetLink);
+        return res.status(200).json({ message: "Password reset link sent to your email.", success: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error", success: false });
+    }
+};
+
+// RESET PASSWORD
+export const resetPassword = async (req, res) => {
+    try {
+        const { token, password } = req.body;
+        if (!token || !password) {
+            return res.status(400).json({ message: "Token and new password are required.", success: false });
+        }
+        const user = await User.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired token.", success: false });
+        }
+        user.password = await bcrypt.hash(password, 10);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+        return res.status(200).json({ message: "Password reset successful.", success: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error", success: false });
     }
 };

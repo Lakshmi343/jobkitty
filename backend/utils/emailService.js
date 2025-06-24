@@ -251,5 +251,29 @@ export const sendContactFormEmail = async (contactData) => {
         console.error('Error sending contact form email:', error);
         return { success: false, error: error.message };
     }
+};
+
+export const sendPasswordResetEmail = async (userEmail, resetLink) => {
+    try {
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: userEmail,
+            subject: 'Password Reset Request',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <h2>Password Reset Request</h2>
+                    <p>You requested a password reset. Click the link below to set a new password. This link will expire in 1 hour.</p>
+                    <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background: #007bff; color: #fff; text-decoration: none; border-radius: 5px;">Reset Password</a>
+                    <p>If you did not request this, please ignore this email.</p>
+                </div>
+            `
+        };
+        const result = await transporter.sendMail(mailOptions);
+        console.log('Password reset email sent:', result.messageId);
+        return { success: true, messageId: result.messageId };
+    } catch (error) {
+        console.error('Error sending password reset email:', error);
+        return { success: false, error: error.message };
+    }
 }; 
 

@@ -17,6 +17,9 @@ import Applicants from './components/admin/Applicants'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 import AppliedJobs from './components/jobseeker/AppliedJobs'
 import Contact from './components/Contact'
+import BlogPage from './components/BlogPage'
+import ForgotPassword from './components/auth/ForgotPassword'
+import ResetPassword from './components/auth/ResetPassword'
 
 
 const appRouter = createBrowserRouter([
@@ -90,6 +93,20 @@ const appRouter = createBrowserRouter([
   {
     path:"/jobseeker/applied-jobs",
     element:<ProtectedRoute allowedRoles={['Jobseeker']}><AppliedJobs /></ProtectedRoute> 
+  },
+
+  {
+    path: '/blog',
+    element: <BlogPage />
+  },
+
+  {
+    path: '/forgot-password',
+    element: <ForgotPassword />
+  },
+  {
+    path: '/reset-password/:token',
+    element: <ResetPassword />
   },
 
 ])

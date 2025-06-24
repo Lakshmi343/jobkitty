@@ -101,6 +101,9 @@ const Login = () => {
                                         required
                                     />
                                 </div>
+                                <div className="text-right mt-1">
+                                    <Link to="/forgot-password" className="text-xs text-blue-600 hover:underline">Forgot Password?</Link>
+                                </div>
                             </div>
 
                             {/* Role Selection */}
