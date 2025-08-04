@@ -3,7 +3,6 @@ import Category from "../models/Category.js";
 import { Company } from "../models/company.model.js";
 
 
-
 export const postJob = async (req, res) => {
     try {
         const { 
@@ -17,27 +16,31 @@ export const postJob = async (req, res) => {
             position, 
             category         
         } = req.body;
+        
         const userId = req.id;
 
-        // Get user with company information
         const User = (await import("../models/user.model.js")).User;
-        const user = await User.findById(userId).populate('profile.company');
+        const user = await User.findById(userId);
         
         if (!user) {
-            return res.status(404).json({ 
-                message: "User not found", 
-                success: false 
+            return res.status(404).json({ message: "User not found", success: false });
+        }
+
+        if (user.role !== 'Employer') {
+            return res.status(403).json({
+                message: "Only employers can post jobs.",
+                success: false
             });
         }
 
-        // Get company from user's profile
-        const company = user.profile?.company;
-        if (!company) {
+        if (!user.profile.company) {
             return res.status(400).json({ 
-                message: "Company information not found in your profile. Please update your profile with company details.", 
+                message: "Company information not found. Please set up your company profile first.", 
                 success: false 
             });
         }
+        
+        const companyId = user.profile.company;
 
         if (!title || !description || !requirements || !salary || !location || 
             !jobType || !experienceLevel || !position || !category) {
@@ -66,7 +69,7 @@ export const postJob = async (req, res) => {
             jobType,
             experienceLevel: Number(experienceLevel),
             position: Number(position),
-            company: company._id,    // Use employer's company
+            company: companyId,
             category,   
             created_by: userId
         });
@@ -157,6 +160,8 @@ export const getAdminJobs = async (req, res) => {
         console.log(error);
     }
 }
+
+
 
 export const updateJob = async (req, res) => {
     try {

@@ -1,3 +1,6 @@
+
+
+
 import express from "express";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import { getAdminJobs, getAllJobs, getJobById, postJob, updateJob } from "../controllers/job.controller.js";
@@ -12,3 +15,5 @@ router.route("/update/:id").put(isAuthenticated, updateJob);
 
 export default router;
 
+
+// Buw=*$3bp?78js*

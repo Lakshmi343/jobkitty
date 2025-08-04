@@ -39,8 +39,7 @@ const AdminJobsTable = () => {
     };
 
     const getStatusBadge = (job) => {
-        // You can add logic here to determine job status
-        const isActive = true; // Replace with actual status logic
+        const isActive = true; 
         return (
             <Badge variant={isActive ? "default" : "secondary"} className="text-xs">
                 {isActive ? "Active" : "Inactive"}

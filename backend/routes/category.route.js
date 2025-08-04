@@ -1,3 +1,5 @@
+
+
 import express from "express";
 import { createCategory, getCategories } from "../controllers/categoryController.js"
 import isAuthenticated from "../middlewares/isAuthenticated.js";

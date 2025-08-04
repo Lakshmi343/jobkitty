@@ -20,16 +20,21 @@ const companySchema = new mongoose.Schema({
         enum:['Startup', 'MNC', 'SME', 'Government', 'Non-Profit', 'Other']
     },
     experience:{
-        type:Number, // years of experience
+        type:Number, 
         min:0
     },
     logo:{
-        type:String // URL to company logo
+        type:String 
     },
     userId:{
         type:mongoose.Schema.Types.ObjectId,
         ref:'User',
         required:true
+    },
+    status: {
+        type: String,
+        enum: ['active', 'inactive', 'pending'],
+        default: 'active'
     }
 },{timestamps:true})
 export const Company = mongoose.model("Company", companySchema);

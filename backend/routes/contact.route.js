@@ -2,13 +2,11 @@ import express from 'express';
 import { sendContactFormEmail } from '../utils/emailService.js';
 
 const router = express.Router();
-
-// POST /api/v1/contact/submit
 router.post('/submit', async (req, res) => {
     try {
         const { name, email, subject, message } = req.body;
 
-        // Validate required fields
+   
         if (!name || !email || !subject || !message) {
             return res.status(400).json({
                 success: false,
@@ -16,7 +14,6 @@ router.post('/submit', async (req, res) => {
             });
         }
 
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             return res.status(400).json({
@@ -24,8 +21,6 @@ router.post('/submit', async (req, res) => {
                 message: 'Please enter a valid email address'
             });
         }
-
-        // Send email
         const emailResult = await sendContactFormEmail({
             name,
             email,

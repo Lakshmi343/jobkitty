@@ -7,6 +7,7 @@ import { sendRegistrationReminderEmail, sendPasswordResetEmail } from "../utils/
 import crypto from "crypto";
 
 // ✅ REGISTER
+
 export const register = async (req, res) => {
     try {
         const { fullname, email, phoneNumber, password, role } = req.body;
@@ -94,6 +95,9 @@ export const login = async (req, res) => {
             });
         }
 
+        console.log('User from DB:', user);
+        console.log('Role from frontend:', role);
+
         const isPasswordMatch = await bcrypt.compare(password, user.password);
         if (!isPasswordMatch || role !== user.role) {
             return res.status(400).json({
@@ -127,6 +131,7 @@ export const login = async (req, res) => {
         }).json({
             message: `Welcome back ${user.fullname}`,
             user,
+            token,
             success: true
         });
     } catch (error) {
@@ -162,20 +167,15 @@ export const updateProfile = async (req, res) => {
                 success: false
             });
         }
-
         let skillsArray = skills ? skills.split(",") : user.profile.skills;
-
-       
         let resumeUrl = user.profile.resume;
         let resumeName = user.profile.resumeOriginalName;
-
         if (req.file) {
             const fileUri = getDataUri(req.file);
             const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
             resumeUrl = cloudResponse.secure_url;
             resumeName = req.file.originalname;
         }
-
         user.fullname = fullname || user.fullname;
         user.email = email || user.email;
         user.phoneNumber = phoneNumber || user.phoneNumber;
@@ -184,7 +184,6 @@ export const updateProfile = async (req, res) => {
         user.profile.resume = resumeUrl;
         user.profile.resumeOriginalName = resumeName;
         await user.save();
-
         user = {
             _id: user._id,
             fullname: user.fullname,
@@ -193,7 +192,6 @@ export const updateProfile = async (req, res) => {
             role: user.role,
             profile: user.profile
         };
-
         return res.status(200).json({
             message: "Profile updated successfully.",
             user,
@@ -205,7 +203,7 @@ export const updateProfile = async (req, res) => {
     }
 };
 
-// Get user profile with company data
+
 export const getUserProfile = async (req, res) => {
     try {
         const userId = req.id;
@@ -218,7 +216,7 @@ export const getUserProfile = async (req, res) => {
             });
         }
 
-        // Populate company data for employers
+        
         if (user.role === 'Employer' && user.profile.company) {
             user = await User.findById(userId).populate('profile.company');
         }

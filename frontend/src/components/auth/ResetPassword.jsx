@@ -17,6 +17,7 @@ const ResetPassword = () => {
     setMessage("");
     setError("");
     try {
+      console.log('Current input state:', { token, password });
       const res = await axios.post(`${USER_API_END_POINT}/reset-password`, { token, password });
       setMessage(res.data.message);
       setTimeout(() => navigate("/login"), 2000);
@@ -25,6 +26,10 @@ const ResetPassword = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const selectChangeHandler = (name, value) => {
+    setInput({ ...input, [name]: value });
   };
 
   return (

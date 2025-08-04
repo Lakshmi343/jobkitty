@@ -12,20 +12,7 @@ import axios from 'axios';
 import { JOB_API_END_POINT, CATEGORY_API_END_POINT, USER_API_END_POINT } from '@/utils/constant';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { 
-    Loader2, 
-    Briefcase, 
-    MapPin, 
-    DollarSign, 
-    Clock, 
-    Users, 
-    Building, 
-    FileText,
-    ArrowLeft,
-    Plus,
-    CheckCircle,
-    AlertCircle
-} from 'lucide-react';
+import { Loader2,  Briefcase, MapPin,  DollarSign, Clock, Users,  Building,  FileText,ArrowLeft,Plus,CheckCircle, AlertCircle} from 'lucide-react';
 
 const locations = [
     "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
@@ -36,18 +23,20 @@ const locations = [
 const jobTypes = ["Full-time", "Part-time", "Contract", "Internship", "Temporary"];
 
 const experienceLevels = [
+
     { value: "0", label: "Entry Level (0-1 years)" },
     { value: "1", label: "Junior (1-3 years)" },
     { value: "3", label: "Mid Level (3-5 years)" },
     { value: "5", label: "Senior (5-8 years)" },
     { value: "8", label: "Expert (8+ years)" }
+    
 ];
 
 const PostJob = () => {
     const [input, setInput] = useState({
         title: "",
         description: "",
-        requirements: "",
+        requirements: [],
         salary: "",
         experienceLevel: "",
         location: "",
@@ -64,26 +53,16 @@ const PostJob = () => {
     const [userCompany, setUserCompany] = useState(null);
     const navigate = useNavigate();
 
-    const { user } = useSelector(store => store.user || {});
+    const { user } = useSelector(store => store.auth);
 
-    // Get user's company information
     useEffect(() => {
-        const fetchUserCompany = async () => {
-            try {
-                if (user?._id) {
-                    const response = await axios.get(`${USER_API_END_POINT}/profile`, {
-                        withCredentials: true
-                    });
-                    if (response.data.success && response.data.user.profile?.company) {
-                        setUserCompany(response.data.user.profile.company);
-                    }
-                }
-            } catch (error) {
-                console.error("Error fetching user company:", error);
-            }
-        };
-        fetchUserCompany();
-    }, [user]);
+        if (user && !user.profile.company) {
+            toast.info("Please set up your company profile before posting a job.");
+            navigate('/employer/company/setup');
+        } else if (user && user.profile.company) {
+            setUserCompany(user.profile.company);
+        }
+    }, [user, navigate]);
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -130,15 +109,18 @@ const PostJob = () => {
             case 1:
                 return input.title && input.description && input.category;
             case 2:
-                return input.location && input.jobType && input.experienceLevel;
+                return input.location && input.jobType;
             case 3:
-                return input.salary && input.position && userCompany;
+                return input.salary && input.position;
+            case 4:
+                return input.experienceLevel && requirements.length > 0;
             default:
                 return true;
         }
     };
 
     const nextStep = () => {
+        console.log('Current step:', currentStep, 'Input state:', input);
         if (validateStep(currentStep)) {
             setCurrentStep(currentStep + 1);
         } else {
@@ -152,6 +134,7 @@ const PostJob = () => {
 
     const submitHandler = async (e) => {
         e.preventDefault();
+        console.log('Submitting job with state:', input, 'Requirements:', requirements);
         
         if (requirements.length === 0) {
             toast.error("Please add at least one requirement");
@@ -159,7 +142,8 @@ const PostJob = () => {
         }
 
         if (!userCompany) {
-            toast.error("Company information is required. Please update your profile with company details.");
+            toast.error("Company information is required. Please set up your company profile.");
+            navigate('/employer/company/setup');
             return;
         }
 
@@ -193,7 +177,7 @@ const PostJob = () => {
         }
     }
 
-    const progressPercentage = (currentStep / 3) * 100;
+    const progressPercentage = (currentStep / 4) * 100;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -223,7 +207,7 @@ const PostJob = () => {
                     {/* Progress Bar */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Step {currentStep} of 3</h2>
+                            <h2 className="text-lg font-semibold text-gray-900">Step {currentStep} of 4</h2>
                             <span className="text-sm text-gray-600">{Math.round(progressPercentage)}% Complete</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -234,8 +218,9 @@ const PostJob = () => {
                         </div>
                         <div className="flex justify-between mt-2 text-xs text-gray-500">
                             <span>Job Details</span>
-                            <span>Requirements</span>
-                            <span>Company Info</span>
+                            <span>Location & Type</span>
+                            <span>Compensation & Openings</span>
+                            <span>Experience & Requirements</span>
                         </div>
                     </div>
                 </div>
@@ -243,292 +228,205 @@ const PostJob = () => {
                 <form onSubmit={submitHandler}>
                     {/* Step 1: Job Details */}
                     {currentStep === 1 && (
-                        <Card className="shadow-lg">
+                        <div className='bg-white p-8 rounded-lg shadow-md border'>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <FileText className="w-5 h-5 text-blue-600" />
+                                    <FileText className="h-6 w-6 text-blue-600" />
                                     Job Details
                                 </CardTitle>
-                                <CardDescription>
-                                    Provide basic information about the position
-                                </CardDescription>
+                                <CardDescription>Provide the core details of the job.</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="md:col-span-2">
-                                        <Label className="text-sm font-medium">Job Title *</Label>
-                                        <Input
-                                            type="text"
-                                            name="title"
-                                            value={input.title}
-                                            onChange={changeEventHandler}
-                                            placeholder="e.g., Senior React Developer"
-                                            className="mt-1"
-                                            required
-                                        />
+                            <CardContent className='mt-4 space-y-6'>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <Label>Job Title</Label>
+                                        <Input name="title" value={input.title} onChange={changeEventHandler} placeholder="e.g., Software Engineer" />
                                     </div>
-
-                                    <div className="md:col-span-2">
-                                        <Label className="text-sm font-medium">Job Description *</Label>
-                                        <Textarea
-                                            name="description"
-                                            value={input.description}
-                                            onChange={changeEventHandler}
-                                            placeholder="Enter your description..."
-                                            className="min-h-[120px]"
-                                            required
-                                        />
-                                    </div>
-
-                                    <div className="md:col-span-2">
-                                        <Label className="text-sm font-medium">Category *</Label>
-                                        <Select 
-                                            onValueChange={(value) => selectChangeHandler("category", value)}
+                                    <div>
+                                        <Label>Category</Label>
+                                        <Select
+                                            name="category"
                                             value={input.category}
-                                            required
+                                            onValueChange={(value) => selectChangeHandler("category", value)}
                                         >
-                                            <SelectTrigger className="mt-1">
-                                                <SelectValue placeholder="Select job category" />
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a category" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {categories.map(category => (
-                                                    <SelectItem key={category._id} value={category._id}>
-                                                        {category.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {/* Step 2: Requirements */}
-                    {currentStep === 2 && (
-                        <Card className="shadow-lg">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <MapPin className="w-5 h-5 text-blue-600" />
-                                    Job Requirements
-                                </CardTitle>
-                                <CardDescription>
-                                    Specify location, type, and experience requirements
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <Label className="text-sm font-medium">Location *</Label>
-                                        <Select 
-                                            onValueChange={(value) => selectChangeHandler("location", value)}
-                                            value={input.location}
-                                            required
-                                        >
-                                            <SelectTrigger className="mt-1">
-                                                <SelectValue placeholder="Select location" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {locations.map(location => (
-                                                    <SelectItem key={location} value={location}>
-                                                        {location}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div>
-                                        <Label className="text-sm font-medium">Job Type *</Label>
-                                        <Select 
-                                            onValueChange={(value) => selectChangeHandler("jobType", value)}
-                                            value={input.jobType}
-                                            required
-                                        >
-                                            <SelectTrigger className="mt-1">
-                                                <SelectValue placeholder="Select job type" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {jobTypes.map(type => (
-                                                    <SelectItem key={type} value={type}>
-                                                        {type}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div>
-                                        <Label className="text-sm font-medium">Experience Level *</Label>
-                                        <Select 
-                                            onValueChange={(value) => selectChangeHandler("experienceLevel", value)}
-                                            value={input.experienceLevel}
-                                            required
-                                        >
-                                            <SelectTrigger className="mt-1">
-                                                <SelectValue placeholder="Select experience level" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {experienceLevels.map(level => (
-                                                    <SelectItem key={level.value} value={level.value}>
-                                                        {level.label}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-
-                                    <div className="md:col-span-2">
-                                        <Label className="text-sm font-medium">Skills & Requirements</Label>
-                                        <div className="mt-1 space-y-3">
-                                            <div className="flex gap-2">
-                                                <Input
-                                                    type="text"
-                                                    value={newRequirement}
-                                                    onChange={(e) => setNewRequirement(e.target.value)}
-                                                    onKeyPress={handleKeyPress}
-                                                    placeholder="Add a requirement (e.g., React, Node.js)"
-                                                    className="flex-1"
-                                                />
-                                                <Button 
-                                                    type="button" 
-                                                    onClick={addRequirement}
-                                                    variant="outline"
-                                                    className="px-4"
-                                                >
-                                                    Add
-                                                </Button>
-                                            </div>
-                                            
-                                            {requirements.length > 0 && (
-                                                <div className="flex flex-wrap gap-2">
-                                                    {requirements.map((req, index) => (
-                                                        <Badge 
-                                                            key={index} 
-                                                            variant="secondary"
-                                                            className="flex items-center gap-1"
-                                                        >
-                                                            {req}
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => removeRequirement(index)}
-                                                                className="ml-1 hover:text-red-600"
-                                                            >
-                                                                ×
-                                                            </button>
-                                                        </Badge>
+                                                <SelectGroup>
+                                                    {categories.map(cat => (
+                                                        <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
                                                     ))}
-                                                </div>
-                                            )}
-                                        </div>
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                 </div>
+                                <div>
+                                    <Label>Job Description</Label>
+                                    <Textarea name="description" value={input.description} onChange={changeEventHandler} placeholder="Describe the role and responsibilities" />
+                                </div>
                             </CardContent>
-                        </Card>
+                        </div>
                     )}
+            
+            {currentStep === 2 && (
+    <div className='bg-white p-8 rounded-lg shadow-md border'>
+        <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+                <MapPin className="h-6 w-6 text-blue-600" />
+                Location & Type
+            </CardTitle>
+            <CardDescription>Specify where and how the job is offered.</CardDescription>
+        </CardHeader>
+        <CardContent className='mt-4 space-y-6'>
+            <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                    <Label>Location</Label>
+                    <Select
+                        name="location"
+                        value={input.location}
+                        onValueChange={(value) => selectChangeHandler("location", value)}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                {locations.map(loc => (
+                                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                                ))}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label>Job Type</Label>
+                    <Select
+                        name="jobType"
+                        value={input.jobType}
+                        onValueChange={(value) => selectChangeHandler("jobType", value)}
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select a job type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                {jobTypes.map(type => (
+                                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                                ))}
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+        </CardContent>
+    </div>
+)}
 
-                    {/* Step 3: Company Info */}
+               
+
                     {currentStep === 3 && (
-                        <Card className="shadow-lg">
+                        <div className='bg-white p-8 rounded-lg shadow-md border'>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <Building className="w-5 h-5 text-blue-600" />
-                                    Company Information
+                                    <DollarSign className="h-6 w-6 text-blue-600" />
+                                   Compensation & Openings
                                 </CardTitle>
-                                <CardDescription>
-                                    Set salary, positions, and company details
-                                </CardDescription>
+                                <CardDescription>Detail the salary and number of open positions.</CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                             <CardContent className='mt-4 space-y-6'>
+                                <div className="grid md:grid-cols-2 gap-6">
                                     <div>
-                                        <Label className="text-sm font-medium">Salary (₹) *</Label>
+                                        <Label>Salary (LPA)</Label>
                                         <Input
-                                            type="number"
                                             name="salary"
+                                            type="number"
                                             value={input.salary}
                                             onChange={changeEventHandler}
-                                            placeholder="50000"
-                                            min="0"
-                                            className="mt-1"
-                                            required
+                                            placeholder="e.g., 50000"
                                         />
                                     </div>
-
                                     <div>
-                                        <Label className="text-sm font-medium">Number of Positions *</Label>
+                                        <Label>Positions/Openings</Label>
                                         <Input
-                                            type="number"
                                             name="position"
+                                            type="number"
                                             value={input.position}
                                             onChange={changeEventHandler}
-                                            placeholder="2"
-                                            min="1"
-                                            className="mt-1"
-                                            required
+                                            placeholder="e.g., 2"
                                         />
-                                    </div>
-
-                                    <div className="md:col-span-2">
-                                        <Label className="text-sm font-medium">Company *</Label>
-                                        <div className="mt-1 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                                            <div className="flex items-center gap-2">
-                                                <Building className="w-4 h-4 text-gray-600" />
-                                                <span className="text-gray-900 font-medium">
-                                                    {userCompany?.name || 'Company not set'}
-                                                </span>
-                                            </div>
-                                            {!userCompany && (
-                                                <p className="text-sm text-red-600 mt-1">
-                                                    Please update your profile with company information
-                                                </p>
-                                            )}
-                                        </div>
                                     </div>
                                 </div>
                             </CardContent>
-                        </Card>
+                        </div>
                     )}
 
-                    {/* Navigation Buttons */}
-                    <div className="flex justify-between mt-8">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={prevStep}
-                            disabled={currentStep === 1}
-                            className="flex items-center gap-2"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            Previous
+                    {currentStep === 4 && (
+                         <div className='bg-white p-8 rounded-lg shadow-md border'>
+                             <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Briefcase className="h-6 w-6 text-blue-600" />
+                                    Experience & Requirements
+                                </CardTitle>
+                                <CardDescription>Define the experience level and skill requirements.</CardDescription>
+                            </CardHeader>
+                            <CardContent className='mt-4 space-y-6'>
+                                <div>
+                                    <Label>Experience Level</Label>
+                                    <Select
+                                        name="experienceLevel"
+                                        value={input.experienceLevel}
+                                        onValueChange={(value) => selectChangeHandler("experienceLevel", value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select experience level" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {experienceLevels.map(exp => (
+                                                    <SelectItem key={exp.value} value={exp.value}>{exp.label}</SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label>Requirements</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            value={newRequirement}
+                                            onChange={(e) => setNewRequirement(e.target.value)}
+                                            onKeyPress={handleKeyPress}
+                                            placeholder="Add a requirement and press Enter"
+                                        />
+                                        <Button type="button" onClick={addRequirement}><Plus /></Button>
+                                    </div>
+                                    <div className="mt-4 space-y-2">
+                                        {requirements.map((req, index) => (
+                                            <Badge key={index} variant="secondary" className="mr-2">
+                                                {req}
+                                                <button onClick={() => removeRequirement(index)} className="ml-2 text-red-500">x</button>
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </div>
+                    )}
+                    <div className='mt-8 flex justify-between items-center'>
+                        <Button type="button" variant="outline" onClick={prevStep} disabled={currentStep === 1}>
+                            <ArrowLeft className='mr-2 h-4 w-4' /> Previous
                         </Button>
-
-                        {currentStep < 3 ? (
-                            <Button
-                                type="button"
-                                onClick={nextStep}
-                                className="flex items-center gap-2"
-                            >
+                        <div className="text-sm text-gray-500">Step {currentStep} of 4</div>
+                        {currentStep < 4 ? (
+                            <Button type="button" onClick={nextStep}>
                                 Next
-                                <ArrowLeft className="w-4 h-4 rotate-180" />
                             </Button>
                         ) : (
-                            <Button 
-                                type="submit" 
-                                disabled={loading}
-                                className="flex items-center gap-2"
-                            >
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        Posting Job...
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle className="w-4 h-4" />
+                            <Button onClick={submitHandler} disabled={loading} className="bg-green-600 hover:bg-green-700">
+                                {loading ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <CheckCircle className='mr-2 h-4 w-4' />}
                                         Post Job
-                                    </>
-                                )}
                             </Button>
                         )}
                     </div>

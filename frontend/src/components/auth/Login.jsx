@@ -21,13 +21,31 @@ const Login = () => {
     const { loading, user } = useSelector(store => store.auth);
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const [showPassword, setShowPassword] = useState(false);
 
     const changeEventHandler = (e) => {
         setInput({ ...input, [e.target.name]: e.target.value });
     }
 
+    const validateInput = () => {
+        if (!/^\S+@\S+\.\S+$/.test(input.email)) {
+            toast.error('Please enter a valid email address.');
+            return false;
+        }
+        if (input.password.length < 6 || input.password.length > 20) {
+            toast.error('Password must be 6-20 characters.');
+            return false;
+        }
+        if (!input.role) {
+            toast.error('Please select your role (Jobseeker or Employer)');
+            return false;
+        }
+        return true;
+    }
+
     const submitHandler = async (e) => {
         e.preventDefault();
+        if (!validateInput()) return;
         try {
             dispatch(setLoading(true));
             const res = await axios.post(`${USER_API_END_POINT}/login`, input, {
@@ -92,7 +110,7 @@ const Login = () => {
                                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                     <Input
                                         id="password"
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         value={input.password}
                                         name="password"
                                         onChange={changeEventHandler}
@@ -100,6 +118,9 @@ const Login = () => {
                                         className="pl-10 py-3 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                                         required
                                     />
+                                    <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 focus:outline-none">
+                                        {showPassword ? <Lock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+                                    </button>
                                 </div>
                                 <div className="text-right mt-1">
                                     <Link to="/forgot-password" className="text-xs text-blue-600 hover:underline">Forgot Password?</Link>
@@ -148,7 +169,7 @@ const Login = () => {
                             {/* Submit Button */}
                             <Button 
                                 type="submit" 
-                                disabled={loading}
+                                disabled={loading || !input.role}
                                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200"
                             >
                                 {loading ? (

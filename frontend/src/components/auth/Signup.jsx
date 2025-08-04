@@ -33,8 +33,41 @@ const Signup = () => {
         setInput({ ...input, file: e.target.files?.[0] });
     }
 
+    const validateInput = () => {
+        if (!/^[A-Za-z ]{2,30}$/.test(input.fullname)) {
+            toast.error('Full name should be 2-30 letters and spaces only.');
+            return false;
+        }
+        if (!/^\S+@\S+\.\S+$/.test(input.email)) {
+            toast.error('Please enter a valid email address.');
+            return false;
+        }
+        if (!/^\d{10}$/.test(input.phoneNumber)) {
+            toast.error('Phone number must be exactly 10 digits.');
+            return false;
+        }
+        if (input.password.length < 6 || input.password.length > 20) {
+            toast.error('Password must be 6-20 characters.');
+            return false;
+        }
+        if (!input.role) {
+            toast.error('Please select your role.');
+            return false;
+        }
+        if (!input.file) {
+            toast.error('Profile photo is required.');
+            return false;
+        }
+        if (input.file && input.file.name.length > 50) {
+            toast.error('Profile photo file name is too long.');
+            return false;
+        }
+        return true;
+    }
+
     const submitHandler = async (e) => {
         e.preventDefault();
+        if (!validateInput()) return;
         const formData = new FormData();
         formData.append("fullname", input.fullname);
         formData.append("email", input.email);

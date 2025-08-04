@@ -9,6 +9,7 @@ import axios from 'axios'
 import { USER_API_END_POINT } from '@/utils/constant'
 import { setUser } from '@/redux/authSlice'
 import { toast } from 'sonner'
+import logo from "../../assets/jobkitty-01.png"
 
 const Navbar = () => {
     const { user } = useSelector(store => store.auth);
@@ -33,7 +34,7 @@ const Navbar = () => {
         <div className='bg-white border-b'>
             <div className='flex items-center justify-between mx-auto max-w-7xl h-16 px-4'>
                 <div>
-                    <h1 className='text-2xl font-bold'>Job<span className='text-[#F83002]'>Portal</span></h1>
+                 <img src={logo} alt="logo" style={{width:"150px"}}></img>
                 </div>
                
                 <button className="md:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -55,24 +56,27 @@ const Navbar = () => {
                                     <li><Link to="/employer/jobs">My Jobs</Link></li>
                                     <li><Link to="/employer/jobs/create">Post Job</Link></li>
                                     <li><Link to="/jobs">Browse Jobs</Link></li>
-                                    <li><Link to="/contact">Contact</Link></li>
                                     <li><Link to="/blog">Blog</Link></li>
+                                    <li><Link to="/contact">Contact</Link></li>
+                                   
                                 </>
                             ) : user && user.role === 'Jobseeker' ? (
                                 <>
                                     <li><Link to="/jobs">Jobs</Link></li>
                                     <li><Link to="/browse">Browse</Link></li>
                                     <li><Link to="/jobseeker/applied-jobs">Applied Jobs</Link></li>
-                                    <li><Link to="/contact">Contact</Link></li>
                                     <li><Link to="/blog">Blog</Link></li>
+                                    <li><Link to="/contact">Contact</Link></li>
+                                  
                                 </>
                             ) : (
                                 <>
                                     <li><Link to="/">Home</Link></li>
                                     <li><Link to="/jobs">Jobs</Link></li>
                                     <li><Link to="/browse">Browse</Link></li>
-                                    <li><Link to="/contact">Contact</Link></li>
                                     <li><Link to="/blog">Blog</Link></li>
+                                    <li><Link to="/contact">Contact</Link></li>
+                                 
                                 </>
                             )
                         }

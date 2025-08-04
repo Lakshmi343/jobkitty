@@ -1,29 +1,25 @@
-import React, { useState } from 'react'
-import { Button } from './ui/button'
-import { Search, MapPin, Briefcase } from 'lucide-react'
-import { useDispatch } from 'react-redux';
-import { setSearchedQuery } from '@/redux/jobSlice';
-import { useNavigate } from 'react-router-dom';
-import CategoryCarousel from './CategoryCarousel';
-
+ import React, { useState } from 'react'
+ import { Button } from './ui/button'
+ import { Search, MapPin, Briefcase } from 'lucide-react'
+ import { useDispatch } from 'react-redux';
+ import { setSearchedQuery } from '@/redux/jobSlice';
+ import { useNavigate } from 'react-router-dom';
+ 
 const HeroSection = () => {
     const [query, setQuery] = useState("");
     const [location, setLocation] = useState("");
     const dispatch = useDispatch();
     const navigate = useNavigate();
-
     const searchJobHandler = () => {
-        const searchTerm = location ? `${query} ${location}` : query;
-        dispatch(setSearchedQuery(searchTerm));
-        navigate("/browse");
+    const searchTerm = location ? `${query} ${location}` : query;
+    dispatch(setSearchedQuery(searchTerm));
+    navigate("/browse");
     }
-
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
             searchJobHandler();
         }
     }
-
     return (
         <div className='relative w-full overflow-hidden min-h-screen' 
              style={{
@@ -31,13 +27,11 @@ const HeroSection = () => {
                  backgroundSize: '200% 200%',
                  animation: 'gradient 20s ease infinite'
              }}>
-
             <div className='absolute inset-0 overflow-hidden'>
                 <div className='absolute -top-24 -left-24 w-96 h-96 bg-indigo-900/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob'></div>
                 <div className='absolute -bottom-24 -right-24 w-96 h-96 bg-purple-900/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000'></div>
                 <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-blue-900/20 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000'></div>
             </div>
-
             <div className='absolute inset-0 overflow-hidden'>
                 {[...Array(20)].map((_, i) => (
                     <div
@@ -52,7 +46,6 @@ const HeroSection = () => {
                     />
                 ))}
             </div>
-
             <div className='relative z-10 w-full min-h-screen flex flex-col items-center justify-center px-4 py-12 lg:py-24'>
                 <div className='w-full max-w-6xl mx-auto'>
                     <div className='flex flex-col gap-8 lg:gap-12 items-center text-center'>
@@ -62,22 +55,19 @@ const HeroSection = () => {
                             </span>
                             <span className='text-lg lg:text-xl'>Browse Jobs</span>
                         </div>
-                        
                         <div className='text-center lg:text-left'>
                             <h1 className='text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white animate-slide-up px-4'>
                                 Find Jobs, Employment & <br className="hidden sm:block" />
-                                <span className='bg-gradient-to-r from-indigo-400 via-purple-400 to-blue-400 text-transparent bg-clip-text'>
+                                <span className='bg-gradient-to-r from-[#6A38C2] to-[#F83002] rounded bg-clip-text text-transparent'>
                                     Career Opportunities
                                 </span>
-                            </h1>
-                            
+                            </h1>                       
                             <p className='text-base md:text-lg text-gray-300 max-w-3xl animate-fade-in animation-delay-200 px-4'>
                                 Discover your next career move with our extensive job listings. 
                                 From entry-level positions to executive roles, find the perfect opportunity 
                                 that matches your skills and aspirations.
                             </p>
                         </div>
-
                         <div className='w-full max-w-4xl animate-slide-up animation-delay-400'>
                             <div className='flex flex-col sm:flex-row gap-4 px-4'>
                                 <div className='flex-1'>
@@ -97,7 +87,6 @@ const HeroSection = () => {
                                 </button>
                             </div>
                         </div>
-
                         {/* Popular Searches */}
                         <div className='flex flex-wrap justify-center gap-4 mt-6 text-sm text-gray-300 animate-fade-in animation-delay-600 px-4'>
                             <span className='text-white/80 font-medium'>Popular:</span>
@@ -115,19 +104,9 @@ const HeroSection = () => {
                             ))}
                         </div>
                     </div>
-
-                    <div className='mt-16 lg:mt-20 relative z-10 animate-fade-in animation-delay-800'>
-                        <h2 className='text-2xl md:text-3xl font-bold text-center mb-8 lg:mb-12 text-white px-4'>
-                            Popular Job Categories
-                        </h2>
-                        <div className='px-4'>
-                            <CategoryCarousel />
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
-    )
+ )
 }
-
 export default HeroSection

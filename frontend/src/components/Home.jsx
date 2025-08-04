@@ -25,6 +25,7 @@ const Home = () => {
       <Navbar />
       <HeroSection />
       <LatestJobs />
+      
       <CategoryCarousel />
       <Footer />
     </div>

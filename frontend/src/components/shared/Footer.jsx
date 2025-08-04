@@ -1,5 +1,7 @@
+
 import React, { useState } from 'react';
 import { Mail, MapPin, Phone, Clock, ArrowUp, ExternalLink } from 'lucide-react';
+import logo from "../../assets/jobkitty-01.png"
 
 const Footer = () => {
   const [email, setEmail] = useState("");
@@ -14,6 +16,8 @@ const Footer = () => {
       setTimeout(() => setSubscribed(false), 3000);
     }
   };
+
+  12082
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -42,9 +46,7 @@ const Footer = () => {
 
           <div className="lg:col-span-2">
             <div className="flex items-center mb-6 group">
-              <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#6A38C2] to-[#F83002] group-hover:scale-105 transition-transform duration-300">
-                Job<span className="text-[#F83002]">Portal</span>
-              </h2>
+            <img src={logo} alt="logo" style={{width:"150px"}}></img>
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
               Empowering your career journey. Find your dream job or the perfect candidate with us! 
