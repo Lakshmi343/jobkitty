@@ -37,11 +37,15 @@ const PostJob = () => {
         title: "",
         description: "",
         requirements: [],
-        salary: "",
+        salaryMin: "",
+        salaryMax: "",
+        experienceMin: "",
+        experienceMax: "",
         experienceLevel: "",
         location: "",
         jobType: "",
         position: "",
+        openings: "1",
         category: ""
     });
     
@@ -109,11 +113,11 @@ const PostJob = () => {
             case 1:
                 return input.title && input.description && input.category;
             case 2:
-                return input.location && input.jobType;
+                return input.location && input.jobType && input.openings;
             case 3:
-                return input.salary && input.position;
+                return input.salaryMin && input.salaryMax && input.position;
             case 4:
-                return input.experienceLevel && requirements.length > 0;
+                return input.experienceLevel && input.experienceMin && input.experienceMax && requirements.length > 0;
             default:
                 return true;
         }
@@ -153,9 +157,17 @@ const PostJob = () => {
             const jobData = {
                 ...input,
                 requirements: requirements,
-                salary: Number(input.salary),
+                salary: {
+                    min: Number(input.salaryMin),
+                    max: Number(input.salaryMax)
+                },
+                experience: {
+                    min: Number(input.experienceMin),
+                    max: Number(input.experienceMax)
+                },
                 experienceLevel: Number(input.experienceLevel),
-                position: Number(input.position)
+                position: Number(input.position),
+                openings: Number(input.openings)
             };
 
             const res = await axios.post(`${JOB_API_END_POINT}/post`, jobData, {
@@ -336,23 +348,33 @@ const PostJob = () => {
                                 <CardDescription>Detail the salary and number of open positions.</CardDescription>
                             </CardHeader>
                              <CardContent className='mt-4 space-y-6'>
-                                <div className="grid md:grid-cols-2 gap-6">
+                                <div className="grid md:grid-cols-3 gap-6">
                                     <div>
-                                        <Label>Salary (LPA)</Label>
+                                        <Label>Salary Range (LPA) - Min</Label>
                                         <Input
-                                            name="salary"
+                                            name="salaryMin"
                                             type="number"
-                                            value={input.salary}
+                                            value={input.salaryMin}
                                             onChange={changeEventHandler}
-                                            placeholder="e.g., 50000"
+                                            placeholder="e.g., 40000"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>Salary Range (LPA) - Max</Label>
+                                        <Input
+                                            name="salaryMax"
+                                            type="number"
+                                            value={input.salaryMax}
+                                            onChange={changeEventHandler}
+                                            placeholder="e.g., 80000"
                                         />
                                     </div>
                                     <div>
                                         <Label>Positions/Openings</Label>
                                         <Input
-                                            name="position"
+                                            name="openings"
                                             type="number"
-                                            value={input.position}
+                                            value={input.openings}
                                             onChange={changeEventHandler}
                                             placeholder="e.g., 2"
                                         />
@@ -390,6 +412,28 @@ const PostJob = () => {
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>
+                                </div>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <Label>Experience Range (Years) - Min</Label>
+                                        <Input
+                                            name="experienceMin"
+                                            type="number"
+                                            value={input.experienceMin}
+                                            onChange={changeEventHandler}
+                                            placeholder="e.g., 1"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>Experience Range (Years) - Max</Label>
+                                        <Input
+                                            name="experienceMax"
+                                            type="number"
+                                            value={input.experienceMax}
+                                            onChange={changeEventHandler}
+                                            placeholder="e.g., 5"
+                                        />
+                                    </div>
                                 </div>
                                 <div>
                                     <Label>Requirements</Label>

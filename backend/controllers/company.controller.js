@@ -46,18 +46,17 @@ export const getCompany = async (req, res) => {
     try {
         const userId = req.id; 
         const companies = await Company.find({ userId });
-        if (!companies) {
-            return res.status(404).json({
-                message: "Companies not found.",
-                success: false
-            })
-        }
+        
         return res.status(200).json({
             companies,
-            success:true
-        })
+            success: true
+        });
     } catch (error) {
-        console.log(error);
+        console.error("Get company error:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false
+        });
     }
 }
 
@@ -70,14 +69,18 @@ export const getCompanyById = async (req, res) => {
             return res.status(404).json({
                 message: "Company not found.",
                 success: false
-            })
+            });
         }
         return res.status(200).json({
             company,
             success: true
-        })
+        });
     } catch (error) {
-        console.log(error);
+        console.error("Get company by ID error:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false
+        });
     }
 }
 

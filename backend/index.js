@@ -13,13 +13,12 @@ import contactRoute from "./routes/contact.route.js";
 import adminRoute from "./routes/admin.route.js"
 
 dotenv.config({});
-
 const app = express();
-
 
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
+
 const corsOptions = {
     origin:'http://localhost:5173',
     credentials:true
@@ -48,7 +47,7 @@ app.use("/api/v1/admin",adminRoute)
 
 app.listen(PORT,()=>{
     connectDB();
-    console.log(`Server running at port ${PORT}`);
+    console.log(`http://localhost:${PORT}/api/v1/`);
 }).on('error', (err) => {
     console.error('Server error:', err);
 });

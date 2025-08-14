@@ -13,14 +13,23 @@ const jobSchema = new mongoose.Schema({
     requirements: [{
          type: String 
         }],
-    salary: { 
-        type: Number,
-         required: true
-         },
+    salary: {
+        min: { type: Number, required: true },
+        max: { type: Number, required: true }
+    },
     experienceLevel: {
          type: Number,
           required: true 
         },
+    experience: {
+        min: { type: Number, required: true },
+        max: { type: Number, required: true }
+    },
+    openings: {
+        type: Number,
+        required: true,
+        default: 1
+    },
     location: {
         type: String,
         enum: [

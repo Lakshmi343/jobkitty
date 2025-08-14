@@ -1,16 +1,17 @@
 
+
+
+
 import React, { useState } from 'react';
 import Navbar from './shared/Navbar';
 import Footer from './shared/Footer';
 import { Mail, MapPin, Phone, Send, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
-
 const Contact = () => {
   
   const address = "306, 3rd Floor, Penta Towers, Bus Stand, Banerji Rd, opposite Kaloor, Kaloor, Kochi, Ernakulam, Kerala 682017";
-  const email = "righthuman.rhr@gmail.com";
-  const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
-
+  const email = "jobkitty.in@gmail.com";
+ 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -163,3 +164,16 @@ const Contact = () => {
 };
 
 export default Contact;
+
+
+
+
+
+
+
+
+
+
+
+
+

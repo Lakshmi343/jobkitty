@@ -30,6 +30,7 @@ import AdminUsers from './components/admin/AdminUsers'
 import AdminCategories from './components/admin/AdminCategories'
 import AdminAnalytics from './components/admin/AdminAnalytics'
 import AdminApplications from './components/admin/AdminApplications'
+import EmployerJobs from './components/employer/EmployerJobs'
 
 const appRouter = createBrowserRouter([
   {
@@ -162,7 +163,7 @@ const appRouter = createBrowserRouter([
   },
   {
     path: "/employer/jobs",
-    element: <ProtectedRoute allowedRoles={['Employer']}><AdminJobs/></ProtectedRoute> 
+    element: <ProtectedRoute allowedRoles={['Employer']}><EmployerJobs/></ProtectedRoute> 
   },
   {
     path: "/employer/jobs/create",

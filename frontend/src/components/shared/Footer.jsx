@@ -24,7 +24,7 @@ const Footer = () => {
   };
 
   const handleEmailClick = () => {
-    window.open('mailto:righthuman.rhr@gmail.com', '_blank');
+    window.open('mailto:jobkitty.in@gmail.com', '_blank');
   };
 
   const handleAddressClick = () => {
@@ -79,7 +79,7 @@ const Footer = () => {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm text-gray-300 group-hover:text-white transition-colors">
-                    righthuman.rhr@gmail.com
+                    jobkitty.in@gmail.com
                   </p>
                 </div>
                 <ExternalLink className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />

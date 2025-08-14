@@ -6,24 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
-import { 
-  Briefcase, 
-  Search, 
-  MoreHorizontal, 
-  CheckCircle, 
-  XCircle,
-  Eye,
-  Trash2,
-  Clock
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../ui/dropdown-menu';
+import {  Briefcase,  Search,  MoreHorizontal,  CheckCircle,  XCircle, Eye, Trash2, Clock} from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '../ui/dropdown-menu';
 
 const AdminJobs = () => {
+
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,6 +33,7 @@ const AdminJobs = () => {
 
     setFilteredJobs(filtered);
   }, [searchTerm, statusFilter, jobs]);
+  
 
   const fetchJobs = async () => {
     try {

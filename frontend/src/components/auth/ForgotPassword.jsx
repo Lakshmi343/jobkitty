@@ -3,13 +3,11 @@ import axios from "axios";
 import { USER_API_END_POINT } from '@/utils/constant'
 
 const ForgotPassword = () => {
-
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -24,6 +22,8 @@ const ForgotPassword = () => {
       setLoading(false);
     }
   };
+
+
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
@@ -50,5 +50,7 @@ const ForgotPassword = () => {
     </div>
   );
 };
+
+
 
 export default ForgotPassword; 

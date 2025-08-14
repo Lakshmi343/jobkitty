@@ -1,3 +1,4 @@
+
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -108,7 +109,7 @@ export const login = async (req, res) => {
 
         const tokenData = { userId: user._id };
         const token = jwt.sign(tokenData, process.env.SECRET_KEY, {
-            expiresIn: "1d"
+            expiresIn: "7d"
         });
 
         if (user.role === 'Employer' && user.profile.company) {

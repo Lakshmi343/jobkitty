@@ -1,13 +1,10 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-
 dotenv.config();
-
-// Create transporter
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER,
+        user: 'jobkitty.in@gmail.com',
         pass: process.env.EMAIL_PASSWORD
     }
 });
@@ -16,7 +13,7 @@ const transporter = nodemailer.createTransport({
 export const sendApplicationAcceptanceEmail = async (studentEmail, studentName, jobTitle, companyName, currentResumeUrl, currentResumeName) => {
     try {
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: 'jobkitty.in@gmail.com',
             to: studentEmail,
             subject: 'Application Accepted - Please Update Your Resume',
             html: `
@@ -85,7 +82,7 @@ export const sendApplicationAcceptanceEmail = async (studentEmail, studentName, 
 export const sendApplicationRejectionEmail = async (studentEmail, studentName, jobTitle, companyName) => {
     try {
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: 'jobkitty.in@gmail.com',
             to: studentEmail,
             subject: 'Application Status Update',
             html: `
@@ -127,7 +124,7 @@ export const sendApplicationRejectionEmail = async (studentEmail, studentName, j
 export const sendApplicationPendingEmail = async (studentEmail, studentName, jobTitle, companyName) => {
     try {
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: 'jobkitty.in@gmail.com',
             to: studentEmail,
             subject: 'Application Status: Pending',
             html: `
@@ -160,7 +157,7 @@ export const sendApplicationPendingEmail = async (studentEmail, studentName, job
 export const sendRegistrationReminderEmail = async (studentEmail, studentName) => {
     try {
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: 'jobkitty.in@gmail.com',
             to: studentEmail,
             subject: 'Keep Your Profile Updated for Better Opportunities!',
             html: `
@@ -206,8 +203,9 @@ export const sendRegistrationReminderEmail = async (studentEmail, studentName) =
 export const sendContactFormEmail = async (contactData) => {
     try {
         const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: 'righthuman.rhr@gmail.com',
+			from: contactData.email,
+			to: 'jobkitty.in@gmail.com',
+			replyTo: contactData.email,
             subject: `Contact Form: ${contactData.subject}`,
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -256,7 +254,7 @@ export const sendContactFormEmail = async (contactData) => {
 export const sendPasswordResetEmail = async (userEmail, resetLink) => {
     try {
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: 'jobkitty.in@gmail.com',
             to: userEmail,
             subject: 'Password Reset Request',
             html: `

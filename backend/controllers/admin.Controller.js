@@ -1,3 +1,4 @@
+
 import { Admin } from '../models/admin.model.js';
 import { User } from '../models/user.model.js';
 import { Company } from '../models/company.model.js';
@@ -27,32 +28,26 @@ const logActivity = async (adminId, action, target, targetId, details) => {
   }
 };
 
+
 export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
-
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required', success: false });
     }
-
     const admin = await Admin.findOne({ email });
     if (!admin) {
       return res.status(401).json({ message: 'Invalid credentials', success: false });
     }
-
     if (!admin.isActive) {
       return res.status(401).json({ message: 'Account is deactivated', success: false });
     }
-
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials', success: false });
     }
-
-    // Update last login
     admin.lastLogin = new Date();
     await admin.save();
-
     const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.SECRET_KEY, { expiresIn: '1h' });
     res.status(200).json({ 
       message: 'Login successful', 
@@ -72,6 +67,9 @@ export const loginAdmin = async (req, res) => {
     res.status(500).json({ message: 'Server error', success: false });
   }
 };
+
+
+
 
 export const createAdmin = async (req, res) => {
   try {
@@ -107,7 +105,6 @@ export const getDashboardStats = async (req, res) => {
     const pendingJobs = await Job.countDocuments({ status: 'pending' });
     const approvedJobs = await Job.countDocuments({ status: 'approved' });
     const rejectedJobs = await Job.countDocuments({ status: 'rejected' });
-
     const recentJobs = await Job.find().sort({ createdAt: -1 }).limit(5);
     const recentApplications = await Application.find().sort({ createdAt: -1 }).limit(5);
 
@@ -131,6 +128,7 @@ export const getDashboardStats = async (req, res) => {
   }
 };
 
+
 // User Management
 export const getAllUsers = async (req, res) => {
   try {
@@ -141,6 +139,7 @@ export const getAllUsers = async (req, res) => {
     res.status(500).json({ message: 'Server error', success: false });
   }
 };
+
 
 export const updateUserStatus = async (req, res) => {
   try {
@@ -158,6 +157,8 @@ export const updateUserStatus = async (req, res) => {
     res.status(500).json({ message: 'Server error', success: false });
   }
 };
+
+
 
 export const deleteUser = async (req, res) => {
   try {

@@ -118,7 +118,7 @@ const CategoryCarousel = () => {
                         onClick={() => searchJobHandler(cat.name)}
                     >
                         <div className="w-14 h-14 mx-auto mb-4">
-                            {/* Replace with real icon/image if available */}
+                            
                             <img 
                                 src={cat.iconUrl || '/default-icon.png'} 
                                 alt={cat.name} 
