@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { ADMIN_API_END_POINT } from '../../utils/constant';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
@@ -24,6 +24,12 @@ import {
   DollarSign
 } from 'lucide-react';
 
+const KERALA_DISTRICTS = [
+  "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
+  "Idukki", "Ernakulam", "Thrissur", "Palakkad", "Malappuram",
+  "Kozhikode", "Wayanad", "Kannur", "Kasaragod"
+];
+
 const AdminApplications = () => {
   const [applications, setApplications] = useState([]);
   const [stats, setStats] = useState(null);
@@ -34,6 +40,7 @@ const AdminApplications = () => {
     jobId: '',
     userId: ''
   });
+  const [keralaOnly, setKeralaOnly] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -140,6 +147,11 @@ const AdminApplications = () => {
     });
   };
 
+  const displayedApplications = useMemo(() => {
+    if (!keralaOnly) return applications;
+    return applications.filter((app) => KERALA_DISTRICTS.includes(app.job?.location));
+  }, [applications, keralaOnly]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -233,7 +245,7 @@ const AdminApplications = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
@@ -260,6 +272,11 @@ const AdminApplications = () => {
                 onChange={(e) => setFilters({ ...filters, userId: e.target.value })}
                 className="border rounded-lg px-3 py-2"
               />
+
+              <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" checked={keralaOnly} onChange={(e) => setKeralaOnly(e.target.checked)} />
+                Kerala candidates only
+              </label>
             </div>
           </CardContent>
         </Card>
@@ -270,11 +287,11 @@ const AdminApplications = () => {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Applications ({pagination.totalApplications})</CardTitle>
+                <CardTitle>Applications ({keralaOnly ? displayedApplications.length : pagination.totalApplications})</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {applications.map((application) => (
+                  {displayedApplications.map((application) => (
                     <div 
                       key={application._id} 
                       className={`p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
@@ -348,13 +365,13 @@ const AdminApplications = () => {
                       </div>
                     </div>
                   ))}
-                  {applications.length === 0 && (
+                  {displayedApplications.length === 0 && (
                     <p className="text-gray-500 text-center py-8">No applications found</p>
                   )}
                 </div>
 
                 {/* Pagination */}
-                {pagination.totalPages > 1 && (
+                {pagination.totalPages > 1 && !keralaOnly && (
                   <div className="flex items-center justify-between mt-6">
                     <Button
                       variant="outline"

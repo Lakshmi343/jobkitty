@@ -38,15 +38,9 @@ const AdminLayout = ({ children }) => {
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
   ];
 
-  const superAdminNavigation = [
-    { name: 'Reports', href: '/admin/reports', icon: Flag },
-    { name: 'User Monitoring', href: '/admin/user-monitoring', icon: UserCheck },
-    { name: 'Compliance', href: '/admin/compliance', icon: Gavel },
-    { name: 'Activity Log', href: '/admin/activity', icon: Activity },
-    { name: 'Quality Control', href: '/admin/quality-control', icon: Target },
-  ];
 
-  const navigation = isSuperAdmin ? [...baseNavigation, ...superAdminNavigation] : baseNavigation;
+
+  const navigation = isSuperAdmin ? [...baseNavigation,] : baseNavigation;
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
@@ -113,30 +107,7 @@ const AdminLayout = ({ children }) => {
               );
             })}
             
-            {isSuperAdmin && (
-              <>
-                <div className="border-t border-gray-200 my-4"></div>
-                <div className="px-3 py-2">
-                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Super Admin
-                  </h3>
-                </div>
-                {superAdminNavigation.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <Button
-                      key={item.name}
-                      variant={isActive(item.href) ? "secondary" : "ghost"}
-                      className={`w-full justify-start ${isActive(item.href) ? 'bg-gray-100' : ''}`}
-                      onClick={() => navigate(item.href)}
-                    >
-                      <Icon className="mr-3 h-5 w-5" />
-                      {item.name}
-                    </Button>
-                  );
-                })}
-              </>
-            )}
+           
           </nav>
         </div>
       </div>

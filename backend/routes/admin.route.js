@@ -32,9 +32,17 @@ import {
   getApplicationById,
   updateApplicationStatus,
   deleteApplication,
-  getApplicationStats
+  getApplicationStats,
+  // Company management
+  getCompanyByIdAdmin,
+  updateCompanyDetailsAdmin,
+  deleteCompany,
+  // Job details (admin)
+  getJobByIdAdmin,
+  updateJobDetailsAdmin
 } from '../controllers/admin.Controller.js';
 import { adminAuth, requireRole } from '../middlewares/adminAuth.js';
+import { singleUpload } from '../middlewares/mutler.js';
 
 import express from "express"
 const router = express.Router();
@@ -59,6 +67,8 @@ router.post('/users/:userId/suspend', adminAuth, requireRole(['superadmin']), su
 
 // Job Management (all admin roles)
 router.get('/jobs', adminAuth, getAllJobs);
+router.get('/jobs/:jobId', adminAuth, getJobByIdAdmin);
+router.put('/jobs/:jobId', adminAuth, updateJobDetailsAdmin);
 router.patch('/jobs/:jobId/approve', adminAuth, approveJob);
 router.patch('/jobs/:jobId/reject', adminAuth, rejectJob);
 router.delete('/jobs/:jobId', adminAuth, requireRole(['superadmin']), deleteJob);
@@ -68,7 +78,10 @@ router.post('/jobs/:jobId/quality-check', adminAuth, requireRole(['superadmin', 
 
 // Company Management (all admin roles)
 router.get('/companies', adminAuth, getAllCompanies);
+router.get('/companies/:companyId', adminAuth, getCompanyByIdAdmin);
 router.patch('/companies/:companyId/status', adminAuth, updateCompanyStatus);
+router.put('/companies/:companyId', adminAuth, singleUpload, updateCompanyDetailsAdmin);
+router.delete('/companies/:companyId', adminAuth, requireRole(['superadmin']), deleteCompany);
 
 // Category Management (all admin roles)
 router.get('/categories', adminAuth, getAllCategories);

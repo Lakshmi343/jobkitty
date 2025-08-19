@@ -13,10 +13,13 @@ const Jobs = () => {
 
     useEffect(() => {
         if (searchedQuery) {
+            const q = searchedQuery.toLowerCase();
             const filteredJobs = allJobs.filter((job) => {
-                return job.title.toLowerCase().includes(searchedQuery.toLowerCase()) ||
-                    job.description.toLowerCase().includes(searchedQuery.toLowerCase()) ||
-                    job.location.toLowerCase().includes(searchedQuery.toLowerCase())
+                return (
+                    job.title?.toLowerCase().includes(q) ||
+                    job.description?.toLowerCase().includes(q) ||
+                    job.location?.toLowerCase().includes(q)
+                )
             })
             setFilterJobs(filteredJobs)
         } else {
@@ -29,7 +32,7 @@ const Jobs = () => {
             <Navbar />
             
             {/* Mobile Filter Toggle */}
-            <div className="lg:hidden p-4">
+            <div className="lg:hidden p-4 sticky top-0 bg-gradient-to-br from-gray-50 to-gray-100 z-10">
                 <button
                     onClick={() => setShowFilters(!showFilters)}
                     className="flex items-center gap-2 px-4 py-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
@@ -63,7 +66,7 @@ const Jobs = () => {
                                 <div className="text-gray-400">Try adjusting your search criteria</div>
                             </div>
                         ) : (
-                            <div className='h-[calc(100vh-200px)] lg:h-[88vh] overflow-y-auto pb-5'>
+                            <div className='pb-5'>
                                 <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6'>
                                     {
                                         filterJobs.map((job) => (
@@ -77,8 +80,7 @@ const Jobs = () => {
                                             >
                                                 <Job job={job} />
                                             </motion.div>
-                                        ))
-                                    }
+                                        ))}
                                 </div>
                             </div>
                         )}

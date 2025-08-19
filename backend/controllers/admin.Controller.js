@@ -8,6 +8,8 @@ import { Application } from '../models/application.model.js';
 import { Report } from '../models/report.model.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import getDataUri from '../utils/datauri.js';
+import cloudinary from '../utils/cloudinary.js';
 
 // Helper function to log admin activity
 const logActivity = async (adminId, action, target, targetId, details) => {
@@ -250,6 +252,67 @@ export const deleteJob = async (req, res) => {
   }
 };
 
+// Admin: Get single job by ID
+export const getJobByIdAdmin = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const job = await Job.findById(jobId)
+      .populate('company')
+      .populate('category');
+    if (!job) return res.status(404).json({ message: 'Job not found', success: false });
+    return res.status(200).json({ success: true, job });
+  } catch (error) {
+    console.error('Admin get job by id error:', error);
+    return res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+// Admin: Update job details
+export const updateJobDetailsAdmin = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const {
+      title,
+      description,
+      requirements,
+      salary,
+      experienceLevel,
+      location,
+      jobType,
+      position,
+      openings,
+      category
+    } = req.body;
+
+    const existingJob = await Job.findById(jobId);
+    if (!existingJob) {
+      return res.status(404).json({ message: 'Job not found', success: false });
+    }
+
+    const updateData = {};
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (requirements !== undefined) {
+      updateData.requirements = Array.isArray(requirements)
+        ? requirements
+        : requirements.split(',').map((r) => r.trim());
+    }
+    if (salary !== undefined) updateData.salary = Number(salary);
+    if (experienceLevel !== undefined) updateData.experienceLevel = Number(experienceLevel);
+    if (location !== undefined) updateData.location = location;
+    if (jobType !== undefined) updateData.jobType = jobType;
+    if (position !== undefined) updateData.position = Number(position);
+    if (openings !== undefined) updateData.openings = Number(openings);
+    if (category !== undefined) updateData.category = category;
+
+    const updated = await Job.findByIdAndUpdate(jobId, updateData, { new: true });
+    return res.status(200).json({ message: 'Job updated successfully', success: true, job: updated });
+  } catch (error) {
+    console.error('Admin update job error:', error);
+    return res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
 // Company Management
 export const getAllCompanies = async (req, res) => {
   try {
@@ -275,6 +338,84 @@ export const updateCompanyStatus = async (req, res) => {
   } catch (error) {
     console.error('Update company status error:', error);
     res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+export const getCompanyByIdAdmin = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const company = await Company.findById(companyId);
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found', success: false });
+    }
+    return res.status(200).json({ success: true, company });
+  } catch (error) {
+    console.error('Admin get company by id error:', error);
+    return res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+export const updateCompanyDetailsAdmin = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const { name, description, website, location, companyType, experience } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ message: 'Company name is required.', success: false });
+    }
+
+    const existingCompany = await Company.findById(companyId);
+    if (!existingCompany) {
+      return res.status(404).json({ message: 'Company not found.', success: false });
+    }
+
+    if (name !== existingCompany.name) {
+      const nameExists = await Company.findOne({ name, _id: { $ne: companyId } });
+      if (nameExists) {
+        return res.status(400).json({ message: 'Company with this name already exists.', success: false });
+      }
+    }
+
+    const file = req.file;
+    const updateData = {
+      name,
+      description,
+      website,
+      location,
+      companyType,
+      experience: experience ? Number(experience) : existingCompany.experience
+    };
+
+    if (file) {
+      try {
+        const fileUri = getDataUri(file);
+        const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+        updateData.logo = cloudResponse.secure_url;
+      } catch (uploadError) {
+        console.error('Logo upload error (admin):', uploadError);
+        return res.status(500).json({ message: 'Failed to upload logo.', success: false });
+      }
+    }
+
+    const company = await Company.findByIdAndUpdate(companyId, updateData, { new: true });
+    return res.status(200).json({ message: 'Company information updated successfully.', company, success: true });
+  } catch (error) {
+    console.error('Admin update company error:', error);
+    return res.status(500).json({ message: 'Internal server error', success: false });
+  }
+};
+
+export const deleteCompany = async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const company = await Company.findByIdAndDelete(companyId);
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found', success: false });
+    }
+    return res.status(200).json({ message: 'Company deleted successfully', success: true });
+  } catch (error) {
+    console.error('Delete company error:', error);
+    return res.status(500).json({ message: 'Server error', success: false });
   }
 };
 

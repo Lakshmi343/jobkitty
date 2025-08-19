@@ -8,6 +8,7 @@ import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
 import {  Briefcase,  Search,  MoreHorizontal,  CheckCircle,  XCircle, Eye, Trash2, Clock} from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '../ui/dropdown-menu';
+import { useNavigate } from 'react-router-dom';
 
 const AdminJobs = () => {
 
@@ -16,6 +17,7 @@ const AdminJobs = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchJobs();
@@ -146,7 +148,7 @@ const AdminJobs = () => {
       <Card>
         <CardHeader>
           <CardTitle>Jobs</CardTitle>
-          <div className="flex gap-4">
+          <div className="flex flex-col gap-3 md:flex-row md:gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
@@ -169,15 +171,16 @@ const AdminJobs = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="overflow-x-auto hidden md:block">
             <table className="w-full">
               <thead>
                 <tr className="border-b">
                   <th className="text-left p-3 font-medium">Job Title</th>
                   <th className="text-left p-3 font-medium">Company</th>
-                  <th className="text-left p-3 font-medium">Location</th>
+                  <th className="text-left p-3 font-medium hidden md:table-cell">Location</th>
                   <th className="text-left p-3 font-medium">Status</th>
-                  <th className="text-left p-3 font-medium">Posted</th>
+                  <th className="text-left p-3 font-medium hidden md:table-cell">Posted</th>
                   <th className="text-left p-3 font-medium">Actions</th>
                 </tr>
               </thead>
@@ -191,15 +194,22 @@ const AdminJobs = () => {
                       </div>
                     </td>
                     <td className="p-3 text-sm text-gray-600">
-                      {job.company?.name || 'Unknown Company'}
+                      <div className="flex items-center gap-2">
+                        <span>{job.company?.name || 'Unknown Company'}</span>
+                        {job.company?._id && (
+                          <Button variant="ghost" size="sm" className="px-2" onClick={() => navigate(`/admin/companies/${job.company._id}`)}>
+                            Edit Company
+                          </Button>
+                        )}
+                      </div>
                     </td>
-                    <td className="p-3 text-sm text-gray-600">{job.location}</td>
+                    <td className="p-3 text-sm text-gray-600 hidden md:table-cell">{job.location}</td>
                     <td className="p-3">
                       <Badge className={getStatusColor(job.status)}>
                         {job.status || 'pending'}
                       </Badge>
                     </td>
-                    <td className="p-3 text-sm text-gray-600">
+                    <td className="p-3 text-sm text-gray-600 hidden md:table-cell">
                       {new Date(job.createdAt).toLocaleDateString()}
                     </td>
                     <td className="p-3">
@@ -222,6 +232,10 @@ const AdminJobs = () => {
                               </DropdownMenuItem>
                             </>
                           )}
+                          <DropdownMenuItem onClick={() => navigate(`/admin/jobs/${job._id}/edit`)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            Edit Job
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => window.open(`/job/${job._id}`, '_blank')}>
                             <Eye className="mr-2 h-4 w-4" />
                             View
@@ -237,6 +251,42 @@ const AdminJobs = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile list */}
+          <div className="md:hidden space-y-3">
+            {filteredJobs.map((job) => (
+              <div key={job._id} className="border rounded-lg p-4 bg-white shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-semibold text-gray-900">{job.title}</div>
+                    <div className="text-sm text-gray-600">{job.company?.name || 'Unknown Company'}</div>
+                    <div className="text-xs text-gray-500 mt-1">{job.location}</div>
+                  </div>
+                  <Badge className={getStatusColor(job.status)}>
+                    {job.status || 'pending'}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between mt-3">
+                  <div className="text-xs text-gray-500">{new Date(job.createdAt).toLocaleDateString()}</div>
+                  <div className="flex items-center gap-2">
+                    {job.status === 'pending' && (
+                      <>
+                        <Button size="sm" variant="secondary" onClick={() => approveJob(job._id)}>Approve</Button>
+                        <Button size="sm" variant="outline" onClick={() => rejectJob(job._id)}>Reject</Button>
+                      </>
+                    )}
+                    <Button size="sm" variant="outline" onClick={() => window.open(`/job/${job._id}`, '_blank')}>View</Button>
+                    <Button size="sm" variant="destructive" onClick={() => deleteJob(job._id)}>Delete</Button>
+                  </div>
+                </div>
+                {job.company?._id && (
+                  <Button variant="ghost" size="sm" className="px-2 mt-2" onClick={() => navigate(`/admin/companies/${job.company._id}`)}>
+                    Edit Company
+                  </Button>
+                )}
+              </div>
+            ))}
             {filteredJobs.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 No jobs found
