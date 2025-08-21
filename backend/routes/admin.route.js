@@ -39,7 +39,9 @@ import {
   deleteCompany,
   // Job details (admin)
   getJobByIdAdmin,
-  updateJobDetailsAdmin
+  updateJobDetailsAdmin,
+  // User resume
+  getUserResume
 } from '../controllers/admin.Controller.js';
 import { adminAuth, requireRole } from '../middlewares/adminAuth.js';
 import { singleUpload } from '../middlewares/mutler.js';
@@ -59,6 +61,7 @@ router.get('/analytics', adminAuth, getAnalytics);
 router.get('/users', adminAuth, requireRole(['superadmin']), getAllUsers);
 router.patch('/users/:userId/status', adminAuth, requireRole(['superadmin']), updateUserStatus);
 router.delete('/users/:userId', adminAuth, requireRole(['superadmin']), deleteUser);
+router.get('/users/:userId/resume', adminAuth, requireRole(['superadmin']), getUserResume);
 
 // Enhanced User Monitoring (superadmin only)
 router.get('/users/:userId/activity', adminAuth, requireRole(['superadmin']), getUserActivity);

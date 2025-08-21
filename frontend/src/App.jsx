@@ -33,6 +33,9 @@ import AdminAnalytics from './components/admin/AdminAnalytics'
 import AdminApplications from './components/admin/AdminApplications'
 import EmployerJobs from './components/employer/EmployerJobs'
 
+// Import the new EmployerProfile component
+import EmployerProfile from './components/employer/EmployerProfile'
+
 const appRouter = createBrowserRouter([
   {
     path: '/',
@@ -168,9 +171,10 @@ const appRouter = createBrowserRouter([
   },
 
   // Employer Routes
+  // Update the employer profile route
   {
     path: "/employer/profile/:id",
-    element: <ProtectedRoute allowedRoles={['Employer']}><CompanySetup/></ProtectedRoute>
+    element: <ProtectedRoute allowedRoles={['Employer']}><EmployerProfile/></ProtectedRoute>
   },
   {
     path: "/employer/jobs",

@@ -9,6 +9,7 @@ import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import { APPLICATION_API_END_POINT } from '@/utils/constant';
 import axios from 'axios';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 
 const shortlistingStatus = [
     { value: "accepted", label: "Accepted", icon: CheckCircle },
@@ -19,6 +20,7 @@ const shortlistingStatus = [
 const ApplicantsTable = () => {
     const { applicants } = useSelector(store => store.application);
     const [updatingStatus, setUpdatingStatus] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
 
     const statusHandler = async (status, id) => {
         try {
@@ -88,6 +90,39 @@ const ApplicantsTable = () => {
         return name?.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2) || 'U';
     };
 
+    const toInline = (url) => {
+        if (!url) return url;
+        let out = url.replace('/upload/', '/upload/fl_inline/');
+        if (out.includes('/raw/')) {
+            try {
+                const u = new URL(out);
+                const segments = u.pathname.split('/');
+                const last = segments[segments.length - 1];
+                if (!last.includes('.')) {
+                    segments[segments.length - 1] = `${last}.pdf`;
+                    u.pathname = segments.join('/');
+                    out = u.toString();
+                }
+            } catch {}
+        }
+        return out;
+    };
+
+    const previewOrDownload = async (url, filenameHint) => {
+        const inline = toInline(url);
+        try {
+            await axios.head(inline);
+            setPreviewUrl(inline);
+        } catch {
+            const link = document.createElement('a');
+            link.href = url;
+            if (filenameHint) link.download = filenameHint;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+    };
+
     const applications = applicants?.applications || [];
 
     return (
@@ -144,15 +179,33 @@ const ApplicantsTable = () => {
                             </TableCell>
                             <TableCell>
                                 {item.applicant?.profile?.resume ? (
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="flex items-center gap-2 h-8"
-                                        onClick={() => window.open(item.applicant.profile.resume, '_blank')}
-                                    >
-                                        <Download className="w-3 h-3" />
-                                        <span className="text-xs">View Resume</span>
-                                    </Button>
+                                    <div className="flex items-center gap-2">
+                                        <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="sm" onClick={() => previewOrDownload(item.applicant.profile.resume, item.applicant?.profile?.resumeOriginalName)}>
+                                                    <FileText className="w-3 h-3 mr-1" /> Preview
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-5xl w-[90vw] h-[85vh] p-0">
+                                                <DialogHeader className="p-4 pb-2">
+                                                    <DialogTitle>Resume Preview</DialogTitle>
+                                                </DialogHeader>
+                                                <div className="w-full h-[calc(85vh-56px)]">
+                                                    <iframe src={previewUrl} title="Resume Preview" width="100%" height="100%" />
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
+                                        <a
+                                            href={item.applicant.profile.resume}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            download
+                                            className="inline-flex items-center gap-2 h-8 px-3 border rounded-md text-sm hover:bg-gray-50"
+                                        >
+                                            <Download className="w-3 h-3" />
+                                            <span className="text-xs">Download</span>
+                                        </a>
+                                    </div>
                                 ) : (
                                     <span className="text-gray-400 text-sm">No resume</span>
                                 )}

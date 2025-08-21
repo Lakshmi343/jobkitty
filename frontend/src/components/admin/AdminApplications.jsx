@@ -430,9 +430,10 @@ const AdminApplications = () => {
                               href={selectedApplication.applicant.profile.resume} 
                               target="_blank" 
                               rel="noopener noreferrer"
+                              download
                               className="text-blue-600 hover:underline ml-1"
                             >
-                              View Resume
+                              {selectedApplication.applicant?.profile?.resumeOriginalName || 'View Resume'}
                             </a>
                           </p>
                         )}

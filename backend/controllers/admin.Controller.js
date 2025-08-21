@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import getDataUri from '../utils/datauri.js';
 import cloudinary from '../utils/cloudinary.js';
+import axios from 'axios';
 
 // Helper function to log admin activity
 const logActivity = async (adminId, action, target, targetId, details) => {
@@ -134,7 +135,12 @@ export const getDashboardStats = async (req, res) => {
 // User Management
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    const { role } = req.query;
+    const filter = {};
+    if (role && ['Jobseeker', 'Employer', 'admin'].includes(role)) {
+      filter.role = role;
+    }
+    const users = await User.find(filter).select('-password').sort({ createdAt: -1 });
     res.status(200).json({ success: true, users });
   } catch (error) {
     console.error('Get users error:', error);
@@ -175,6 +181,30 @@ export const deleteUser = async (req, res) => {
   } catch (error) {
     console.error('Delete user error:', error);
     res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+export const getUserResume = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).select('profile.resume profile.resumeOriginalName fullname');
+
+    if (!user || !user.profile?.resume) {
+      return res.status(404).json({ message: 'Resume not found', success: false });
+    }
+
+    const resumeUrl = user.profile.resume;
+    const filename = user.profile.resumeOriginalName || `${user.fullname || 'resume'}`;
+
+    const response = await axios.get(resumeUrl, { responseType: 'stream' });
+
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(filename)}"`);
+    res.setHeader('Content-Type', response.headers['content-type'] || 'application/octet-stream');
+
+    response.data.pipe(res);
+  } catch (error) {
+    console.error('Get user resume error:', error);
+    return res.status(500).json({ message: 'Failed to fetch resume', success: false });
   }
 };
 
@@ -502,148 +532,63 @@ export const getAnalytics = async (req, res) => {
       },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          count: { $sum: 1 }
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+          total: { $sum: 1 }
         }
       },
       { $sort: { _id: 1 } }
     ]);
 
-    // User role statistics
-    const userStats = await User.aggregate([
-      {
-        $group: {
-          _id: "$role",
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Job status statistics
-    const jobStatusStats = await Job.aggregate([
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Report statistics
-    const reportStats = await Report.aggregate([
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Report type statistics
-    const reportTypeStats = await Report.aggregate([
-      {
-        $group: {
-          _id: "$reportType",
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Company statistics
-    const companyStats = await Company.aggregate([
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Application statistics
-    const applicationStats = await Application.aggregate([
-      {
-        $group: {
-          _id: "$status",
-          count: { $sum: 1 }
-        }
-      }
-    ]);
-
-    // Quality check statistics
-    const qualityStats = await Job.aggregate([
+    // Yearly user growth
+    const yearlyUserGrowth = await User.aggregate([
       {
         $match: {
-          "qualityCheck.score": { $exists: true }
+          createdAt: { $gte: lastYear }
         }
       },
       {
         $group: {
-          _id: null,
-          avgScore: { $avg: "$qualityCheck.score" },
-          totalChecked: { $sum: 1 }
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+          total: { $sum: 1 }
         }
-      }
+      },
+      { $sort: { _id: 1 } }
     ]);
 
-    // Recent activity (last 7 days)
-    const lastWeek = new Date(currentDate.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const recentJobs = await Job.countDocuments({ createdAt: { $gte: lastWeek } });
-    const recentUsers = await User.countDocuments({ createdAt: { $gte: lastWeek } });
-    const recentApplications = await Application.countDocuments({ createdAt: { $gte: lastWeek } });
-    const recentReports = await Report.countDocuments({ createdAt: { $gte: lastWeek } });
-
-    // Top categories
-    const topCategories = await Job.aggregate([
+    // Top companies by job postings
+    const topCompanies = await Job.aggregate([
+      {
+        $group: {
+          _id: '$company',
+          jobsPosted: { $sum: 1 }
+        }
+      },
+      { $sort: { jobsPosted: -1 } },
+      { $limit: 5 },
       {
         $lookup: {
-          from: 'categories',
-          localField: 'category',
+          from: 'companies',
+          localField: '_id',
           foreignField: '_id',
-          as: 'categoryInfo'
+          as: 'company'
         }
       },
+      { $unwind: '$company' },
       {
-        $group: {
-          _id: '$category',
-          count: { $sum: 1 },
-          categoryName: { $first: '$categoryInfo.name' }
+        $project: {
+          _id: 0,
+          companyName: '$company.name',
+          jobsPosted: 1
         }
-      },
-      { $sort: { count: -1 } },
-      { $limit: 5 }
-    ]);
-
-    // Location statistics
-    const locationStats = await Job.aggregate([
-      {
-        $group: {
-          _id: '$location',
-          count: { $sum: 1 }
-        }
-      },
-      { $sort: { count: -1 } },
-      { $limit: 5 }
+      }
     ]);
 
     res.status(200).json({
       success: true,
       analytics: {
         monthlyStats,
-        userStats,
-        jobStatusStats,
-        reportStats,
-        reportTypeStats,
-        companyStats,
-        applicationStats,
-        qualityStats: qualityStats[0] || { avgScore: 0, totalChecked: 0 },
-        recentActivity: {
-          jobs: recentJobs,
-          users: recentUsers,
-          applications: recentApplications,
-          reports: recentReports
-        },
-        topCategories,
-        locationStats
+        yearlyUserGrowth,
+        topCompanies
       }
     });
   } catch (error) {

@@ -138,25 +138,18 @@ const PostJob = () => {
 
     const submitHandler = async (e) => {
         e.preventDefault();
-        console.log('Submitting job with state:', input, 'Requirements:', requirements);
         
-        if (requirements.length === 0) {
-            toast.error("Please add at least one requirement");
+        if (currentStep < 4) {
+            setCurrentStep(currentStep + 1);
             return;
         }
-
-        if (!userCompany) {
-            toast.error("Company information is required. Please set up your company profile.");
-            navigate('/employer/company/setup');
-            return;
-        }
-
+        
         try {
             setLoading(true);
             
-            const jobData = {
+            // Format the data properly
+            const formData = {
                 ...input,
-                requirements: requirements,
                 salary: {
                     min: Number(input.salaryMin),
                     max: Number(input.salaryMax)
@@ -165,29 +158,36 @@ const PostJob = () => {
                     min: Number(input.experienceMin),
                     max: Number(input.experienceMax)
                 },
-                experienceLevel: Number(input.experienceLevel),
-                position: Number(input.position),
+                requirements: Array.isArray(input.requirements) 
+                    ? input.requirements 
+                    : input.requirements.split(',').map(req => req.trim()),
                 openings: Number(input.openings)
             };
-
-            const res = await axios.post(`${JOB_API_END_POINT}/post`, jobData, {
+            
+            // Remove individual fields that are now part of objects
+            delete formData.salaryMin;
+            delete formData.salaryMax;
+            delete formData.experienceMin;
+            delete formData.experienceMax;
+            
+            const response = await axios.post(`${JOB_API_END_POINT}/post`, formData, {
                 headers: {
-                    'Content-Type': 'application/json'
-                },
-                withCredentials: true
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                }
             });
-
-            if (res.data.success) {
-                toast.success("Job posted successfully!");
-                navigate("/employer/jobs");
+            
+            if (response.data.success) {
+                toast.success('Job posted successfully!');
+                navigate('/admin/jobs');
             }
         } catch (error) {
-            console.error("Job posting error:", error);
-            toast.error(error.response?.data?.message || "Failed to post job");
+            console.error('Error posting job:', error);
+            toast.error(error.response?.data?.message || 'Failed to post job');
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     const progressPercentage = (currentStep / 4) * 100;
 
@@ -343,40 +343,46 @@ const PostJob = () => {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <DollarSign className="h-6 w-6 text-blue-600" />
-                                   Compensation & Openings
+                                    Compensation & Openings
                                 </CardTitle>
                                 <CardDescription>Detail the salary and number of open positions.</CardDescription>
                             </CardHeader>
-                             <CardContent className='mt-4 space-y-6'>
+                            <CardContent className='mt-4 space-y-6'>
                                 <div className="grid md:grid-cols-3 gap-6">
                                     <div>
-                                        <Label>Salary Range (LPA) - Min</Label>
+                                        <Label>Salary Range (LPA) - Min*</Label>
                                         <Input
                                             name="salaryMin"
                                             type="number"
                                             value={input.salaryMin}
                                             onChange={changeEventHandler}
-                                            placeholder="e.g., 40000"
+                                            placeholder="e.g., 4"
+                                            required
+                                            min="0"
                                         />
                                     </div>
                                     <div>
-                                        <Label>Salary Range (LPA) - Max</Label>
+                                        <Label>Salary Range (LPA) - Max*</Label>
                                         <Input
                                             name="salaryMax"
                                             type="number"
                                             value={input.salaryMax}
                                             onChange={changeEventHandler}
-                                            placeholder="e.g., 80000"
+                                            placeholder="e.g., 8"
+                                            required
+                                            min="0"
                                         />
                                     </div>
                                     <div>
-                                        <Label>Positions/Openings</Label>
+                                        <Label>No. of Openings*</Label>
                                         <Input
                                             name="openings"
                                             type="number"
                                             value={input.openings}
                                             onChange={changeEventHandler}
                                             placeholder="e.g., 2"
+                                            required
+                                            min="1"
                                         />
                                     </div>
                                 </div>

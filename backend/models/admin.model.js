@@ -30,7 +30,7 @@ const adminSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-// Set default permissions based on role
+
 adminSchema.pre('save', function(next) {
   if (this.role === 'superadmin') {
     this.permissions = {

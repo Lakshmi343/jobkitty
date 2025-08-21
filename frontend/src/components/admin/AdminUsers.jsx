@@ -12,7 +12,9 @@ import {
   Edit, 
   Trash2,
   UserCheck,
-  UserX
+  UserX,
+  FileDown,
+  FileText
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -22,35 +24,36 @@ import {
 } from '../ui/dropdown-menu';
 
 const AdminUsers = () => {
-  const [users, setUsers] = useState([]);
+  const [jobseekers, setJobseekers] = useState([]);
+  const [employers, setEmployers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [displayUsers, setDisplayUsers] = useState([]);
+  const [activeTab, setActiveTab] = useState('Jobseeker');
 
   useEffect(() => {
-    fetchUsers();
+    fetchBoth();
   }, []);
 
   useEffect(() => {
-    const filtered = users.filter(user =>
-      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const source = activeTab === 'Jobseeker' ? jobseekers : employers;
+    const filtered = source.filter(user =>
+      (user.fullname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role?.toLowerCase().includes(searchTerm.toLowerCase())
+      user.role?.toLowerCase().includes(searchTerm.toLowerCase()))
     );
-    setFilteredUsers(filtered);
-  }, [searchTerm, users]);
+    setDisplayUsers(filtered);
+  }, [searchTerm, activeTab, jobseekers, employers]);
 
-  const fetchUsers = async () => {
+  const fetchBoth = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${ADMIN_API_END_POINT}/users`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      if (response.data.success) {
-        setUsers(response.data.users);
-        setFilteredUsers(response.data.users);
-      }
+      const [jsRes, emRes] = await Promise.all([
+        axios.get(`${ADMIN_API_END_POINT}/users`, { headers: { Authorization: `Bearer ${token}` }, params: { role: 'Jobseeker' } }),
+        axios.get(`${ADMIN_API_END_POINT}/users`, { headers: { Authorization: `Bearer ${token}` }, params: { role: 'Employer' } })
+      ]);
+      if (jsRes.data.success) setJobseekers(jsRes.data.users);
+      if (emRes.data.success) setEmployers(emRes.data.users);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -68,9 +71,8 @@ const AdminUsers = () => {
       );
 
       if (response.data.success) {
-        setUsers(users.map(user => 
-          user._id === userId ? { ...user, status } : user
-        ));
+        setJobseekers(prev => prev.map(u => u._id === userId ? { ...u, status } : u));
+        setEmployers(prev => prev.map(u => u._id === userId ? { ...u, status } : u));
       }
     } catch (error) {
       console.error('Error updating user status:', error);
@@ -89,7 +91,8 @@ const AdminUsers = () => {
       });
 
       if (response.data.success) {
-        setUsers(users.filter(user => user._id !== userId));
+        setJobseekers(prev => prev.filter(u => u._id !== userId));
+        setEmployers(prev => prev.filter(u => u._id !== userId));
       }
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -113,6 +116,63 @@ const AdminUsers = () => {
     }
   };
 
+  const getInlineResumeUrl = (url) => {
+    if (!url) return url;
+    let out = url.replace('/upload/', '/upload/fl_inline/');
+    if (out.includes('/raw/')) {
+      const u = new URL(out);
+      const segments = u.pathname.split('/');
+      const last = segments[segments.length - 1];
+      if (!last.includes('.')) {
+        segments[segments.length - 1] = `${last}.pdf`;
+        u.pathname = segments.join('/');
+        out = u.toString();
+      }
+    }
+    return out;
+  };
+
+  const downloadDirect = (url, filenameHint) => {
+    const link = document.createElement('a');
+    link.href = url;
+    if (filenameHint) link.download = filenameHint;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
+
+  const viewCV = async (user) => {
+    if (!user.profile?.resume) return;
+    const inlineUrl = getInlineResumeUrl(user.profile.resume);
+    try {
+      await axios.head(inlineUrl);
+      window.open(inlineUrl, '_blank');
+    } catch {
+      downloadDirect(user.profile.resume, user.profile?.resumeOriginalName || `${user.fullname || 'resume'}.pdf`);
+    }
+  };
+
+  const downloadCV = async (user) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const url = `${ADMIN_API_END_POINT}/users/${user._id}/resume`;
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+      const blob = new Blob([response.data]);
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      const filename = user.profile?.resumeOriginalName || `${user.fullname || 'resume'}`;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Failed to download CV', error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -120,6 +180,8 @@ const AdminUsers = () => {
       </div>
     );
   }
+
+  const totalUsers = jobseekers.length + employers.length;
 
   return (
     <div className="space-y-6">
@@ -130,21 +192,39 @@ const AdminUsers = () => {
         </div>
         <div className="flex items-center gap-2">
           <Users className="h-5 w-5 text-gray-400" />
-          <span className="text-sm text-gray-500">{users.length} users</span>
+          <span className="text-sm text-gray-500">{totalUsers} users</span>
         </div>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Users</CardTitle>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="relative md:col-span-2">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search users..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <div className="flex items-center gap-2 justify-start md:justify-end">
+              <Button
+                variant={activeTab === 'Jobseeker' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('Jobseeker')}
+              >
+                Jobseekers ({jobseekers.length})
+              </Button>
+              <Button
+                variant={activeTab === 'Employer' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('Employer')}
+              >
+                Employers ({employers.length})
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -161,7 +241,7 @@ const AdminUsers = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((user) => (
+                {displayUsers.map((user) => (
                   <tr key={user._id} className="border-b hover:bg-gray-50">
                     <td className="p-3">
                       <div>
@@ -183,33 +263,45 @@ const AdminUsers = () => {
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td className="p-3">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => updateUserStatus(user._id, 'active')}>
-                            <UserCheck className="mr-2 h-4 w-4" />
-                            Activate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => updateUserStatus(user._id, 'inactive')}>
-                            <UserX className="mr-2 h-4 w-4" />
-                            Deactivate
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => deleteUser(user._id)}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      <div className="flex items-center gap-2">
+                        {user.role === 'Jobseeker' && user.profile?.resume && (
+                          <>
+                            <Button variant="outline" size="sm" onClick={() => viewCV(user)}>
+                              <FileText className="mr-2 h-4 w-4" /> View CV
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => downloadCV(user)}>
+                              <FileDown className="mr-2 h-4 w-4" /> Download CV
+                            </Button>
+                          </>
+                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => updateUserStatus(user._id, 'active')}>
+                              <UserCheck className="mr-2 h-4 w-4" />
+                              Activate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => updateUserStatus(user._id, 'inactive')}>
+                              <UserX className="mr-2 h-4 w-4" />
+                              Deactivate
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => deleteUser(user._id)}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {filteredUsers.length === 0 && (
+            {displayUsers.length === 0 && (
               <div className="text-center py-8 text-gray-500">
                 No users found
               </div>
