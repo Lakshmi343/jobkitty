@@ -69,8 +69,10 @@ const Job = ({job}) => {
             {/* Footer */}
             <div className='flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-auto pt-4 border-t border-gray-100'>
                 <div className='flex items-center gap-2'>
-                    <span className='text-lg font-bold text-green-600'>₹{job?.salary?.toLocaleString()}</span>
-                    <span className='text-sm text-gray-500'>/year</span>
+                    <span className='text-lg font-bold text-green-600'>
+                        {typeof job?.salary === 'object' ? `${job?.salary?.min}-${job?.salary?.max} LPA` : `₹${Number(job?.salary || 0).toLocaleString()}`}
+                    </span>
+                    <span className='text-sm text-gray-500'>{typeof job?.salary === 'object' ? '' : '/year'}</span>
                 </div>
                 <Button 
                     onClick={() => navigate(`/job/${job?._id}`)}

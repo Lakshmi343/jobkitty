@@ -4,8 +4,11 @@ dotenv.config();
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'jobkitty.in@gmail.com',
+        user: process.env.EMAIL_USER || 'jobkitty.in@gmail.com',
         pass: process.env.EMAIL_PASSWORD
+    },
+    tls: {
+        rejectUnauthorized: false
     }
 });
 
@@ -273,5 +276,5 @@ export const sendPasswordResetEmail = async (userEmail, resetLink) => {
         console.error('Error sending password reset email:', error);
         return { success: false, error: error.message };
     }
-}; 
+};
 

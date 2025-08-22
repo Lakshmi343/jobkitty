@@ -412,7 +412,7 @@ const AdminApplications = () => {
                         <p><strong>Title:</strong> {selectedApplication.job?.title}</p>
                         <p><strong>Company:</strong> {selectedApplication.job?.company?.name}</p>
                         <p><strong>Location:</strong> {selectedApplication.job?.location}</p>
-                        <p><strong>Salary:</strong> ₹{selectedApplication.job?.salary}/month</p>
+                        <p><strong>Salary:</strong> {typeof selectedApplication.job?.salary === 'object' ? `${selectedApplication.job?.salary?.min}-${selectedApplication.job?.salary?.max} LPA` : `₹${selectedApplication.job?.salary}/month`}</p>
                         <p><strong>Type:</strong> {selectedApplication.job?.jobType}</p>
                       </div>
                     </div>

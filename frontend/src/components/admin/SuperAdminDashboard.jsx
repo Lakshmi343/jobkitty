@@ -254,7 +254,7 @@ const SuperAdminDashboard = () => {
                     <div className="flex-1">
                       <h4 className="font-medium text-sm">{job.title}</h4>
                       <p className="text-xs text-gray-500">{job.company?.name || 'Unknown Company'}</p>
-                      <p className="text-xs text-gray-400">₹{job.salary}/month</p>
+                      <p className="text-xs text-gray-400">{typeof job.salary === 'object' ? `${job.salary.min}-${job.salary.max} LPA` : `₹${job.salary}/month`}</p>
                     </div>
                     <div className="flex flex-col items-end gap-2">
                       <Badge className={getStatusColor(job.status)}>

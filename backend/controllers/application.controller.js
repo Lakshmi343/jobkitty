@@ -33,7 +33,7 @@ export const applyJob = async (req, res) => {
             applicant:userId,
         });
         job.applications.push(newApplication._id);
-        await job.save();
+        await job.save({ validateBeforeSave: false });
         return res.status(201).json({
             message:"Job applied successfully.",
             success:true
@@ -107,116 +107,87 @@ export const getApplicants = async (req,res) => {
 }
 
 
-export const updateStatus = async (req,res) => {
+// Add this to the existing updateStatus function in application.controller.js
+
+export const updateStatus = async (req, res) => {
     try {
-        const {status} = req.body;
-        const applicationId = req.params.id;
-        if(!status){
+        const { id } = req.params;
+        const { status, rejectionReason } = req.body;
+        
+        if (!id) {
             return res.status(400).json({
-                message:'status is required',
-                success:false
-            })
-        };
-
-        const application = await Application.findOne({_id:applicationId})
-            .populate({
-                path: 'applicant',
-                select: 'fullname email profile.resume profile.resumeOriginalName'
-            })
-            .populate({
-                path: 'job',
-                select: 'title',
-                populate: {
-                    path: 'company',
-                    select: 'name'
-                }
+                message: "Application id is required",
+                success: false
             });
-
-        if(!application){
+        }
+        
+        if (!status) {
+            return res.status(400).json({
+                message: "Status is required",
+                success: false
+            });
+        }
+        
+        const application = await Application.findById(id);
+        
+        if (!application) {
             return res.status(404).json({
-                message:"Application not found.",
-                success:false
-            })
-        };
-
-
-        let resumeUrl = application.applicant.profile?.resume;
-        let resumeName = application.applicant.profile?.resumeOriginalName;
-        
-        if (!resumeUrl || !resumeName) {
-            try {
-                const user = await User.findById(application.applicant._id).select('profile.resume profile.resumeOriginalName');
-                if (user) {
-                    resumeUrl = user.profile?.resume;
-                    resumeName = user.profile?.resumeOriginalName;
-                }
-            } catch (userError) {
-                console.error('Error fetching user data:', userError);
-            }
+                message: "Application not found",
+                success: false
+            });
         }
-
-        application.status = status.toLowerCase();
+        
+        // Update application status
+        application.status = status;
+        
+        // Add rejection reason if provided
+        if (status === 'rejected' && rejectionReason) {
+            application.rejectionReason = rejectionReason;
+        }
+        
         await application.save();
-
-      
-        try {
-            if (status.toLowerCase() === 'accepted') {
         
-                console.log('Resume Data:', {
-                    resumeUrl: resumeUrl,
-                    resumeName: resumeName,
-                    studentName: application.applicant.fullname,
-                    studentEmail: application.applicant.email
-                });
-                
-                const emailResult = await sendApplicationAcceptanceEmail(
-                    application.applicant.email,
-                    application.applicant.fullname,
-                    application.job.title,
-                    application.job.company.name,
-                    resumeUrl,
-                    resumeName
+        // Get applicant and job details for email notification
+        const applicant = await User.findById(application.applicant);
+        const job = await Job.findById(application.job).populate('company');
+        
+        if (applicant && job) {
+            // Send appropriate email based on status
+            if (status === 'accepted') {
+                await sendApplicationAcceptanceEmail(
+                    applicant.email,
+                    applicant.fullname,
+                    job.title,
+                    job.company?.name || 'the employer'
                 );
-                
-                if (!emailResult.success) {
-                    console.error('Failed to send acceptance email:', emailResult.error);
-                }
-            } else if (status.toLowerCase() === 'rejected') {
-                const emailResult = await sendApplicationRejectionEmail(
-                    application.applicant.email,
-                    application.applicant.fullname,
-                    application.job.title,
-                    application.job.company.name
+            } else if (status === 'rejected') {
+                await sendApplicationRejectionEmail(
+                    applicant.email,
+                    applicant.fullname,
+                    job.title,
+                    job.company?.name || 'the employer',
+                    rejectionReason || 'No specific reason provided'
                 );
-                
-                if (!emailResult.success) {
-                    console.error('Failed to send rejection email:', emailResult.error);
-                }
-            } else if (status.toLowerCase() === 'pending') {
-                const emailResult = await sendApplicationPendingEmail(
-                    application.applicant.email,
-                    application.applicant.fullname,
-                    application.job.title,
-                    application.job.company.name
+            } else if (status === 'pending') {
+                await sendApplicationPendingEmail(
+                    applicant.email,
+                    applicant.fullname,
+                    job.title,
+                    job.company?.name || 'the employer'
                 );
-                if (!emailResult.success) {
-                    console.error('Failed to send pending email:', emailResult.error);
-                }
             }
-        } catch (emailError) {
-            console.error('Email sending error:', emailError);
-            
         }
+        
         return res.status(200).json({
-            message:"Status updated successfully.",
-            success:true
+            message: `Application status updated to ${status}`,
+            success: true
         });
     } catch (error) {
-        console.log(error);
+        console.error("Update application status error:", error);
         return res.status(500).json({
             message: "Internal server error",
             success: false
         });
     }
-}
+};
 

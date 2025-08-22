@@ -9,20 +9,22 @@ const jobSchema = new mongoose.Schema({
         type: String,
          required: true
          },
-    requirements: [{
-         type: String 
-        }],
+    requirements: {
+        type: [String],
+        default: ["No specific requirements"]
+    },
     salary: {
-        min: { type: Number, required: true },
-        max: { type: Number, required: true }
+        min: { type: Number, required: true, default: 0 },
+        max: { type: Number, required: true, default: 0 }
     },
     experienceLevel: {
-         type: Number,
-          required: true 
+         type: String,
+         required: false,
+         default: "Entry Level"
         },
     experience: {
-        min: { type: Number, required: true },
-        max: { type: Number, required: true }
+        min: { type: Number, required: true, default: 0 },
+        max: { type: Number, required: true, default: 5 }
     },
     openings: {
         type: Number,
@@ -31,21 +33,19 @@ const jobSchema = new mongoose.Schema({
     },
     location: {
         type: String,
-        enum: [
-            "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
-            "Idukki", "Ernakulam", "Thrissur", "Palakkad", "Malappuram",
-            "Kozhikode", "Wayanad", "Kannur", "Kasaragod"  
-        ],
-        required: true
+        required: true,
+        default: "Remote"
     },
 
     jobType: {
          type: String,
-          required: true 
+         required: true,
+         default: "Full-time"
         },
     position: {
          type: Number, 
-         required: true 
+         required: true,
+         default: 1
         },
     company: { 
         type: mongoose.Schema.Types.ObjectId, 

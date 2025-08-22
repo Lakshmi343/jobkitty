@@ -15,7 +15,7 @@ import AdminJobs from "./components/admin/AdminJobs";
 import AdminEditJob from './components/admin/AdminEditJob'
 import PostJob from './components/admin/PostJob'
 import EditJob from './components/admin/EditJob'
-import Applicants from './components/admin/Applicants'
+import EmployerApplicants from './components/employer/EmployerApplicants'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 import AppliedJobs from './components/jobseeker/AppliedJobs'
 import Contact from './components/Contact'
@@ -188,9 +188,10 @@ const appRouter = createBrowserRouter([
     path: "/employer/jobs/:id/edit",
     element: <ProtectedRoute allowedRoles={['Employer']}><EditJob/></ProtectedRoute> 
   },
+  // Update the employer jobs applicants route
   {
     path: "/employer/jobs/:id/applicants",
-    element: <ProtectedRoute allowedRoles={['Employer']}><Applicants/></ProtectedRoute> 
+    element: <ProtectedRoute allowedRoles={['Employer']}><EmployerApplicants/></ProtectedRoute> 
   },
 
   // Jobseeker Routes

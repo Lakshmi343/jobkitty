@@ -113,11 +113,9 @@ const PostJob = () => {
             case 1:
                 return input.title && input.description && input.category;
             case 2:
-                return input.location && input.jobType && input.openings;
+                return input.location && input.jobType; // openings is collected in step 3
             case 3:
-                return input.salaryMin && input.salaryMax && input.position;
-            case 4:
-                return input.experienceLevel && input.experienceMin && input.experienceMax && requirements.length > 0;
+                return input.salaryMin && input.salaryMax && input.openings; // final submit on step 3
             default:
                 return true;
         }
@@ -139,7 +137,7 @@ const PostJob = () => {
     const submitHandler = async (e) => {
         e.preventDefault();
         
-        if (currentStep < 4) {
+        if (currentStep < 3) {
             setCurrentStep(currentStep + 1);
             return;
         }
@@ -154,32 +152,37 @@ const PostJob = () => {
                     min: Number(input.salaryMin),
                     max: Number(input.salaryMax)
                 },
-                experience: {
-                    min: Number(input.experienceMin),
-                    max: Number(input.experienceMax)
-                },
-                requirements: Array.isArray(input.requirements) 
-                    ? input.requirements 
-                    : input.requirements.split(',').map(req => req.trim()),
+                // experience and requirements optional in 3-step flow
+                experience: (input.experienceMin || input.experienceMax) ? {
+                    min: Number(input.experienceMin || 0),
+                    max: Number(input.experienceMax || 0)
+                } : undefined,
                 openings: Number(input.openings)
             };
             
-            // Remove individual fields that are now part of objects
+            // Remove individual fields that are now part of objects or unused
             delete formData.salaryMin;
             delete formData.salaryMax;
             delete formData.experienceMin;
             delete formData.experienceMax;
+            delete formData.position; // not used by backend
+            if (!formData.experience) delete formData.experience;
+            if (!requirements.length) delete formData.requirements;
             
             const response = await axios.post(`${JOB_API_END_POINT}/post`, formData, {
+                withCredentials: true,
                 headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`
+                    'Content-Type': 'application/json'
                 }
             });
             
             if (response.data.success) {
                 toast.success('Job posted successfully!');
-                navigate('/admin/jobs');
+                if (user?.role === 'admin' || user?.role === 'superadmin') {
+                    navigate('/admin/jobs');
+                } else {
+                    navigate('/employer/jobs');
+                }
             }
         } catch (error) {
             console.error('Error posting job:', error);
@@ -189,7 +192,7 @@ const PostJob = () => {
         }
     };
 
-    const progressPercentage = (currentStep / 4) * 100;
+    const progressPercentage = (currentStep / 3) * 100;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -219,7 +222,7 @@ const PostJob = () => {
                     {/* Progress Bar */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-lg font-semibold text-gray-900">Step {currentStep} of 4</h2>
+                            <h2 className="text-lg font-semibold text-gray-900">Step {currentStep} of 3</h2>
                             <span className="text-sm text-gray-600">{Math.round(progressPercentage)}% Complete</span>
                         </div>
                         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -232,7 +235,6 @@ const PostJob = () => {
                             <span>Job Details</span>
                             <span>Location & Type</span>
                             <span>Compensation & Openings</span>
-                            <span>Experience & Requirements</span>
                         </div>
                     </div>
                 </div>
@@ -336,8 +338,6 @@ const PostJob = () => {
     </div>
 )}
 
-               
-
                     {currentStep === 3 && (
                         <div className='bg-white p-8 rounded-lg shadow-md border'>
                             <CardHeader>
@@ -390,86 +390,12 @@ const PostJob = () => {
                         </div>
                     )}
 
-                    {currentStep === 4 && (
-                         <div className='bg-white p-8 rounded-lg shadow-md border'>
-                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Briefcase className="h-6 w-6 text-blue-600" />
-                                    Experience & Requirements
-                                </CardTitle>
-                                <CardDescription>Define the experience level and skill requirements.</CardDescription>
-                            </CardHeader>
-                            <CardContent className='mt-4 space-y-6'>
-                                <div>
-                                    <Label>Experience Level</Label>
-                                    <Select
-                                        name="experienceLevel"
-                                        value={input.experienceLevel}
-                                        onValueChange={(value) => selectChangeHandler("experienceLevel", value)}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select experience level" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {experienceLevels.map(exp => (
-                                                    <SelectItem key={exp.value} value={exp.value}>{exp.label}</SelectItem>
-                                                ))}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <div>
-                                        <Label>Experience Range (Years) - Min</Label>
-                                        <Input
-                                            name="experienceMin"
-                                            type="number"
-                                            value={input.experienceMin}
-                                            onChange={changeEventHandler}
-                                            placeholder="e.g., 1"
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label>Experience Range (Years) - Max</Label>
-                                        <Input
-                                            name="experienceMax"
-                                            type="number"
-                                            value={input.experienceMax}
-                                            onChange={changeEventHandler}
-                                            placeholder="e.g., 5"
-                                        />
-                                    </div>
-                                </div>
-                                <div>
-                                    <Label>Requirements</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Input
-                                            value={newRequirement}
-                                            onChange={(e) => setNewRequirement(e.target.value)}
-                                            onKeyPress={handleKeyPress}
-                                            placeholder="Add a requirement and press Enter"
-                                        />
-                                        <Button type="button" onClick={addRequirement}><Plus /></Button>
-                                    </div>
-                                    <div className="mt-4 space-y-2">
-                                        {requirements.map((req, index) => (
-                                            <Badge key={index} variant="secondary" className="mr-2">
-                                                {req}
-                                                <button onClick={() => removeRequirement(index)} className="ml-2 text-red-500">x</button>
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </div>
-                    )}
                     <div className='mt-8 flex justify-between items-center'>
                         <Button type="button" variant="outline" onClick={prevStep} disabled={currentStep === 1}>
                             <ArrowLeft className='mr-2 h-4 w-4' /> Previous
                         </Button>
-                        <div className="text-sm text-gray-500">Step {currentStep} of 4</div>
-                        {currentStep < 4 ? (
+                        <div className="text-sm text-gray-500">Step {currentStep} of 3</div>
+                        {currentStep < 3 ? (
                             <Button type="button" onClick={nextStep}>
                                 Next
                             </Button>

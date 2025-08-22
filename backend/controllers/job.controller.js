@@ -31,13 +31,23 @@ export const postJob = async (req, res) => {
         
         const companyId = user.profile.company;
         
-        if (!title || !description || !requirements || !salary || !location || 
-            !jobType || !experienceLevel || !position || !category) {
+        // Only check for essential fields
+        if (!title || !description || !category) {
             return res.status(400).json({ 
-                message: "All fields are required", 
+                message: "Job title, description, and category are required", 
                 success: false 
             });
         }
+        
+        // Set default values for missing fields
+        const defaultRequirements = ["No specific requirements"];
+        const defaultSalary = { min: 0, max: 0 };
+        const defaultExperience = { min: 0, max: 5 };
+        const defaultLocation = "Remote";
+        const defaultJobType = "Full-time";
+        const defaultExperienceLevel = "Entry Level";
+        const defaultPosition = 1;
+        const defaultOpenings = 1;
         
         const categoryExists = await Category.findById(category);
         if (!categoryExists) {
@@ -47,18 +57,24 @@ export const postJob = async (req, res) => {
             });
         }
         
-        // Create job with employer's company
+        // Create job with employer's company, using default values for missing fields
         const job = await Job.create({
             title,
             description,
-            requirements: Array.isArray(requirements) ? requirements : requirements.split(",").map(req => req.trim()),
-            salary: salary, 
-            experience: experience, 
-            location,
-            jobType,
-            experienceLevel: Number(experienceLevel),
-            position: Number(position),
-            openings: Number(openings),
+            requirements: requirements ? (Array.isArray(requirements) ? requirements : requirements.split(",").map(req => req.trim())) : defaultRequirements,
+            salary: {
+                min: salary && salary.min !== undefined ? Number(salary.min) : 0,
+                max: salary && salary.max !== undefined ? Number(salary.max) : 0
+            },
+            experience: {
+                min: experience && experience.min !== undefined ? Number(experience.min) : 0,
+                max: experience && experience.max !== undefined ? Number(experience.max) : 5
+            },
+            location: location || defaultLocation,
+            jobType: jobType || defaultJobType,
+            experienceLevel: experienceLevel || defaultExperienceLevel,
+            position: position ? Number(position) : defaultPosition,
+            openings: openings ? Number(openings) : defaultOpenings,
             company: companyId,
             category,   
             created_by: userId

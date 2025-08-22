@@ -17,7 +17,7 @@ const LatestJobCards = ({job}) => {
             <div className='flex flex-wrap items-center gap-1 md:gap-2 mt-3 md:mt-4'>
                 <Badge className={'text-blue-700 font-bold text-xs md:text-sm'} variant="ghost">{job?.position} Positions</Badge>
                 <Badge className={'text-[#F83002] font-bold text-xs md:text-sm'} variant="ghost">{job?.jobType}</Badge>
-                <Badge className={'text-[#7209b7] font-bold text-xs md:text-sm'} variant="ghost">{job?.salary}LPA</Badge>
+                <Badge className={'text-[#7209b7] font-bold text-xs md:text-sm'} variant="ghost">{typeof job?.salary === 'object' ? `${job?.salary?.min}-${job?.salary?.max} LPA` : `${job?.salary} LPA`}</Badge>
             </div>
 
         </div>
