@@ -1,3 +1,6 @@
+
+
+
 import React, { useEffect, useState } from 'react';
 import Navbar from '../shared/Navbar';
 import axios from 'axios';
@@ -5,15 +8,29 @@ import { APPLICATION_API_END_POINT } from '../../utils/constant';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { setAllApplicants } from '../../redux/applicationSlice';
-import { Users, ArrowLeft, Calendar, Building, MapPin, CheckCircle, XCircle, Clock, MoreHorizontal, User, Mail, Phone, FileText, Download } from 'lucide-react';
+import { 
+  Users, ArrowLeft, Calendar, Building, MapPin, CheckCircle, 
+  XCircle, Clock, MoreHorizontal, User, Mail, Phone, FileText, 
+  Download, Eye, Briefcase, GraduationCap, Award, Link, ExternalLink 
+} from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '../ui/dialog';
+
 import Footer from '../shared/Footer';
+import LoadingSpinner from '../shared/LoadingSpinner';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogTrigger
+} from '../ui/dialog';
+
 
 const EmployerApplicants = () => {
     const params = useParams();
@@ -26,6 +43,8 @@ const EmployerApplicants = () => {
     const [selectedApplicant, setSelectedApplicant] = useState(null);
     const [showRejectDialog, setShowRejectDialog] = useState(false);
     const [rejectionReason, setRejectionReason] = useState('');
+    const [showProfileDialog, setShowProfileDialog] = useState(false);
+    const [profileDetails, setProfileDetails] = useState(null);
 
     useEffect(() => {
         const fetchAllApplicants = async () => {
@@ -112,6 +131,11 @@ const EmployerApplicants = () => {
         }
     };
 
+    const viewProfileDetails = (applicant) => {
+        setProfileDetails(applicant);
+        setShowProfileDialog(true);
+    };
+
     const getStatusBadge = (status) => {
         const statusLower = (status || 'pending').toLowerCase();
         
@@ -192,6 +216,11 @@ const EmployerApplicants = () => {
             link.click();
             link.remove();
         }
+    };
+
+    // Get profile photo from the correct path
+    const getProfilePhoto = (applicant) => {
+        return applicant?.applicant?.profile?.profilePhoto || applicant?.applicant?.profile?.avatar;
     };
 
     const stats = getApplicationStats();
@@ -307,7 +336,7 @@ const EmployerApplicants = () => {
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                     {loading ? (
                         <div className="flex items-center justify-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <LoadingSpinner size={40} />
                             <span className="ml-3 text-gray-600">Loading applicants...</span>
                         </div>
                     ) : (
@@ -338,14 +367,18 @@ const EmployerApplicants = () => {
                                     <TableRow key={item._id} className="hover:bg-gray-50 transition-colors duration-200">
                                         <TableCell className="py-4">
                                             <div className="flex items-center gap-3">
-                                                <Avatar className="w-10 h-10 border-2 border-gray-200">
-                                                    <AvatarImage src={item?.applicant?.profile?.avatar} alt={item?.applicant?.fullname} />
+                                                <Avatar className="w-10 h-10 border-2 border-gray-200 cursor-pointer" onClick={() => viewProfileDetails(item)}>
+                                                    <AvatarImage 
+                                                        src={getProfilePhoto(item)} 
+                                                        alt={item?.applicant?.fullname} 
+                                                        className="object-cover"
+                                                    />
                                                     <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
                                                         {getInitials(item?.applicant?.fullname)}
                                                     </AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex-1 min-w-0">
-                                                    <h3 className="font-semibold text-gray-900 truncate">
+                                                    <h3 className="font-semibold text-gray-900 truncate cursor-pointer hover:text-blue-600" onClick={() => viewProfileDetails(item)}>
                                                         {item?.applicant?.fullname || 'N/A'}
                                                     </h3>
                                                     <p className="text-sm text-gray-600 truncate flex items-center gap-1">
@@ -402,6 +435,15 @@ const EmployerApplicants = () => {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                                                    onClick={() => viewProfileDetails(item)}
+                                                >
+                                                    <Eye className="w-3 h-3 mr-1" /> Candidate Profile
+                                                </Button>
+                                                
                                                 {item.status !== 'accepted' && (
                                                     <Button 
                                                         variant="outline" 
@@ -423,18 +465,6 @@ const EmployerApplicants = () => {
                                                         disabled={updatingStatus === item._id}
                                                     >
                                                         <XCircle className="w-3 h-3 mr-1" /> Reject
-                                                    </Button>
-                                                )}
-                                                
-                                                {item.status !== 'pending' && (
-                                                    <Button 
-                                                        variant="outline" 
-                                                        size="sm" 
-                                                        className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
-                                                        onClick={() => statusHandler('pending', item._id)}
-                                                        disabled={updatingStatus === item._id}
-                                                    >
-                                                        <Clock className="w-3 h-3 mr-1" /> Pending
                                                     </Button>
                                                 )}
                                             </div>
@@ -477,6 +507,151 @@ const EmployerApplicants = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Profile Details Dialog */}
+             <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            {profileDetails && (
+                <>
+                    <DialogHeader>
+                        <DialogTitle>Applicant Profile</DialogTitle>
+                        <DialogDescription>
+                            Detailed information about the applicant
+                        </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="py-4 space-y-6">
+                        
+                        {/* Profile Header */}
+                        <div className="flex items-center gap-4 pb-4 border-b border-gray-200">
+                            <Avatar className="w-20 h-20 border-2 border-blue-100">
+                                <AvatarImage 
+                                    src={getProfilePhoto(profileDetails)} 
+                                    alt={profileDetails?.applicant?.fullname}
+                                    className="object-cover"
+                                />
+                                <AvatarFallback className="bg-blue-100 text-blue-600 text-2xl font-semibold">
+                                    {getInitials(profileDetails?.applicant?.fullname)}
+                                </AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900">
+                                    {profileDetails?.applicant?.fullname || 'N/A'}
+                                </h2>
+                                <p className="text-gray-600 flex items-center gap-1">
+                                    <Mail className="w-4 h-4" />
+                                    {profileDetails?.applicant?.email || 'N/A'}
+                                </p>
+                                <p className="text-gray-600 flex items-center gap-1">
+                                    <Phone className="w-4 h-4" />
+                                    {profileDetails?.applicant?.phoneNumber || 'N/A'}
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Bio/Summary */}
+                        {profileDetails?.applicant?.profile?.bio && (
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                                    <Briefcase className="w-5 h-5 text-blue-600" />
+                                    About
+                                </h3>
+                                <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
+                                    {profileDetails.applicant.profile.bio}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Education - Updated to match your data structure */}
+                        {profileDetails?.applicant?.profile?.education && (
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                    <GraduationCap className="w-5 h-5 text-blue-600" />
+                                    Education
+                                </h3>
+                                <div className="bg-gray-50 p-4 rounded-lg">
+                                    <h4 className="font-medium text-gray-900">
+                                        {profileDetails.applicant.profile.education.degree || 'Not specified'}
+                                    </h4>
+                                    <p className="text-gray-600">
+                                        {profileDetails.applicant.profile.education.institution || 'Not specified'}
+                                    </p>
+                                    {profileDetails.applicant.profile.education.yearOfCompletion && (
+                                        <p className="text-sm text-gray-500">
+                                            Completed: {profileDetails.applicant.profile.education.yearOfCompletion}
+                                        </p>
+                                    )}
+                                    {profileDetails.applicant.profile.education.grade && (
+                                        <p className="text-sm text-gray-500">
+                                            Grade: {profileDetails.applicant.profile.education.grade}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Skills */}
+                        {profileDetails?.applicant?.profile?.skills && profileDetails.applicant.profile.skills.length > 0 && (
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                                    <Award className="w-5 h-5 text-blue-600" />
+                                    Skills
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {profileDetails.applicant.profile.skills.map((skill, index) => (
+                                        <Badge key={index} variant="secondary" className="text-sm">
+                                            {skill.trim()}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Location */}
+                        {profileDetails?.applicant?.profile?.place && (
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                                    <MapPin className="w-5 h-5 text-blue-600" />
+                                    Location
+                                </h3>
+                                <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">
+                                    {profileDetails.applicant.profile.place}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Resume */}
+                        {profileDetails?.applicant?.profile?.resume && (
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-3">Resume</h3>
+                                <div className="flex items-center gap-3">
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={() => previewOrDownload(profileDetails.applicant.profile.resume, profileDetails.applicant?.profile?.resumeOriginalName)}
+                                    >
+                                        <FileText className="w-4 h-4 mr-2" /> Preview Resume
+                                    </Button>
+                                    <a
+                                        href={profileDetails.applicant.profile.resume}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                                    >
+                                        <Download className="w-4 h-4 mr-1" /> Download
+                                    </a>
+                                </div>
+                                {profileDetails.applicant?.profile?.resumeOriginalName && (
+                                    <p className="text-sm text-gray-500 mt-2">
+                                        File: {profileDetails.applicant.profile.resumeOriginalName}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </>
+            )}
+        </DialogContent>
+    </Dialog>
             
             <Footer />
         </div>

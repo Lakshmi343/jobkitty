@@ -7,7 +7,7 @@ import cloudinary from "../utils/cloudinary.js";
 import { sendRegistrationReminderEmail, sendPasswordResetEmail } from "../utils/emailService.js";
 import crypto from "crypto";
 
-// ✅ REGISTER
+
 
 export const register = async (req, res) => {
 	try {
@@ -19,14 +19,12 @@ export const register = async (req, res) => {
 				success: false
 			});
 		}
-
 		if (!req.file) {
 			return res.status(400).json({
 				message: "Profile photo is required.",
 				success: false
 			});
 		}
-
 		const existingUser = await User.findOne({ email });
 		if (existingUser) {
 			return res.status(400).json({
@@ -34,12 +32,10 @@ export const register = async (req, res) => {
 				success: false
 			});
 		}
-
 		const fileUri = getDataUri(req.file);
 		const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
 			folder: "profile-photos"
 		});
-
 		const hashedPassword = await bcrypt.hash(password, 10);
 
 		await User.create({
@@ -52,7 +48,6 @@ export const register = async (req, res) => {
 				profilePhoto: cloudResponse.secure_url
 			}
 		});
-
 		const user = await User.findOne({ email });
 		if (user) {
 			setTimeout(async () => {
@@ -64,10 +59,8 @@ export const register = async (req, res) => {
 					console.log('Reminder email sent to', user.email);
 				} catch (err) {
 					console.error('Failed to send reminder email:', err);
-				}
-			}, 4 * 60 * 1000); 
+				}		}, 4 * 60 * 1000); 
 		}
-
 		return res.status(201).json({
 			message: "Account created successfully.",
 			success: true
@@ -79,68 +72,67 @@ export const register = async (req, res) => {
 };
 
 
+
 export const login = async (req, res) => {
-	try {
-		const { email, password, role } = req.body;
+  try {
+    const { email, password } = req.body; // 👈 no role here
 
-		if (!email || !password || !role) {
-			return res.status(400).json({
-				message: "All fields are required.",
-				success: false
-			});
-		}
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password are required.",
+        success: false
+      });
+    }
 
-		let user = await User.findOne({ email });
-		if (!user) {
-			return res.status(400).json({
-				message: "Invalid email or password.",
-				success: false
-			});
-		}
+    let user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({
+        message: "Invalid email or password.",
+        success: false
+      });
+    }
 
-		console.log('User from DB:', user);
-		console.log('Role from frontend:', role);
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      return res.status(400).json({
+        message: "Invalid email or password.",
+        success: false
+      });
+    }
 
-		const isPasswordMatch = await bcrypt.compare(password, user.password);
-		if (!isPasswordMatch || role !== user.role) {
-			return res.status(400).json({
-				message: "Invalid credentials or incorrect role.",
-				success: false
-			});
-		}
+    const tokenData = { userId: user._id };
+    const token = jwt.sign(tokenData, process.env.SECRET_KEY, {
+      expiresIn: "4h"
+    });
 
-		const tokenData = { userId: user._id };
-		const token = jwt.sign(tokenData, process.env.SECRET_KEY, {
-			expiresIn: "7d"
-		});
+    if (user.role === 'Employer' && user.profile.company) {
+      user = await User.findById(user._id).populate('profile.company');
+    }
 
-		if (user.role === 'Employer' && user.profile.company) {
-			user = await User.findById(user._id).populate('profile.company');
-		}
+    user = {
+      _id: user._id,
+      fullname: user.fullname,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      profile: user.profile
+    };
 
-		user = {
-			_id: user._id,
-			fullname: user.fullname,
-			email: user.email,
-			phoneNumber: user.phoneNumber,
-			role: user.role,
-			profile: user.profile
-		};
+    return res.status(200).cookie("token", token, {
+      maxAge: 86400000,
+      httpOnly: true,
+      sameSite: "strict"
+    }).json({
+      message: `Welcome back ${user.fullname}`,
+      user,
+      token,
+      success: true
+    });
 
-		return res.status(200).cookie("token", token, {
-			maxAge: 86400000, 
-			httpOnly: true,
-			sameSite: "strict"
-		}).json({
-			message: `Welcome back ${user.fullname}`,
-			user,
-			token,
-			success: true
-		});
-	} catch (error) {
-		console.error(error);
-		res.status(500).json({ message: "Server error", success: false });
-	}
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", success: false });
+  }
 };
 
 
@@ -157,59 +149,68 @@ export const logout = async (req, res) => {
 };
 
 
+
 export const updateProfile = async (req, res) => {
-	try {
-		const { fullname, email, phoneNumber, bio, skills } = req.body;
+    try {
+        const { fullname, email, phoneNumber, bio, skills, place, education, experience } = req.body;
+        const userId = req.id;
+        let user = await User.findById(userId);
 
-		const userId = req.id; 
-		let user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found.", success: false });
+        }
 
-		if (!user) {
-			return res.status(404).json({
-				message: "User not found.",
-				success: false
-			});
-		}
-		let skillsArray = skills ? skills.split(",") : user.profile.skills;
-		let resumeUrl = user.profile.resume;
-		let resumeName = user.profile.resumeOriginalName;
-		if (req.file) {
-			const isPdf = req.file.mimetype === 'application/pdf' || req.file.originalname?.toLowerCase().endsWith('.pdf');
-			const fileUri = getDataUri(req.file);
-			const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
-				folder: process.env.CLOUDINARY_CV_FOLDER || "resumes",
-				resource_type: isPdf ? "image" : "auto"
-			});
-			resumeUrl = cloudResponse.secure_url;
-			resumeName = req.file.originalname;
-		}
-		user.fullname = fullname || user.fullname;
-		user.email = email || user.email;
-		user.phoneNumber = phoneNumber || user.phoneNumber;
-		user.profile.bio = bio || user.profile.bio;
-		user.profile.skills = skillsArray || user.profile.skills;
-		user.profile.resume = resumeUrl;
-		user.profile.resumeOriginalName = resumeName;
-		await user.save();
-		user = {
-			_id: user._id,
-			fullname: user.fullname,
-			email: user.email,
-			phoneNumber: user.phoneNumber,
-			role: user.role,
-			profile: user.profile
-		};
-		return res.status(200).json({
-			message: "Profile updated successfully.",
-			user,
-			success: true
-		});
-	} catch (error) {
-		console.error(error);
-		res.status(500).json({ message: "Server error", success: false });
-	}
+        let skillsArray = skills ? skills.split(",") : user.profile.skills;
+        let resumeUrl = user.profile.resume;
+        let resumeName = user.profile.resumeOriginalName;
+
+        // ✅ Resume Upload
+        if (req.file) {
+            const fileUri = getDataUri(req.file);
+            const isPdf = req.file.mimetype === 'application/pdf' || req.file.originalname?.toLowerCase().endsWith('.pdf');
+
+            const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
+                folder: process.env.CLOUDINARY_CV_FOLDER || "resumes",
+                resource_type: isPdf ? "raw" : "auto"
+            });
+
+            resumeUrl = cloudResponse.secure_url;
+            resumeName = req.file.originalname;
+        }
+
+        // ✅ Update fields
+        user.fullname = fullname || user.fullname;
+        user.email = email || user.email;
+        user.phoneNumber = phoneNumber || user.phoneNumber;
+        user.profile.bio = bio || user.profile.bio;
+        user.profile.skills = skillsArray || user.profile.skills;
+        user.profile.resume = resumeUrl;
+        user.profile.resumeOriginalName = resumeName;
+        user.profile.place = place || user.profile.place;
+
+        // ✅ Education (Required)
+        if (education) {
+            user.profile.education = JSON.parse(education);
+        }
+
+        // ✅ Experience (Optional)
+        if (experience) {
+            user.profile.experience = JSON.parse(experience);
+        }
+
+        await user.save();
+
+        return res.status(200).json({
+            message: "Profile updated successfully.",
+            user,
+            success: true
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error", success: false });
+    }
 };
-
 
 export const getUserProfile = async (req, res) => {
 	try {

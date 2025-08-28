@@ -13,7 +13,7 @@ const Home = () => {
   const { user } = useSelector(store => store.auth);
   const navigate = useNavigate();
   
-  // Only redirect admin users to admin panel
+
   useEffect(() => {
     if (user?.role === 'admin') {
       navigate("/admin/companies");
@@ -24,9 +24,10 @@ const Home = () => {
     <div>
       <Navbar />
       <HeroSection />
+       <CategoryCarousel />
       <LatestJobs />
       
-      <CategoryCarousel />
+     
       <Footer />
     </div>
   )

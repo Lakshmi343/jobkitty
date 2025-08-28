@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Briefcase, MapPin, DollarSign, Clock, Users, Calendar,Building,CheckCircle,ArrowLeft,ExternalLink,Star, TrendingUp, FileText} from 'lucide-react';
 import Navbar from './shared/Navbar';
 import { Avatar, AvatarImage } from './ui/avatar'
+import LoadingSpinner from './shared/LoadingSpinner';
 
 const JobDescription = () => {
     const {singleJob} = useSelector(store => store.job);
@@ -58,7 +59,7 @@ const JobDescription = () => {
             <>
                 <Navbar />
                 <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+                    <LoadingSpinner size={60} />
                 </div>
             </>
         );
@@ -146,11 +147,7 @@ const JobDescription = () => {
                                             </>
                                         )}
                                     </Button>
-                                    {!isApplied && (
-                                        <p className="text-blue-100 text-sm text-center">
-                                            {singleJob?.applications?.length || 0} people have applied
-                                        </p>
-                                    )}
+                                    
                                 </div>
                             </div>
                         </div>

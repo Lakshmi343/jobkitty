@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react'
 import Navbar from '../shared/Navbar'
 import { Label } from '../ui/label'
 import { Input } from '../ui/input'
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group'
 import { Button } from '../ui/button'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
@@ -10,193 +9,178 @@ import { USER_API_END_POINT } from '@/utils/constant'
 import { toast } from 'sonner'
 import { useDispatch, useSelector } from 'react-redux'
 import { setLoading, setUser } from '@/redux/authSlice'
-import { Loader2, Mail, Lock, User, Building } from 'lucide-react'
+import { Mail, Lock } from 'lucide-react'
+import LoadingSpinner from '../shared/LoadingSpinner'
 
 const Login = () => {
-    const [input, setInput] = useState({
-        email: "",
-        password: "",
-        role: "",
-    });
-    const { loading, user } = useSelector(store => store.auth);
-    const navigate = useNavigate();
-    const dispatch = useDispatch();
-    const [showPassword, setShowPassword] = useState(false);
+  const [input, setInput] = useState({
+    email: "",
+    password: "",
+    confirmPassword: ""
+  });
+  const { loading, user } = useSelector(store => store.auth);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    const changeEventHandler = (e) => {
-        setInput({ ...input, [e.target.name]: e.target.value });
+  const changeEventHandler = (e) => {
+    setInput({ ...input, [e.target.name]: e.target.value });
+  }
+
+  const validateInput = () => {
+    if (!/^\S+@\S+\.\S+$/.test(input.email)) {
+      toast.error('Please enter a valid email address.');
+      return false;
     }
-
-    const validateInput = () => {
-        if (!/^\S+@\S+\.\S+$/.test(input.email)) {
-            toast.error('Please enter a valid email address.');
-            return false;
-        }
-        if (input.password.length < 6 || input.password.length > 20) {
-            toast.error('Password must be 6-20 characters.');
-            return false;
-        }
-        if (!input.role) {
-            toast.error('Please select your role (Jobseeker or Employer)');
-            return false;
-        }
-        return true;
+    if (input.password.length < 6 || input.password.length > 20) {
+      toast.error('Password must be 6-20 characters.');
+      return false;
     }
-
-    const submitHandler = async (e) => {
-        e.preventDefault();
-        if (!validateInput()) return;
-        try {
-            dispatch(setLoading(true));
-            const res = await axios.post(`${USER_API_END_POINT}/login`, input, {
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                withCredentials: true,
-            });
-            if (res.data.success) {
-                dispatch(setUser(res.data.user));
-                navigate("/");
-                toast.success(res.data.message);
-            }
-        } catch (error) {
-            console.log(error);
-            toast.error(error.response.data.message);
-        } finally {
-            dispatch(setLoading(false));
-        }
+    if (input.password !== input.confirmPassword) {
+      toast.error('Passwords do not match.');
+      return false;
     }
+    return true;
+  }
 
-    useEffect(() => {
-        if (user) {
-            navigate("/");
-        }
-    }, [user, navigate])
+  const submitHandler = async (e) => {
+    e.preventDefault();
+    if (!validateInput()) return;
+    try {
+      dispatch(setLoading(true));
+      const res = await axios.post(`${USER_API_END_POINT}/login`, {
+        email: input.email,
+        password: input.password,
+      }, {
+        headers: {
+          "Content-Type": "application/json"
+        },
+        withCredentials: true,
+      });
 
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-            <Navbar />
-            <div className='flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8'>
-                <div className='w-full max-w-md'>
-                    <div className='bg-white rounded-2xl shadow-xl border border-gray-200 p-6 lg:p-8'>
-                        <div className='text-center mb-8'>
-                            <h1 className='text-3xl font-bold text-gray-900 mb-2'>Welcome Back</h1>
-                            <p className='text-gray-600'>Sign in to your account to continue</p>
-                        </div>
+      if (res.data.success) {
+        dispatch(setUser(res.data.user));
+        navigate("/");
+        toast.success(res.data.message);
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response?.data?.message || "Something went wrong");
+    } finally {
+      dispatch(setLoading(false));
+    }
+  }
 
-                        <form onSubmit={submitHandler} className='space-y-6'>
-                            {/* Email Field */}
-                            <div className='space-y-2'>
-                                <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</Label>
-                                <div className="relative">
-                                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        value={input.email}
-                                        name="email"
-                                        onChange={changeEventHandler}
-                                        placeholder="Enter your email"
-                                        className="pl-10 py-3 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                                        required
-                                    />
-                                </div>
-                            </div>
+  useEffect(() => {
+    if (user) {
+      navigate("/");
+    }
+  }, [user, navigate])
 
-                            {/* Password Field */}
-                            <div className='space-y-2'>
-                                <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
-                                <div className="relative">
-                                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                                    <Input
-                                        id="password"
-                                        type={showPassword ? "text" : "password"}
-                                        value={input.password}
-                                        name="password"
-                                        onChange={changeEventHandler}
-                                        placeholder="Enter your password"
-                                        className="pl-10 py-3 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                                        required
-                                    />
-                                    <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 focus:outline-none">
-                                        {showPassword ? <Lock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
-                                    </button>
-                                </div>
-                                <div className="text-right mt-1">
-                                    <Link to="/forgot-password" className="text-xs text-blue-600 hover:underline">Forgot Password?</Link>
-                                </div>
-                            </div>
-
-                            {/* Role Selection */}
-                            <div className='space-y-3'>
-                                <Label className="text-sm font-medium text-gray-700">I am a</Label>
-                                <RadioGroup 
-                                    value={input.role} 
-                                    onValueChange={(value) => setInput({...input, role: value})}
-                                    className="grid grid-cols-2 gap-4"
-                                >
-                                    <div className="relative">
-                                        <RadioGroupItem 
-                                            value="Jobseeker" 
-                                            id="jobseeker" 
-                                            className="peer sr-only"
-                                        />
-                                        <Label 
-                                            htmlFor="jobseeker" 
-                                            className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-gray-50 transition-all duration-200"
-                                        >
-                                            <User className="w-6 h-6 text-gray-600 mb-2" />
-                                            <span className="text-sm font-medium">Jobseeker</span>
-                                        </Label>
-                                    </div>
-                                    <div className="relative">
-                                        <RadioGroupItem 
-                                            value="Employer" 
-                                            id="employer" 
-                                            className="peer sr-only"
-                                        />
-                                        <Label 
-                                            htmlFor="employer" 
-                                            className="flex flex-col items-center justify-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer peer-checked:border-blue-500 peer-checked:bg-blue-50 hover:bg-gray-50 transition-all duration-200"
-                                        >
-                                            <Building className="w-6 h-6 text-gray-600 mb-2" />
-                                            <span className="text-sm font-medium">Employer</span>
-                                        </Label>
-                                    </div>
-                                </RadioGroup>
-                            </div>
-
-                            {/* Submit Button */}
-                            <Button 
-                                type="submit" 
-                                disabled={loading || !input.role}
-                                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200"
-                            >
-                                {loading ? (
-                                    <>
-                                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                                        Signing in...
-                                    </>
-                                ) : (
-                                    'Sign In'
-                                )}
-                            </Button>
-                        </form>
-
-                        {/* Sign Up Link */}
-                        <div className='mt-6 text-center'>
-                            <span className='text-sm text-gray-600'>
-                                Don't have an account?{' '}
-                                <Link to="/signup" className='text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200'>
-                                    Sign up
-                                </Link>
-                            </span>
-                        </div>
-                    </div>
-                </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <Navbar />
+      <div className='flex items-center justify-center min-h-[calc(100vh-80px)] px-4 py-8'>
+        <div className='w-full max-w-md'>
+          <div className='bg-white rounded-2xl shadow-xl border border-gray-200 p-6 lg:p-8'>
+            <div className='text-center mb-8'>
+              <h1 className='text-3xl font-bold text-gray-900 mb-2'>Welcome Back</h1>
+              <p className='text-gray-600'>Sign in to your account to continue</p>
             </div>
+
+            <form onSubmit={submitHandler} className='space-y-6'>
+              {/* Email */}
+              <div className='space-y-2'>
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={input.email}
+                    name="email"
+                    onChange={changeEventHandler}
+                    placeholder="Enter your email"
+                    className="pl-10 py-3 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className='space-y-2'>
+                <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={input.password}
+                    name="password"
+                    onChange={changeEventHandler}
+                    placeholder="Enter your password"
+                    className="pl-10 py-3 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                  <button type="button" onClick={() => setShowPassword(v => !v)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 focus:outline-none">
+                    {showPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div className='space-y-2'>
+                <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={input.confirmPassword}
+                    name="confirmPassword"
+                    onChange={changeEventHandler}
+                    placeholder="Re-enter your password"
+                    className="pl-10 py-3 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    required
+                  />
+                  <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 focus:outline-none">
+                    {showConfirmPassword ? "🙈" : "👁️"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors duration-200"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <LoadingSpinner size={20} color="#ffffff" />
+                    <span className="ml-2">Signing in...</span>
+                  </div>
+                ) : (
+                  'Sign In'
+                )}
+              </Button>
+            </form>
+
+            {/* Sign Up Link */}
+            <div className='mt-6 text-center'>
+              <span className='text-sm text-gray-600'>
+                Don&apos;t have an account?{' '}
+                <Link to="/signup" className='text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200'>
+                  Sign up
+                </Link>
+              </span>
+            </div>
+          </div>
         </div>
-    )
+      </div>
+    </div>
+  )
 }
 
 export default Login

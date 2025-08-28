@@ -13,14 +13,15 @@ const AdminLayout = ({ children }) => {
   const isSuperAdmin = admin.role === 'superadmin';
 
   const baseNavigation = [
-    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Users', href: '/admin/users', icon: Users },
-    { name: 'Companies', href: '/admin/companies', icon: Building2 },
-    { name: 'Jobs', href: '/admin/jobs', icon: Briefcase },
-    { name: 'Applications', href: '/admin/applications', icon: FileText },
-    { name: 'Categories', href: '/admin/categories', icon: Settings },
-    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-  ];
+  { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'Jobseekers', href: '/admin/jobseekers', icon: Users },
+  { name: 'Employers', href: '/admin/employers', icon: Building2 },
+  { name: 'Companies', href: '/admin/companies', icon: Building2 },
+  { name: 'Jobs', href: '/admin/jobs', icon: Briefcase },
+  { name: 'Applications', href: '/admin/applications', icon: FileText },
+  { name: 'Categories', href: '/admin/categories', icon: Settings },
+  { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+];
 
 
 

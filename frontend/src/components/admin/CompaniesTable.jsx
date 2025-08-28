@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Edit2, MoreHorizontal, ShieldCheck, ShieldAlert, Trash2, Building, Calendar } from 'lucide-react'
+import LoadingSpinner from '../shared/LoadingSpinner'
 
 const CompaniesTable = ({ companies = [], loading = false, onEdit, onUpdateStatus, onDelete }) => {
 	const getStatus = (status) => {
@@ -23,7 +24,10 @@ const CompaniesTable = ({ companies = [], loading = false, onEdit, onUpdateStatu
 
 	if (loading) {
 		return (
-			<div className='py-20 text-center text-gray-500'>Loading companies...</div>
+			<div className='py-20 flex flex-col items-center justify-center text-gray-500'>
+				<LoadingSpinner size={40} />
+				<span className="mt-4">Loading companies...</span>
+			</div>
 		)
 	}
 

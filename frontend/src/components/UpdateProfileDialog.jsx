@@ -1,196 +1,581 @@
-import React, { useState, useEffect } from 'react'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
-import { Label } from './ui/label'
-import { Input } from './ui/input'
-import { Button } from './ui/button'
-import { Loader2 } from 'lucide-react'
-import { useDispatch, useSelector } from 'react-redux'
-import axios from 'axios'
-import { USER_API_END_POINT } from '@/utils/constant'
-import { setUser } from '@/redux/authSlice'
-import { toast } from 'sonner'
+
+
+// import React, { useState, useEffect } from 'react'
+// import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
+// import { Label } from './ui/label'
+// import { Input } from './ui/input'
+// import { Button } from './ui/button'
+// import { useDispatch, useSelector } from 'react-redux'
+// import axios from 'axios'
+// import { USER_API_END_POINT } from '@/utils/constant'
+// import { setUser } from '@/redux/authSlice'
+// import { toast } from 'sonner'
+// import LoadingSpinner from './shared/LoadingSpinner'
+
+// // ✅ Tag Input
+// import { WithContext as ReactTags } from "react-tag-input";
+// import { skillSuggestions } from "../utils/skills";
+// import "@/styles/reactTags.css";
+
+
+// const UpdateProfileDialog = ({ open, setOpen }) => {
+//     const [loading, setLoading] = useState(false);
+//     const { user } = useSelector(store => store.auth);
+//     const dispatch = useDispatch();
+
+//     const [input, setInput] = useState({
+//         fullname: "",
+//         email: "",
+//         phoneNumber: "",
+//         bio: "",
+//         file: null
+//     });
+
+//     const [tags, setTags] = useState([]); // skills state
+
+//     useEffect(() => {
+//         if (user) {
+//             setInput({
+//                 fullname: user.fullname || "",
+//                 email: user.email || "",
+//                 phoneNumber: user.phoneNumber || "",
+//                 bio: user.profile?.bio || "",
+//                 file: null
+//             });
+
+//             if (user.profile?.skills?.length) {
+//                 setTags(user.profile.skills.map(skill => ({ id: skill, text: skill })));
+//             } else {
+//                 setTags([]);
+//             }
+//         }
+//     }, [user, open]);
+
+//     // react-tag-input handlers
+//     const handleDelete = (i) => {
+//         setTags(tags.filter((_, index) => index !== i));
+//     };
+
+//     const handleAddition = (tag) => {
+//         setTags([...tags, tag]);
+//     };
+
+//     const handleDrag = (tag, currPos, newPos) => {
+//         const newTags = [...tags];
+//         newTags.splice(currPos, 1);
+//         newTags.splice(newPos, 0, tag);
+//         setTags(newTags);
+//     };
+
+//     const changeEventHandler = (e) => {
+//         setInput({ ...input, [e.target.name]: e.target.value });
+//     }
+
+//     const fileChangeHandler = (e) => {
+//         const file = e.target.files?.[0];
+//         setInput({ ...input, file });
+//     }
+
+//     const submitHandler = async (e) => {
+//         e.preventDefault();
+
+//         if (!input.fullname || !input.email || !input.phoneNumber) {
+//             toast.error("Name, email, and phone number are required");
+//             return;
+//         }
+
+//         const skillsArray = tags.map(tag => tag.text);
+//         const skillsString = skillsArray.join(", ");
+
+//         const formData = new FormData();
+//         formData.append("fullname", input.fullname);
+//         formData.append("email", input.email);
+//         formData.append("phoneNumber", input.phoneNumber);
+//         formData.append("bio", input.bio);
+//        formData.append("skills", skillsString);
+
+//         if (input.file) {
+//             formData.append("file", input.file);
+//         }
+
+//         try {
+//             setLoading(true);
+//             const res = await axios.post(`${USER_API_END_POINT}/profile/update`, formData, {
+//                 headers: {
+//                     'Content-Type': 'multipart/form-data'
+//                 },
+//                 withCredentials: true
+//             });
+
+//             if (res.data.success) {
+//                 dispatch(setUser(res.data.user));
+//                 toast.success(res.data.message);
+//                 setOpen(false);
+//             }
+//         } catch (error) {
+//             console.error("Profile update error:", error);
+//             toast.error(error.response?.data?.message || "Failed to update profile");
+//         } finally {
+//             setLoading(false);
+//         }
+//     }
+
+//     return (
+//         <Dialog open={open} onOpenChange={setOpen}>
+//             <DialogContent className="sm:max-w-[500px]">
+//                 <DialogHeader>
+//                     <DialogTitle>Update Profile</DialogTitle>
+//                 </DialogHeader>
+//                 <form onSubmit={submitHandler}>
+//                     <div className='grid gap-4 py-4'>
+//                         {/* Full Name */}
+//                         <div className='grid grid-cols-4 items-center gap-4'>
+//                             <Label htmlFor="fullname" className="text-right">Name *</Label>
+//                             <Input
+//                                 id="fullname"
+//                                 name="fullname"
+//                                 type="text"
+//                                 value={input.fullname}
+//                                 onChange={changeEventHandler}
+//                                 className="col-span-3"
+//                                 required
+//                             />
+//                         </div>
+
+//                         {/* Email */}
+//                         <div className='grid grid-cols-4 items-center gap-4'>
+//                             <Label htmlFor="email" className="text-right">Email *</Label>
+//                             <Input
+//                                 id="email"
+//                                 name="email"
+//                                 type="email"
+//                                 value={input.email}
+//                                 onChange={changeEventHandler}
+//                                 className="col-span-3"
+//                                 required
+//                             />
+//                         </div>
+
+//                         {/* Phone */}
+//                         <div className='grid grid-cols-4 items-center gap-4'>
+//                             <Label htmlFor="phoneNumber" className="text-right">Phone *</Label>
+//                             <Input
+//                                 id="phoneNumber"
+//                                 name="phoneNumber"
+//                                 type="text"
+//                                 value={input.phoneNumber}
+//                                 onChange={changeEventHandler}
+//                                 className="col-span-3"
+//                                 required
+//                             />
+//                         </div>
+
+//                         {/* Bio */}
+//                         <div className='grid grid-cols-4 items-center gap-4'>
+//                             <Label htmlFor="bio" className="text-right">Bio</Label>
+//                             <Input
+//                                 id="bio"
+//                                 name="bio"
+//                                 value={input.bio}
+//                                 onChange={changeEventHandler}
+//                                 className="col-span-3"
+//                                 placeholder="Tell us about yourself..."
+//                             />
+//                         </div>
+
+//                         {/* ✅ Skills with react-tag-input */}
+//                         <div className='grid grid-cols-4 items-center gap-4'>
+//                             <Label className="text-right">Skills</Label>
+//                             <div className="col-span-3 border rounded-md p-2">
+//                                 <ReactTags
+//                                     tags={tags}
+//                                     suggestions={skillSuggestions}
+//                                     handleDelete={handleDelete}
+//                                     handleAddition={handleAddition}
+//                                     handleDrag={handleDrag}
+//                                     delimiters={[188, 13]} // comma & enter
+//                                     placeholder="Add a skill"
+//                                 />
+//                             </div>
+//                         </div>
+
+//                         {/* Resume Upload */}
+//                         <div className='grid grid-cols-4 items-center gap-4'>
+//                             <Label htmlFor="file" className="text-right">Resume</Label>
+//                             <Input
+//                                 id="file"
+//                                 name="file"
+//                                 type="file"
+//                                 accept=".pdf,.doc,.docx"
+//                                 onChange={fileChangeHandler}
+//                                 className="col-span-3"
+//                             />
+//                         </div>
+//                     </div>
+
+//                     {/* Footer Buttons */}
+//                     <DialogFooter>
+//                         <Button 
+//                             type="button" 
+//                             variant="outline" 
+//                             onClick={() => setOpen(false)}
+//                             disabled={loading}
+//                         >
+//                             Cancel
+//                         </Button>
+//                         <Button type="submit" disabled={loading}>
+//                             {loading ? (
+//                                 <div className="flex items-center justify-center">
+//                                     <LoadingSpinner size={20} color="#ffffff" />
+//                                     <span className="ml-2">Updating...</span>
+//                                 </div>
+//                             ) : (
+//                                 'Update Profile'
+//                             )}
+//                         </Button>
+//                     </DialogFooter>
+//                 </form>
+//             </DialogContent>
+//         </Dialog>
+//     )
+// }
+
+// export default UpdateProfileDialog
+
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import axios from "axios";
+import { USER_API_END_POINT } from "@/utils/constant";
+import { setUser } from "@/redux/authSlice";
+import { toast } from "sonner";
+
+// UI Components
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Button } from "./ui/button";
+import LoadingSpinner from "./shared/LoadingSpinner";
+
+// Skills Input
+import { WithContext as ReactTags } from "react-tag-input";
+import { skillSuggestions } from "../utils/skills";
+import "@/styles/reactTags.css";
 
 const UpdateProfileDialog = ({ open, setOpen }) => {
-    const [loading, setLoading] = useState(false);
-    const { user } = useSelector(store => store.auth);
-    const dispatch = useDispatch();
+  const [loading, setLoading] = useState(false);
+  const { user } = useSelector((store) => store.auth);
+  const dispatch = useDispatch();
 
-    const [input, setInput] = useState({
-        fullname: "",
-        email: "",
-        phoneNumber: "",
-        bio: "",
-        skills: "",
-        file: null
-    });
+  const [input, setInput] = useState({
+    fullname: "",
+    email: "",
+    phoneNumber: "",
+    bio: "",
+    place: "",
+    degree: "",
+    institution: "",
+    yearOfCompletion: "",
+    grade: "",
+    years: "",
+    field: "",
+    file: null,
+  });
 
-    // Update input when user data changes or dialog opens
-    useEffect(() => {
-        if (user) {
-            setInput({
-                fullname: user.fullname || "",
-                email: user.email || "",
-                phoneNumber: user.phoneNumber || "",
-                bio: user.profile?.bio || "",
-                skills: user.profile?.skills?.join(", ") || "",
-                file: null
-            });
-        }
-    }, [user, open]);
+  const [tags, setTags] = useState([]); // skills state
 
-    const changeEventHandler = (e) => {
-        setInput({ ...input, [e.target.name]: e.target.value });
+  // Prefill form from user data
+  useEffect(() => {
+    if (user) {
+      setInput({
+        fullname: user.fullname || "",
+        email: user.email || "",
+        phoneNumber: user.phoneNumber || "",
+        bio: user.profile?.bio || "",
+        place: user.profile?.place || "",
+        degree: user.profile?.education?.degree || "",
+        institution: user.profile?.education?.institution || "",
+        yearOfCompletion: user.profile?.education?.yearOfCompletion || "",
+        grade: user.profile?.education?.grade || "",
+        years: user.profile?.experience?.years || "",
+        field: user.profile?.experience?.field || "",
+        file: null,
+      });
+
+      if (user.profile?.skills?.length) {
+        setTags(user.profile.skills.map((skill) => ({ id: skill, text: skill })));
+      } else {
+        setTags([]);
+      }
+    }
+  }, [user]);
+
+  // react-tag-input handlers
+  const handleDelete = (i) => {
+    setTags(tags.filter((_, index) => index !== i));
+  };
+  const handleAddition = (tag) => {
+    setTags([...tags, tag]);
+  };
+  const handleDrag = (tag, currPos, newPos) => {
+    const newTags = [...tags];
+    newTags.splice(currPos, 1);
+    newTags.splice(newPos, 0, tag);
+    setTags(newTags);
+  };
+
+  // Input Change
+  const changeEventHandler = (e) => {
+    setInput({ ...input, [e.target.name]: e.target.value });
+  };
+
+  // File Upload
+  const fileChangeHandler = (e) => {
+    const file = e.target.files?.[0];
+    setInput({ ...input, file });
+  };
+
+  // Submit
+  const submitHandler = async (e) => {
+    e.preventDefault();
+
+    if (!input.fullname || !input.email || !input.phoneNumber) {
+      toast.error("Name, email, and phone number are required");
+      return;
     }
 
-    const fileChangeHandler = (e) => {
-        const file = e.target.files?.[0];
-        setInput({ ...input, file });
+    if (!input.degree || !input.institution || !input.yearOfCompletion) {
+      toast.error("Education details are required");
+      return;
     }
 
-    const submitHandler = async (e) => {
-        e.preventDefault();
-        
-        // Validate required fields
-        if (!input.fullname || !input.email || !input.phoneNumber) {
-            toast.error("Name, email, and phone number are required");
-            return;
-        }
+    const skillsArray = tags.map((tag) => tag.text);
+    const skillsString = skillsArray.join(", ");
 
-        const formData = new FormData();
-        formData.append("fullname", input.fullname);
-        formData.append("email", input.email);
-        formData.append("phoneNumber", input.phoneNumber);
-        formData.append("bio", input.bio);
-        formData.append("skills", input.skills);
-        
-        if (input.file) {
-            formData.append("file", input.file);
-        }
+    const formData = new FormData();
+    formData.append("fullname", input.fullname);
+    formData.append("email", input.email);
+    formData.append("phoneNumber", input.phoneNumber);
+    formData.append("bio", input.bio);
+    formData.append("skills", skillsString);
+    formData.append("place", input.place);
 
-        try {
-            setLoading(true);
-            const res = await axios.post(`${USER_API_END_POINT}/profile/update`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
-                },
-                withCredentials: true
-            });
-            
-            if (res.data.success) {
-                dispatch(setUser(res.data.user));
-                toast.success(res.data.message);
-                setOpen(false);
-            }
-        } catch (error) {
-            console.error("Profile update error:", error);
-            toast.error(error.response?.data?.message || "Failed to update profile");
-        } finally {
-            setLoading(false);
-        }
+    // Education
+    formData.append(
+      "education",
+      JSON.stringify({
+        degree: input.degree,
+        institution: input.institution,
+        yearOfCompletion: input.yearOfCompletion,
+        grade: input.grade,
+      })
+    );
+
+    // Experience (optional)
+    if (input.years || input.field) {
+      formData.append(
+        "experience",
+        JSON.stringify({
+          years: input.years,
+          field: input.field,
+        })
+      );
     }
 
-    return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                    <DialogTitle>Update Profile</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={submitHandler}>
-                    <div className='grid gap-4 py-4'>
-                        <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor="fullname" className="text-right">Name *</Label>
-                            <Input
-                                id="fullname"
-                                name="fullname"
-                                type="text"
-                                value={input.fullname}
-                                onChange={changeEventHandler}
-                                className="col-span-3"
-                                required
-                            />
-                        </div>
-                        <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor="email" className="text-right">Email *</Label>
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={input.email}
-                                onChange={changeEventHandler}
-                                className="col-span-3"
-                                required
-                            />
-                        </div>
-                        <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor="phoneNumber" className="text-right">Phone *</Label>
-                            <Input
-                                id="phoneNumber"
-                                name="phoneNumber"
-                                type="text"
-                                value={input.phoneNumber}
-                                onChange={changeEventHandler}
-                                className="col-span-3"
-                                required
-                            />
-                        </div>
-                        <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor="bio" className="text-right">Bio</Label>
-                            <Input
-                                id="bio"
-                                name="bio"
-                                value={input.bio}
-                                onChange={changeEventHandler}
-                                className="col-span-3"
-                                placeholder="Tell us about yourself..."
-                            />
-                        </div>
-                        <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor="skills" className="text-right">Skills</Label>
-                            <Input
-                                id="skills"
-                                name="skills"
-                                value={input.skills}
-                                onChange={changeEventHandler}
-                                className="col-span-3"
-                                placeholder="JavaScript, React, Node.js (comma separated)"
-                            />
-                        </div>
-                        <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor="file" className="text-right">Resume</Label>
-                            <Input
-                                id="file"
-                                name="file"
-                                type="file"
-                                accept=".pdf,.doc,.docx"
-                                onChange={fileChangeHandler}
-                                className="col-span-3"
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => setOpen(false)}
-                            disabled={loading}
-                        >
-                            Cancel
-                        </Button>
-                        <Button type="submit" disabled={loading}>
-                            {loading ? (
-                                <>
-                                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                                    Updating...
-                                </>
-                            ) : (
-                                'Update Profile'
-                            )}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-    )
-}
+    if (input.file) {
+      formData.append("file", input.file);
+    }
 
-export default UpdateProfileDialog
+    try {
+      setLoading(true);
+      const res = await axios.post(`${USER_API_END_POINT}/profile/update`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true,
+      });
+
+      if (res.data.success) {
+        dispatch(setUser(res.data.user));
+        toast.success(res.data.message);
+        setOpen(false); // close dialog
+      }
+    } catch (error) {
+      console.error("Profile update error:", error);
+      toast.error(error.response?.data?.message || "Failed to update profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Update Profile</DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={submitHandler} className="space-y-5">
+          {/* Full Name */}
+          <div>
+            <Label htmlFor="fullname">Full Name *</Label>
+            <Input
+              id="fullname"
+              name="fullname"
+              type="text"
+              value={input.fullname}
+              onChange={changeEventHandler}
+              required
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={input.email}
+              onChange={changeEventHandler}
+              required
+            />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <Label htmlFor="phoneNumber">Phone *</Label>
+            <Input
+              id="phoneNumber"
+              name="phoneNumber"
+              type="text"
+              value={input.phoneNumber}
+              onChange={changeEventHandler}
+              required
+            />
+          </div>
+
+          {/* Place */}
+          <div>
+            <Label htmlFor="place">Place</Label>
+            <Input
+              id="place"
+              name="place"
+              type="text"
+              value={input.place}
+              onChange={changeEventHandler}
+              placeholder="Your location"
+            />
+          </div>
+
+          {/* Bio */}
+          <div>
+            <Label htmlFor="bio">Bio</Label>
+            <Input
+              id="bio"
+              name="bio"
+              type="text"
+              value={input.bio}
+              onChange={changeEventHandler}
+              placeholder="Tell us about yourself..."
+            />
+          </div>
+
+          {/* Skills */}
+          <div>
+            <Label>Skills</Label>
+            <div className="border rounded-md p-2">
+              <ReactTags
+                tags={tags}
+                suggestions={skillSuggestions}
+                handleDelete={handleDelete}
+                handleAddition={handleAddition}
+                handleDrag={handleDrag}
+                delimiters={[188, 13]} // comma & enter
+                placeholder="Add a skill"
+              />
+            </div>
+          </div>
+
+          {/* Education */}
+          <div>
+            <Label>Education *</Label>
+            <div className="grid gap-2">
+              <Input
+                name="degree"
+                placeholder="Degree (e.g. B.Tech)"
+                value={input.degree}
+                onChange={changeEventHandler}
+                required
+              />
+              <Input
+                name="institution"
+                placeholder="Institution"
+                value={input.institution}
+                onChange={changeEventHandler}
+                required
+              />
+              <Input
+                name="yearOfCompletion"
+                type="number"
+                placeholder="Year of Completion"
+                value={input.yearOfCompletion}
+                onChange={changeEventHandler}
+                required
+              />
+              <Input
+                name="grade"
+                placeholder="Grade (optional)"
+                value={input.grade}
+                onChange={changeEventHandler}
+              />
+            </div>
+          </div>
+
+          {/* Experience */}
+          <div>
+            <Label>Experience</Label>
+            <div className="grid gap-2">
+              <Input
+                name="years"
+                type="number"
+                placeholder="Years of experience"
+                value={input.years}
+                onChange={changeEventHandler}
+              />
+              <Input
+                name="field"
+                placeholder="Field (optional)"
+                value={input.field}
+                onChange={changeEventHandler}
+              />
+            </div>
+          </div>
+
+          {/* Resume Upload */}
+          <div>
+            <Label htmlFor="file">Resume</Label>
+            <Input
+              id="file"
+              name="file"
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={fileChangeHandler}
+            />
+          </div>
+
+          {/* Submit */}
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <LoadingSpinner size={20} color="#ffffff" />
+                <span className="ml-2">Updating...</span>
+              </div>
+            ) : (
+              "Update Profile"
+            )}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default UpdateProfileDialog;

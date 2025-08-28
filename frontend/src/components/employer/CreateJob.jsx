@@ -8,12 +8,13 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup } from '../ui/select';
-import { FileText, MapPin, DollarSign, Briefcase, CheckCircle, ArrowLeft, Loader2, Plus, X } from 'lucide-react';
+import { FileText, MapPin, DollarSign, Briefcase, CheckCircle, ArrowLeft, Plus, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import Navbar from '../shared/Navbar';
 import { useSelector } from 'react-redux';
 import Footer from '../shared/Footer';
+import LoadingSpinner from '../shared/LoadingSpinner';
 
 const CreateJob = () => {
     const [input, setInput] = useState({
@@ -615,16 +616,16 @@ const CreateJob = () => {
                                 Next
                             </Button>
                         ) : (
-                            <Button 
-                                type="submit" 
-                                disabled={loading || requirements.length === 0} 
+                            <Button
+                                type="submit"
+                                disabled={loading || requirements.length === 0}
                                 className="ml-auto bg-green-600 hover:bg-green-700"
                             >
                                 {loading ? (
-                                    <>
-                                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                                        Posting...
-                                    </>
+                                    <div className="flex items-center justify-center">
+                                        <LoadingSpinner size={20} color="#ffffff" />
+                                        <span className="ml-2">Posting...</span>
+                                    </div>
                                 ) : (
                                     <>
                                         <CheckCircle className='mr-2 h-4 w-4' />

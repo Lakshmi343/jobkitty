@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import Navbar from '../shared/Navbar';
 import { useSelector } from 'react-redux';
 import Footer from '../shared/Footer';
+import LoadingSpinner from '../shared/LoadingSpinner';
 
 const EmployerJobs = () => {
   const { user } = useSelector(store => store.auth);
@@ -127,7 +128,7 @@ const EmployerJobs = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+        <LoadingSpinner size={60} />
       </div>
     );
   }

@@ -98,7 +98,7 @@ export const createAdmin = async (req, res) => {
   }
 };
 
-// Dashboard Statistics
+
 export const getDashboardStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();

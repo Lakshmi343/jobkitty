@@ -33,8 +33,10 @@ import AdminAnalytics from './components/admin/AdminAnalytics'
 import AdminApplications from './components/admin/AdminApplications'
 import EmployerJobs from './components/employer/EmployerJobs'
 
-// Import the new EmployerProfile component
+
 import EmployerProfile from './components/employer/EmployerProfile'
+import JobseekerTable from './components/admin/JobseekerTable.jsx'
+import EmployerTable from './components/admin/EmployerTable.jsx'
 
 const appRouter = createBrowserRouter([
   {
@@ -74,7 +76,7 @@ const appRouter = createBrowserRouter([
     element: <ProtectedRoute allowedRoles={['Jobseeker']}><Profile /></ProtectedRoute>
   },
 
-  // Admin Routes
+  
   {
     path: "/admin/login",
     element: <AdminLogin />
@@ -90,15 +92,27 @@ const appRouter = createBrowserRouter([
     )
   },
   {
-    path: "/admin/users",
-    element: (
-      <AdminProtectedRoute allowedRoles={['superadmin']}>
-        <AdminLayout>
-          <AdminUsers />
-        </AdminLayout>
-      </AdminProtectedRoute>
-    )
-  },
+  path: "/admin/jobseekers",
+  element: (
+    <AdminProtectedRoute allowedRoles={['superadmin']}>
+      <AdminLayout>
+        <JobseekerTable/>
+
+      </AdminLayout>
+    </AdminProtectedRoute>
+  )
+},
+{
+  path: "/admin/employers",
+  element: (
+    <AdminProtectedRoute allowedRoles={['superadmin']}>
+      <AdminLayout>
+       <EmployerTable/>
+      </AdminLayout>
+    </AdminProtectedRoute>
+  )
+},
+
   {
     path: "/admin/jobs",
     element: (
@@ -170,8 +184,7 @@ const appRouter = createBrowserRouter([
     )
   },
 
-  // Employer Routes
-  // Update the employer profile route
+
   {
     path: "/employer/profile/:id",
     element: <ProtectedRoute allowedRoles={['Employer']}><EmployerProfile/></ProtectedRoute>
@@ -188,19 +201,19 @@ const appRouter = createBrowserRouter([
     path: "/employer/jobs/:id/edit",
     element: <ProtectedRoute allowedRoles={['Employer']}><EditJob/></ProtectedRoute> 
   },
-  // Update the employer jobs applicants route
+  
   {
     path: "/employer/jobs/:id/applicants",
     element: <ProtectedRoute allowedRoles={['Employer']}><EmployerApplicants/></ProtectedRoute> 
   },
 
-  // Jobseeker Routes
+ 
   {
     path: "/jobseeker/applied-jobs",
     element: <ProtectedRoute allowedRoles={['Jobseeker']}><AppliedJobs /></ProtectedRoute> 
   },
 
-  // Auth Routes
+
   {
     path: '/forgot-password',
     element: <ForgotPassword />

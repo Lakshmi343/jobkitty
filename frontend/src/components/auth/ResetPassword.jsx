@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { USER_API_END_POINT } from '@/utils/constant'
+import { USER_API_END_POINT } from '@/utils/constant';
+import { toast } from 'sonner';
+import LoadingSpinner from '../shared/LoadingSpinner';
 
 const ResetPassword = () => {
   const { token } = useParams();
@@ -19,10 +21,10 @@ const ResetPassword = () => {
     try {
       console.log('Current input state:', { token, password });
       const res = await axios.post(`${USER_API_END_POINT}/reset-password`, { token, password });
-      setMessage(res.data.message);
+      toast.success(res.data.message);
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong");
+      toast.error(err.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -46,10 +48,17 @@ const ResetPassword = () => {
         />
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 flex items-center justify-center"
           disabled={loading}
         >
-          {loading ? "Resetting..." : "Reset Password"}
+          {loading ? (
+            <>
+              <LoadingSpinner size={20} color="#ffffff" />
+              <span className="ml-2">Resetting...</span>
+            </>
+          ) : (
+            "Reset Password"
+          )}
         </button>
         {message && <p className="text-green-600 mt-4">{message}</p>}
         {error && <p className="text-red-600 mt-4">{error}</p>}

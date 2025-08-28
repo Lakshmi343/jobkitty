@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Button } from '../ui/button'
-import { ArrowLeft, Loader2, AlertCircle } from 'lucide-react'
+import { ArrowLeft, AlertCircle } from 'lucide-react'
 import { Label } from '../ui/label'
 import { Input } from '../ui/input'
 import axios from 'axios'
@@ -9,6 +9,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useSelector } from 'react-redux'
 import useGetCompanyByIdAdmin from '@/hooks/useGetCompanyByIdAdmin'
+import LoadingSpinner from '../shared/LoadingSpinner'
 
 const CompanySetup = () => {
 	const params = useParams();
@@ -82,8 +83,8 @@ const CompanySetup = () => {
 			<div>
 				<div className='flex items-center justify-center w-screen my-5'>
 					<div className='text-center'>
-						<Loader2 className='mr-2 h-8 w-8 animate-spin mx-auto mb-4' />
-						<p>Loading company data...</p>
+						<LoadingSpinner size={40} />
+						<p className="mt-4">Loading company data...</p>
 					</div>
 				</div>
 			</div>

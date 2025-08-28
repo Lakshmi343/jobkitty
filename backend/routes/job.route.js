@@ -8,8 +8,8 @@ const router = express.Router();
 
 
 // Public routes (for all authenticated users)
-router.route("/get").get(isAuthenticated, getAllJobs);
-router.route("/get/:id").get(isAuthenticated, getJobById);
+router.route("/get").get( getAllJobs);
+router.route("/get/:id").get( getJobById);
 // Employer-specific routes
 router.route("/post").post(isAuthenticated, employerAuth, postJob);
 router.route("/employer/jobs").get(isAuthenticated, employerAuth, getEmployerJobs);

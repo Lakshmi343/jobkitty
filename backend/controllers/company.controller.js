@@ -85,42 +85,33 @@ export const getCompanyById = async (req, res) => {
 }
 
 
+
 export const updateCompany = async (req, res) => {
     try {
-        const { name, description, website, location, companyType, experience } = req.body;
+        const { 
+            name, description, website, location, companyType, experience,
+            contactEmail, contactPhone, foundedYear, numberOfEmployees
+        } = req.body;
         const companyId = req.params.id;
         const userId = req.id;
 
- 
         if (!name) {
-            return res.status(400).json({
-                message: "Company name is required.",
-                success: false
-            });
+            return res.status(400).json({ message: "Company name is required.", success: false });
         }
 
         const existingCompany = await Company.findById(companyId);
         if (!existingCompany) {
-            return res.status(404).json({
-                message: "Company not found.",
-                success: false
-            });
+            return res.status(404).json({ message: "Company not found.", success: false });
         }
 
         if (existingCompany.userId.toString() !== userId) {
-            return res.status(403).json({
-                message: "You can only update your own company.",
-                success: false
-            });
+            return res.status(403).json({ message: "You can only update your own company.", success: false });
         }
 
         if (name !== existingCompany.name) {
             const nameExists = await Company.findOne({ name, _id: { $ne: companyId } });
             if (nameExists) {
-                return res.status(400).json({
-                    message: "Company with this name already exists.",
-                    success: false
-                });
+                return res.status(400).json({ message: "Company with this name already exists.", success: false });
             }
         }
 
@@ -131,9 +122,12 @@ export const updateCompany = async (req, res) => {
             website, 
             location, 
             companyType, 
-            experience: experience ? Number(experience) : undefined
+            experience: experience ? Number(experience) : undefined,
+            contactEmail,
+            contactPhone,
+            foundedYear: foundedYear ? Number(foundedYear) : undefined,
+            numberOfEmployees: numberOfEmployees ? Number(numberOfEmployees) : undefined
         };
-        
 
         if (file) {
             try {
@@ -142,13 +136,10 @@ export const updateCompany = async (req, res) => {
                 updateData.logo = cloudResponse.secure_url;
             } catch (uploadError) {
                 console.error("Logo upload error:", uploadError);
-                return res.status(500).json({
-                    message: "Failed to upload logo.",
-                    success: false
-                });
+                return res.status(500).json({ message: "Failed to upload logo.", success: false });
             }
         }
-    
+
         const company = await Company.findByIdAndUpdate(companyId, updateData, { new: true });
 
         return res.status(200).json({
@@ -159,10 +150,7 @@ export const updateCompany = async (req, res) => {
 
     } catch (error) {
         console.error("Update company error:", error);
-        return res.status(500).json({
-            message: "Internal server error",
-            success: false
-        });
+        return res.status(500).json({ message: "Internal server error", success: false });
     }
 }
 

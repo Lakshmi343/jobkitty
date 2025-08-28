@@ -9,6 +9,7 @@ import { Input } from '../ui/input';
 import {  Briefcase,  Search,  MoreHorizontal,  CheckCircle,  XCircle, Eye, Trash2, Clock} from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,} from '../ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
+import LoadingSpinner from '../shared/LoadingSpinner';
 
 const AdminJobs = () => {
 
@@ -127,7 +128,7 @@ const AdminJobs = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+        <LoadingSpinner size={60} />
       </div>
     );
   }

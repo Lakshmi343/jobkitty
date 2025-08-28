@@ -12,7 +12,8 @@ import axios from 'axios';
 import { JOB_API_END_POINT, CATEGORY_API_END_POINT, USER_API_END_POINT } from '@/utils/constant';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { Loader2,  Briefcase, MapPin,  DollarSign, Clock, Users,  Building,  FileText,ArrowLeft,Plus,CheckCircle, AlertCircle} from 'lucide-react';
+import { Briefcase, MapPin,  DollarSign, Clock, Users,  Building,  FileText,ArrowLeft,Plus,CheckCircle, AlertCircle} from 'lucide-react';
+import LoadingSpinner from '../shared/LoadingSpinner';
 
 const locations = [
     "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
@@ -401,8 +402,17 @@ const PostJob = () => {
                             </Button>
                         ) : (
                             <Button onClick={submitHandler} disabled={loading} className="bg-green-600 hover:bg-green-700">
-                                {loading ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <CheckCircle className='mr-2 h-4 w-4' />}
+                                {loading ? (
+                                    <div className="flex items-center justify-center">
+                                        <LoadingSpinner size={20} color="#ffffff" />
+                                        <span className="ml-2">Posting...</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <CheckCircle className='mr-2 h-4 w-4' />
                                         Post Job
+                                    </>
+                                )}
                             </Button>
                         )}
                     </div>

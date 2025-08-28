@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { USER_API_END_POINT } from '@/utils/constant'
+import { USER_API_END_POINT } from '@/utils/constant';
+import { toast } from 'sonner';
+import LoadingSpinner from '../shared/LoadingSpinner';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -15,9 +17,9 @@ const ForgotPassword = () => {
     setError("");
     try {
       const res = await axios.post(`${USER_API_END_POINT}/forgot-password`, { email });
-      setMessage(res.data.message);
+      toast.success(res.data.message);
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong");
+      toast.error(err.response?.data?.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -39,10 +41,17 @@ const ForgotPassword = () => {
         />
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 flex items-center justify-center"
           disabled={loading}
         >
-          {loading ? "Sending..." : "Send Reset Link"}
+          {loading ? (
+            <>
+              <LoadingSpinner size={20} color="#ffffff" />
+              <span className="ml-2">Sending...</span>
+            </>
+          ) : (
+            "Send Reset Link"
+          )}
         </button>
         {message && <p className="text-green-600 mt-4">{message}</p>}
         {error && <p className="text-red-600 mt-4">{error}</p>}

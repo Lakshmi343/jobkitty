@@ -7,7 +7,7 @@ import axios from 'axios'
 import { ADMIN_API_END_POINT, CATEGORY_API_END_POINT } from '@/utils/constant'
 import { toast } from 'sonner'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Loader2 } from 'lucide-react'
+import LoadingSpinner from '../shared/LoadingSpinner'
 
 const locations = [
 	"Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
@@ -109,7 +109,7 @@ const AdminEditJob = () => {
 	if (fetching) {
 		return (
 			<div className='flex items-center justify-center w-full py-10'>
-				<Loader2 className='mr-2 h-8 w-8 animate-spin' />
+				<LoadingSpinner size={40} />
 			</div>
 		)
 	}
@@ -175,8 +175,14 @@ const AdminEditJob = () => {
 				</div>
 				<div className='md:col-span-2'>
 					<Button type='submit' className='w-full' disabled={loading}>
-						{loading ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : null}
-						{loading ? 'Updating...' : 'Update Job'}
+						{loading ? (
+							<div className="flex items-center justify-center">
+								<LoadingSpinner size={20} color="#ffffff" />
+								<span className="ml-2">Updating...</span>
+							</div>
+						) : (
+							'Update Job'
+						)}
 					</Button>
 				</div>
 			</form>
