@@ -4,6 +4,8 @@ import { ADMIN_API_END_POINT } from '../../utils/constant';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { 
   Users, 
   Building2, 
@@ -21,7 +23,21 @@ import {
   RefreshCw,
   Flag,
   MapPin,
-  Star
+  Star,
+  ArrowUpRight,
+  ArrowDownRight,
+  Zap,
+  Shield,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Filter,
+  Search,
+  MoreHorizontal,
+  Globe,
+  Smartphone,
+  Monitor,
+  Tablet
 } from 'lucide-react';
 
 const AdminAnalytics = () => {
@@ -95,88 +111,125 @@ const AdminAnalytics = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Enhanced Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Analytics Dashboard</h1>
-              <p className="text-gray-600 mt-2">Comprehensive insights into platform performance and user activity.</p>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Analytics Dashboard
+              </h1>
+              <p className="text-gray-600 mt-2 text-lg">Real-time insights into platform performance and user engagement</p>
+              <div className="flex items-center gap-4 mt-3">
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  Live Data
+                </div>
+                <div className="text-sm text-gray-500">
+                  Last updated: {new Date().toLocaleTimeString()}
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-4">
-              <select
-                value={timeRange}
-                onChange={(e) => setTimeRange(e.target.value)}
-                className="border rounded-lg px-3 py-2"
-              >
-                <option value="week">Last Week</option>
-                <option value="month">Last Month</option>
-                <option value="quarter">Last Quarter</option>
-                <option value="year">Last Year</option>
-              </select>
-              <Button onClick={fetchAnalyticsData} variant="outline">
+              <Tabs value={timeRange} onValueChange={setTimeRange} className="w-auto">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="week" className="text-xs">Week</TabsTrigger>
+                  <TabsTrigger value="month" className="text-xs">Month</TabsTrigger>
+                  <TabsTrigger value="quarter" className="text-xs">Quarter</TabsTrigger>
+                  <TabsTrigger value="year" className="text-xs">Year</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <Button onClick={fetchAnalyticsData} variant="outline" className="shadow-sm">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
+              </Button>
+              <Button variant="outline" className="shadow-sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export
               </Button>
             </div>
           </div>
         </div>
 
-        {/* Key Metrics */}
+        {/* Enhanced Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100 hover:shadow-xl transition-all duration-300 cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-blue-500" />
+              <CardTitle className="text-sm font-medium text-blue-800">Total Users</CardTitle>
+              <div className="p-2 bg-blue-500 rounded-lg">
+                <Users className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboardStats?.totalUsers || 0}</div>
-              <div className="flex items-center text-xs text-muted-foreground">
-                <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                +{analytics?.recentActivity?.users || 0} this week
+              <div className="text-3xl font-bold text-blue-900">{dashboardStats?.totalUsers || 0}</div>
+              <div className="flex items-center text-xs mt-2">
+                <ArrowUpRight className="h-3 w-3 mr-1 text-green-600" />
+                <span className="text-green-600 font-medium">+{analytics?.recentActivity?.users || 0}</span>
+                <span className="text-blue-600 ml-1">this week</span>
+              </div>
+              <div className="mt-2 bg-blue-200 rounded-full h-1">
+                <div className="bg-blue-500 h-1 rounded-full" style={{width: '75%'}}></div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100 hover:shadow-xl transition-all duration-300 cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Jobs</CardTitle>
-              <Briefcase className="h-4 w-4 text-green-500" />
+              <CardTitle className="text-sm font-medium text-green-800">Total Jobs</CardTitle>
+              <div className="p-2 bg-green-500 rounded-lg">
+                <Briefcase className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboardStats?.totalJobs || 0}</div>
-              <div className="flex items-center text-xs text-muted-foreground">
-                <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                +{analytics?.recentActivity?.jobs || 0} this week
+              <div className="text-3xl font-bold text-green-900">{dashboardStats?.totalJobs || 0}</div>
+              <div className="flex items-center text-xs mt-2">
+                <ArrowUpRight className="h-3 w-3 mr-1 text-green-600" />
+                <span className="text-green-600 font-medium">+{analytics?.recentActivity?.jobs || 0}</span>
+                <span className="text-green-600 ml-1">this week</span>
+              </div>
+              <div className="mt-2 bg-green-200 rounded-full h-1">
+                <div className="bg-green-500 h-1 rounded-full" style={{width: '85%'}}></div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-purple-50 to-purple-100 hover:shadow-xl transition-all duration-300 cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Applications</CardTitle>
-              <FileText className="h-4 w-4 text-purple-500" />
+              <CardTitle className="text-sm font-medium text-purple-800">Applications</CardTitle>
+              <div className="p-2 bg-purple-500 rounded-lg">
+                <FileText className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dashboardStats?.totalApplications || 0}</div>
-              <div className="flex items-center text-xs text-muted-foreground">
-                <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                +{analytics?.recentActivity?.applications || 0} this week
+              <div className="text-3xl font-bold text-purple-900">{dashboardStats?.totalApplications || 0}</div>
+              <div className="flex items-center text-xs mt-2">
+                <ArrowUpRight className="h-3 w-3 mr-1 text-green-600" />
+                <span className="text-green-600 font-medium">+{analytics?.recentActivity?.applications || 0}</span>
+                <span className="text-purple-600 ml-1">this week</span>
+              </div>
+              <div className="mt-2 bg-purple-200 rounded-full h-1">
+                <div className="bg-purple-500 h-1 rounded-full" style={{width: '65%'}}></div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-lg bg-gradient-to-br from-red-50 to-red-100 hover:shadow-xl transition-all duration-300 cursor-pointer">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Reports</CardTitle>
-              <Flag className="h-4 w-4 text-red-500" />
+              <CardTitle className="text-sm font-medium text-red-800">Active Reports</CardTitle>
+              <div className="p-2 bg-red-500 rounded-lg">
+                <Flag className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analytics?.recentActivity?.reports || 0}</div>
-              <div className="flex items-center text-xs text-muted-foreground">
-                <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                +{analytics?.recentActivity?.reports || 0} this week
+              <div className="text-3xl font-bold text-red-900">{analytics?.recentActivity?.reports || 0}</div>
+              <div className="flex items-center text-xs mt-2">
+                <Shield className="h-3 w-3 mr-1 text-blue-600" />
+                <span className="text-blue-600 font-medium">Monitoring</span>
+                <span className="text-red-600 ml-1">security</span>
+              </div>
+              <div className="mt-2 bg-red-200 rounded-full h-1">
+                <div className="bg-red-500 h-1 rounded-full" style={{width: '25%'}}></div>
               </div>
             </CardContent>
           </Card>
@@ -297,6 +350,333 @@ const AdminAnalytics = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Interactive Analytics Tabs */}
+        <Card className="mb-8 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50">
+            <CardTitle className="text-xl font-bold text-gray-800">Platform Analytics</CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <Tabs defaultValue="overview" className="w-full">
+              <TabsList className="grid w-full grid-cols-4 mb-6">
+                <TabsTrigger value="overview" className="flex items-center gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Overview
+                </TabsTrigger>
+                <TabsTrigger value="jobs" className="flex items-center gap-2">
+                  <Briefcase className="h-4 w-4" />
+                  Jobs
+                </TabsTrigger>
+                <TabsTrigger value="users" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Users
+                </TabsTrigger>
+                <TabsTrigger value="reports" className="flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  Reports
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="overview" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Enhanced Job Status Chart */}
+                  <Card className="border-0 shadow-md">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <PieChart className="h-5 w-5 text-blue-500" />
+                        Job Status Distribution
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {analytics?.jobStatusDistribution?.map((status, index) => {
+                          const percentage = analytics?.jobStatusDistribution ? 
+                            Math.round((status.count / analytics.jobStatusDistribution.reduce((sum, s) => sum + s.count, 0)) * 100) : 0;
+                          return (
+                            <div key={index} className="group hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-4 h-4 rounded-full shadow-sm ${
+                                    status.status === 'approved' ? 'bg-green-500' :
+                                    status.status === 'pending' ? 'bg-yellow-500' :
+                                    'bg-red-500'
+                                  }`}></div>
+                                  <span className="capitalize font-medium">{status.status}</span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-bold text-lg">{status.count}</span>
+                                  <span className="text-sm text-gray-500 ml-2">({percentage}%)</span>
+                                </div>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full transition-all duration-500 ${
+                                    status.status === 'approved' ? 'bg-green-500' :
+                                    status.status === 'pending' ? 'bg-yellow-500' :
+                                    'bg-red-500'
+                                  }`}
+                                  style={{width: `${percentage}%`}}
+                                ></div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Enhanced User Role Chart */}
+                  <Card className="border-0 shadow-md">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="flex items-center gap-2 text-lg">
+                        <Users className="h-5 w-5 text-purple-500" />
+                        User Role Distribution
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {analytics?.userRoleDistribution?.map((role, index) => {
+                          const percentage = analytics?.userRoleDistribution ? 
+                            Math.round((role.count / analytics.userRoleDistribution.reduce((sum, r) => sum + r.count, 0)) * 100) : 0;
+                          return (
+                            <div key={index} className="group hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-4 h-4 rounded-full shadow-sm ${
+                                    role.role === 'job_seeker' ? 'bg-blue-500' :
+                                    role.role === 'employer' ? 'bg-purple-500' :
+                                    'bg-gray-500'
+                                  }`}></div>
+                                  <span className="capitalize font-medium">{role.role.replace('_', ' ')}</span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-bold text-lg">{role.count}</span>
+                                  <span className="text-sm text-gray-500 ml-2">({percentage}%)</span>
+                                </div>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full transition-all duration-500 ${
+                                    role.role === 'job_seeker' ? 'bg-blue-500' :
+                                    role.role === 'employer' ? 'bg-purple-500' :
+                                    'bg-gray-500'
+                                  }`}
+                                  style={{width: `${percentage}%`}}
+                                ></div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="jobs" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card className="border-0 shadow-md">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-green-500" />
+                        Monthly Job Trends
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {analytics?.monthlyTrends?.jobs?.map((month, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                            <span className="font-medium">{month.month}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                                  style={{width: `${Math.min(month.count / 50 * 100, 100)}%`}}
+                                ></div>
+                              </div>
+                              <span className="font-bold text-green-600">{month.count}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-0 shadow-md">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Building className="h-5 w-5 text-blue-500" />
+                        Top Categories
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {analytics?.topCategories?.map((category, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                            <span className="font-medium">{category.name}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                                  style={{width: `${Math.min(category.count / 30 * 100, 100)}%`}}
+                                ></div>
+                              </div>
+                              <span className="font-bold text-blue-600">{category.count}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="users" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card className="border-0 shadow-md">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <ArrowUpRight className="h-5 w-5 text-purple-500" />
+                        User Growth Trends
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {analytics?.monthlyTrends?.users?.map((month, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                            <span className="font-medium">{month.month}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-purple-500 h-2 rounded-full transition-all duration-300"
+                                  style={{width: `${Math.min(month.count / 100 * 100, 100)}%`}}
+                                ></div>
+                              </div>
+                              <span className="font-bold text-purple-600">{month.count}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-0 shadow-md">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <MapPin className="h-5 w-5 text-orange-500" />
+                        Top Locations
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        {analytics?.topLocations?.map((location, index) => (
+                          <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded">
+                            <span className="font-medium">{location.name}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-orange-500 h-2 rounded-full transition-all duration-300"
+                                  style={{width: `${Math.min(location.count / 50 * 100, 100)}%`}}
+                                ></div>
+                              </div>
+                              <span className="font-bold text-orange-600">{location.count}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="reports" className="space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <Card className="border-0 shadow-md">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5 text-red-500" />
+                        Report Status Distribution
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {analytics?.reportStatusDistribution?.map((status, index) => {
+                          const percentage = analytics?.reportStatusDistribution ? 
+                            Math.round((status.count / analytics.reportStatusDistribution.reduce((sum, s) => sum + s.count, 0)) * 100) : 0;
+                          return (
+                            <div key={index} className="group hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-3">
+                                  <div className={`w-4 h-4 rounded-full shadow-sm ${
+                                    status.status === 'resolved' ? 'bg-green-500' :
+                                    status.status === 'pending' ? 'bg-yellow-500' :
+                                    'bg-red-500'
+                                  }`}></div>
+                                  <span className="capitalize font-medium">{status.status}</span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-bold text-lg">{status.count}</span>
+                                  <span className="text-sm text-gray-500 ml-2">({percentage}%)</span>
+                                </div>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className={`h-2 rounded-full transition-all duration-500 ${
+                                    status.status === 'resolved' ? 'bg-green-500' :
+                                    status.status === 'pending' ? 'bg-yellow-500' :
+                                    'bg-red-500'
+                                  }`}
+                                  style={{width: `${percentage}%`}}
+                                ></div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-0 shadow-md">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Flag className="h-5 w-5 text-purple-500" />
+                        Report Type Distribution
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {analytics?.reportTypeDistribution?.map((type, index) => {
+                          const percentage = analytics?.reportTypeDistribution ? 
+                            Math.round((type.count / analytics.reportTypeDistribution.reduce((sum, t) => sum + t.count, 0)) * 100) : 0;
+                          return (
+                            <div key={index} className="group hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                              <div className="flex items-center justify-between mb-2">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-4 h-4 rounded-full bg-purple-500 shadow-sm"></div>
+                                  <span className="capitalize font-medium">{type.type.replace('_', ' ')}</span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-bold text-lg">{type.count}</span>
+                                  <span className="text-sm text-gray-500 ml-2">({percentage}%)</span>
+                                </div>
+                              </div>
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div 
+                                  className="bg-purple-500 h-2 rounded-full transition-all duration-500"
+                                  style={{width: `${percentage}%`}}
+                                ></div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
 
         {/* Monthly Trends */}
         <Card className="mb-8">

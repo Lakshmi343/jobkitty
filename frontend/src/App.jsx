@@ -1,5 +1,6 @@
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { setupGlobalInterceptors } from './utils/axiosSetup'
 import Navbar from './components/shared/Navbar'
 import Login from './components/auth/Login'
 import Signup from './components/auth/Signup'
@@ -33,7 +34,10 @@ import AdminAnalytics from './components/admin/AdminAnalytics'
 import AdminApplications from './components/admin/AdminApplications'
 import AdminCVManagement from './components/admin/AdminCVManagement'
 import EmployerJobs from './components/employer/EmployerJobs'
-
+import BlockedAccount from './components/BlockedAccount'
+import UserManagementDashboard from './components/admin/UserManagementDashboard'
+import JobseekerManagement from './components/admin/JobseekerManagement'
+import EmployerManagement from './components/admin/EmployerManagement'
 
 import EmployerProfile from './components/employer/EmployerProfile'
 
@@ -60,6 +64,10 @@ const appRouter = createBrowserRouter([
   {
     path: '/contact',
     element: <Contact />
+  },
+  {
+    path: '/blocked-account',
+    element: <BlockedAccount />
   },
   {
     path: "/jobs",
@@ -194,6 +202,36 @@ const appRouter = createBrowserRouter([
       </AdminProtectedRoute>
     )
   },
+  {
+    path: "/admin/user-management",
+    element: (
+      <AdminProtectedRoute allowedRoles={['superadmin']}>
+        <AdminLayout>
+          <UserManagementDashboard />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/jobseeker-management",
+    element: (
+      <AdminProtectedRoute>
+        <AdminLayout>
+          <JobseekerManagement />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/employer-management",
+    element: (
+      <AdminProtectedRoute>
+        <AdminLayout>
+          <EmployerManagement />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
 
 
   {
@@ -240,6 +278,9 @@ const appRouter = createBrowserRouter([
 ])
 
 function App() {
+  // Setup global axios interceptors on app initialization
+  setupGlobalInterceptors();
+  
   return (
     <div>
       <RouterProvider router={appRouter} />

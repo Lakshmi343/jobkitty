@@ -23,6 +23,8 @@ const Login = () => {
   const dispatch = useDispatch();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [acceptCode, setAcceptCode] = useState("");
 
   const changeEventHandler = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
@@ -45,10 +47,17 @@ const Login = () => {
     if (!validateInput()) return;
     try {
       dispatch(setLoading(true));
-      const res = await axios.post(`${USER_API_END_POINT}/login`, {
+      const loginData = {
         email: input.email,
         password: input.password,
-      }, {
+      };
+      
+      // Add accept code if user is blocked and provided a code
+      if (isBlocked && acceptCode) {
+        loginData.acceptCode = acceptCode;
+      }
+      
+      const res = await axios.post(`${USER_API_END_POINT}/login`, loginData, {
         headers: {
           "Content-Type": "application/json"
         },
@@ -71,6 +80,15 @@ const Login = () => {
       }
     } catch (error) {
       console.log(error);
+      
+      // Check if account is blocked
+      if (error.response?.status === 403 && error.response?.data?.blocked) {
+        // Show blocked message and enable accept code input
+        setIsBlocked(true);
+        toast.error("Your account has been blocked by the admin. You cannot log in until the block is removed.");
+        return;
+      }
+      
       toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
       dispatch(setLoading(false));
@@ -133,6 +151,26 @@ const Login = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Accept Code (shown only when blocked) */}
+              {isBlocked && (
+                <div className='space-y-2'>
+                  <Label htmlFor="acceptCode" className="text-sm font-medium text-red-700">Accept Code</Label>
+                  <div className="relative">
+                    <Input
+                      id="acceptCode"
+                      type="text"
+                      value={acceptCode}
+                      onChange={(e) => setAcceptCode(e.target.value)}
+                      placeholder="Enter admin-provided accept code"
+                      className="py-3 border-red-300 focus:border-red-500 focus:ring-red-500"
+                    />
+                  </div>
+                  <p className="text-xs text-red-600">
+                    Your account is blocked. Enter the accept code provided by the admin to regain access.
+                  </p>
+                </div>
+              )}
 
 
               {/* Submit Button */}

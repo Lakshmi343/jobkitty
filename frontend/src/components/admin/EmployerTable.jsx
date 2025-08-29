@@ -1,151 +1,9 @@
-// import React, { useEffect, useState } from "react";
-// import axios from "axios";
-// import { Button } from "../ui/button";
-// import { Badge } from "../ui/badge";
-// import { 
-//   UserCheck, UserX, Trash2, Globe, MapPin, Phone, Mail, MoreHorizontal 
-// } from "lucide-react";
-// import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
 
-// const EmployerTable = () => {
-//   const [employers, setEmployers] = useState([]);
-//   const [selectedEmployer, setSelectedEmployer] = useState(null);
-
-//   // Fetch employers from your API
-//   useEffect(() => {
-//     const fetchEmployers = async () => {
-//       try {
-//         const res = await axios.get("http://localhost:8000/api/v1/user/employers", { withCredentials: true });
-//         setEmployers(res.data.employers || []);
-//       } catch (error) {
-//         console.error("Failed to fetch employers:", error);
-//       }
-//     };
-//     fetchEmployers();
-//   }, []);
-
-//   const getStatusColor = (status) => {
-//     switch (status) {
-//       case "active": return "bg-green-100 text-green-800";
-//       case "inactive": return "bg-red-100 text-red-800";
-//       case "pending": return "bg-yellow-100 text-yellow-800";
-//       default: return "bg-gray-100 text-gray-800";
-//     }
-//   };
-
-//   const updateUserStatus = (id, status) => {
-//     console.log(`Update employer ${id} to ${status}`);
-//     // Add your API call here to update status
-//   };
-
-//   const deleteUser = (id) => {
-//     console.log(`Delete employer ${id}`);
-//     // Add your API call here to delete employer
-//   };
-
-//   return (
-//     <div className="min-h-screen p-6 bg-gray-50">
-//       <div className="max-w-7xl mx-auto">
-//         <h1 className="text-3xl font-bold mb-6">Employer Management</h1>
-
-//         <div className="overflow-x-auto">
-//           <table className="w-full text-sm">
-//             <thead>
-//               <tr className="border-b bg-gray-100">
-//                 <th className="p-3">Employer</th>
-//                 <th className="p-3">Email</th>
-//                 <th className="p-3">Phone</th>
-//                 <th className="p-3">Company</th>
-//                 <th className="p-3">Status</th>
-//                 <th className="p-3">Actions</th>
-//               </tr>
-//             </thead>
-//             <tbody>
-//               {employers.length > 0 ? employers.map((user) => {
-//                 const company = user.profile?.company;
-//                 return (
-//                   <tr key={user._id} className="border-b hover:bg-gray-50">
-//                     <td className="p-3 font-medium cursor-pointer" onClick={() => setSelectedEmployer(user)}>
-//                       {user.fullname}
-//                     </td>
-//                     <td className="p-3 flex items-center gap-1"><Mail className="h-4 w-4 text-gray-500"/> {user.email}</td>
-//                     <td className="p-3 flex items-center gap-1"><Phone className="h-4 w-4 text-gray-500"/> {user.phoneNumber}</td>
-//                     <td className="p-3">{company?.name || "-"}</td>
-//                     <td className="p-3">
-//                       <Badge className={getStatusColor(user.status)}>{user.status}</Badge>
-//                     </td>
-//                     <td className="p-3">
-//                       <Button variant="outline" size="sm" onClick={() => setSelectedEmployer(user)}>
-//                         <MoreHorizontal className="h-4 w-4" />
-//                         Details
-//                       </Button>
-//                     </td>
-//                   </tr>
-//                 );
-//               }) : (
-//                 <tr>
-//                   <td colSpan={6} className="text-center py-6 text-gray-500">No employers found</td>
-//                 </tr>
-//               )}
-//             </tbody>
-//           </table>
-//         </div>
-
-//         {/* Modal for More Details */}
-//         <Dialog open={!!selectedEmployer} onOpenChange={() => setSelectedEmployer(null)}>
-//           <DialogContent className="max-w-xl">
-//             <DialogHeader>
-//               <DialogTitle>Employer Details</DialogTitle>
-//             </DialogHeader>
-
-//             {selectedEmployer && (
-//               <div className="space-y-3 text-sm">
-//                 <p><strong>Name:</strong> {selectedEmployer.fullname}</p>
-//                 <p><strong>Email:</strong> {selectedEmployer.email}</p>
-//                 <p><strong>Phone:</strong> {selectedEmployer.phoneNumber}</p>
-//                 <p><strong>Status:</strong> 
-//                   <Badge className={`ml-2 ${getStatusColor(selectedEmployer.status)}`}>
-//                     {selectedEmployer.status}
-//                   </Badge>
-//                 </p>
-
-//                 <h4 className="font-medium mt-3">Company Info</h4>
-//                 {selectedEmployer.profile?.company ? (
-//                   <div className="space-y-1 text-sm">
-//                     <p><strong>Name:</strong> {selectedEmployer.profile.company.name}</p>
-//                     <p><strong>Type:</strong> {selectedEmployer.profile.company.companyType}</p>
-//                     <p><strong>Employees:</strong> {selectedEmployer.profile.company.numberOfEmployees}</p>
-//                     <p><strong>Location:</strong> {selectedEmployer.profile.company.location}</p>
-//                     {selectedEmployer.profile.company.website && (
-//                       <p>
-//                         <strong>Website:</strong> <a href={selectedEmployer.profile.company.website} target="_blank" rel="noreferrer" className="text-blue-600 underline flex items-center gap-1"><Globe className="h-4 w-4"/> Visit</a>
-//                       </p>
-//                     )}
-//                   </div>
-//                 ) : (
-//                   <p>N/A</p>
-//                 )}
-//               </div>
-//             )}
-
-//             <DialogFooter className="flex flex-col gap-2">
-//               <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => updateUserStatus(selectedEmployer._id, "active")}>Activate</Button>
-//               <Button className="w-full bg-red-600 hover:bg-red-700" onClick={() => updateUserStatus(selectedEmployer._id, "inactive")}>Deactivate</Button>
-//               <Button className="w-full bg-gray-200 hover:bg-gray-300" onClick={() => deleteUser(selectedEmployer._id)}>Delete</Button>
-//               <Button variant="outline" className="w-full" onClick={() => setSelectedEmployer(null)}>Close</Button>
-//             </DialogFooter>
-//           </DialogContent>
-//         </Dialog>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default EmployerTable;
 
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { 
@@ -208,43 +66,56 @@ const EmployerTable = () => {
 
   const handleStatusUpdate = async (id, status) => {
     try {
-      // Add your API call here to update status
-      console.log(`Update employer ${id} to ${status}`);
-      // Example: await axios.patch(`/api/v1/user/${id}/status`, { status }, { withCredentials: true });
+      const response = await axios.patch(
+        `http://localhost:8000/api/v1/admin/users/${id}/status`, 
+        { status }, 
+        { withCredentials: true }
+      );
       
-      // Update local state
-      setEmployers(employers.map(employer => 
-        employer._id === id ? { ...employer, status } : employer
-      ));
-      
-      // If we're viewing this employer's details, update that too
-      if (selectedEmployer && selectedEmployer._id === id) {
-        setSelectedEmployer({ ...selectedEmployer, status });
+      if (response.data.success) {
+        // Update local state
+        setEmployers(employers.map(employer => 
+          employer._id === id ? { ...employer, status } : employer
+        ));
+        
+        // If we're viewing this employer's details, update that too
+        if (selectedEmployer && selectedEmployer._id === id) {
+          setSelectedEmployer({ ...selectedEmployer, status });
+        }
+        
+        toast.success(`Employer ${status === 'active' ? 'activated' : 'blocked'} successfully`);
       }
       
       setActionDialog({ open: false, action: '', title: '', description: '' });
     } catch (error) {
       console.error("Failed to update status:", error);
+      toast.error("Failed to update employer status");
     }
   };
 
   const handleDeleteUser = async (id) => {
     try {
-      // Add your API call here to delete employer
-      console.log(`Delete employer ${id}`);
-      // Example: await axios.delete(`/api/v1/user/${id}`, { withCredentials: true });
+      const response = await axios.delete(
+        `http://localhost:8000/api/v1/admin/users/${id}`, 
+        { withCredentials: true }
+      );
       
-      // Update local state
-      setEmployers(employers.filter(employer => employer._id !== id));
-      
-      // If we're viewing this employer's details, close the dialog
-      if (selectedEmployer && selectedEmployer._id === id) {
-        setSelectedEmployer(null);
+      if (response.data.success) {
+        // Update local state
+        setEmployers(employers.filter(employer => employer._id !== id));
+        
+        // If we're viewing this employer's details, close the dialog
+        if (selectedEmployer && selectedEmployer._id === id) {
+          setSelectedEmployer(null);
+        }
+        
+        toast.success("Employer and associated company/jobs deleted successfully");
       }
       
       setActionDialog({ open: false, action: '', title: '', description: '' });
     } catch (error) {
       console.error("Failed to delete employer:", error);
+      toast.error("Failed to delete employer");
     }
   };
 
@@ -255,15 +126,15 @@ const EmployerTable = () => {
     switch(action) {
       case 'activate':
         title = 'Activate Employer Account';
-        description = `Are you sure you want to activate ${employer.fullname}'s account?`;
+        description = `Are you sure you want to activate ${employer.fullname}'s account? This will allow them to access the website and post jobs.`;
         break;
       case 'deactivate':
-        title = 'Deactivate Employer Account';
-        description = `Are you sure you want to deactivate ${employer.fullname}'s account?`;
+        title = 'Block Employer Account';
+        description = `Are you sure you want to block ${employer.fullname}'s account? This will restrict their access to the website until you unblock them. After unblocking, they can use it again as an employer or jobseeker.`;
         break;
       case 'delete':
         title = 'Delete Employer Account';
-        description = `Are you sure you want to delete ${employer.fullname}'s account? This action cannot be undone.`;
+        description = `You are viewing this employer's details and their registered company information. Deleting this employer will permanently remove their company and all job posts. This action cannot be undone.`;
         break;
       default:
         return;

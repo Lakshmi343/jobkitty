@@ -184,13 +184,22 @@ export const updateUserStatus = async (req, res) => {
   try {
     const { userId } = req.params;
     const { status } = req.body;
+    const { admin } = req;
 
     const user = await User.findByIdAndUpdate(userId, { status }, { new: true });
     if (!user) {
       return res.status(404).json({ message: 'User not found', success: false });
     }
 
-    res.status(200).json({ success: true, user });
+    // Log activity
+    const statusAction = status === 'active' ? 'activated' : 'blocked';
+    await logActivity(admin._id, 'user_status_updated', 'user', userId, `User ${user.fullname} ${statusAction}`);
+
+    res.status(200).json({ 
+      success: true, 
+      user,
+      message: `User ${statusAction} successfully`
+    });
   } catch (error) {
     console.error('Update user status error:', error);
     res.status(500).json({ message: 'Server error', success: false });
@@ -202,13 +211,45 @@ export const updateUserStatus = async (req, res) => {
 export const deleteUser = async (req, res) => {
   try {
     const { userId } = req.params;
-    const user = await User.findByIdAndDelete(userId);
+    const { admin } = req;
     
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found', success: false });
     }
 
-    res.status(200).json({ message: 'User deleted successfully', success: true });
+    // If user is an employer, cascade delete their company and job posts
+    if (user.role === 'employer') {
+      // Find and delete company registered by this employer
+      const company = await Company.findOne({ userId: userId });
+      if (company) {
+        // Delete all jobs posted by this company
+        await Job.deleteMany({ company: company._id });
+        
+        // Delete all applications for jobs from this company
+        await Application.deleteMany({ job: { $in: await Job.find({ company: company._id }).select('_id') } });
+        
+        // Delete the company
+        await Company.findByIdAndDelete(company._id);
+      }
+      
+      // Delete any jobs directly created by this user
+      await Job.deleteMany({ created_by: userId });
+    }
+    
+    // Delete all applications made by this user (if jobseeker)
+    await Application.deleteMany({ applicant: userId });
+    
+    // Finally delete the user
+    await User.findByIdAndDelete(userId);
+    
+    // Log activity
+    await logActivity(admin._id, 'user_deleted', 'user', userId, `${user.role} ${user.fullname} deleted with cascade`);
+
+    res.status(200).json({ 
+      message: 'User and associated data deleted successfully', 
+      success: true 
+    });
   } catch (error) {
     console.error('Delete user error:', error);
     res.status(500).json({ message: 'Server error', success: false });

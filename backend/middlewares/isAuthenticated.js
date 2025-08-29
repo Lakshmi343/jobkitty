@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { User } from "../models/user.model.js";
 
 const isAuthenticated = async (req, res, next) => {
     try {
@@ -16,7 +17,26 @@ const isAuthenticated = async (req, res, next) => {
                 success:false
             })
         };
+        
+        // Check if user account is blocked
+        const user = await User.findById(decode.userId);
+        if (!user) {
+            return res.status(401).json({
+                message: "User not found",
+                success: false
+            });
+        }
+        
+        if (user.status === 'blocked') {
+            return res.status(403).json({
+                message: "Your account has been blocked by the admin. Whether you are an employer or a jobseeker, you cannot log in or use the website until the block is removed.",
+                success: false,
+                blocked: true
+            });
+        }
+        
         req.id = decode.userId;
+        req.user = user;
         next();
     } catch (error) {
         console.log(error);

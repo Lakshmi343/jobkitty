@@ -14,13 +14,16 @@ const AdminLayout = ({ children }) => {
 
   const baseNavigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-  { name: 'CV Management', href: '/admin/cv-management', icon: FolderOpen },
-  { name: 'Jobseekers', href: '/admin/jobseekers', icon: Users },
-  { name: 'Employers', href: '/admin/employers', icon: Building2 },
+ 
+  { name: 'Jobseeker Management', href: '/admin/jobseeker-management', icon: Users },
+  { name: 'Employer Management', href: '/admin/employer-management', icon: Building2 },
+
   { name: 'Companies', href: '/admin/companies', icon: Building2 },
   { name: 'Jobs', href: '/admin/jobs', icon: Briefcase },
   { name: 'Applications', href: '/admin/applications', icon: FileText },
+  { name: 'CV Management', href: '/admin/cv-management', icon: FolderOpen },
   { name: 'Categories', href: '/admin/categories', icon: Settings },
+
   { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
 ];
 

@@ -73,7 +73,7 @@ export const register = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body; // 👈 no role here
+    const { email, password, acceptCode } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -96,6 +96,32 @@ export const login = async (req, res) => {
         message: "Invalid email or password.",
         success: false
       });
+    }
+
+    // Check if user account is blocked
+    if (user.status === 'blocked') {
+      // Check if accept code is provided and valid
+      if (acceptCode) {
+        const validAcceptCode = process.env.ADMIN_ACCEPT_CODE || 'ADMIN2024';
+        if (acceptCode === validAcceptCode) {
+          // Temporarily allow login with accept code - unblock the user
+          user.status = 'active';
+          await user.save();
+          console.log(`User ${user.email} unblocked via accept code`);
+        } else {
+          return res.status(403).json({
+            message: "Invalid accept code. Please contact admin for the correct code.",
+            success: false,
+            blocked: true
+          });
+        }
+      } else {
+        return res.status(403).json({
+          message: "Your account has been blocked by the admin. Whether you are an employer or a jobseeker, you cannot log in or use the website until the block is removed.",
+          success: false,
+          blocked: true
+        });
+      }
     }
 
     const tokenData = { userId: user._id };
