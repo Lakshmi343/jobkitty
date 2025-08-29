@@ -6,13 +6,16 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Shield } from 'lucide-react';
+import { Shield, Eye, EyeOff } from 'lucide-react';
+import { tokenManager } from '../../utils/tokenManager';
+import { toast } from 'sonner';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -23,13 +26,20 @@ const AdminLogin = () => {
     try {
       const response = await axios.post(`${ADMIN_API_END_POINT}/login`, { email, password });
       if (response.data.success) {
-        localStorage.setItem('adminToken', response.data.token);
+        // Store tokens using token manager
+        tokenManager.setTokens(response.data.accessToken, response.data.refreshToken);
         localStorage.setItem('adminRole', response.data.role);
         localStorage.setItem('admin', JSON.stringify(response.data.admin));
+        
+        // Setup token interceptors
+        tokenManager.setupInterceptors();
+        
+        toast.success('Welcome to Admin Dashboard!');
         navigate('/admin/dashboard');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
+      toast.error('Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -74,14 +84,23 @@ const AdminLogin = () => {
               
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
               
               <Button 

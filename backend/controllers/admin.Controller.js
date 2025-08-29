@@ -31,6 +31,34 @@ const logActivity = async (adminId, action, target, targetId, details) => {
   }
 };
 
+// Get all jobseekers
+export const getAllJobseekers = async (req, res) => {
+  try {
+    const jobseekers = await User.find({ role: 'jobseeker' })
+      .select('-password')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json(jobseekers);
+  } catch (error) {
+    console.error('Error fetching jobseekers:', error);
+    res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+// Get all employers
+export const getAllEmployers = async (req, res) => {
+  try {
+    const employers = await User.find({ role: 'employer' })
+      .select('-password')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json(employers);
+  } catch (error) {
+    console.error('Error fetching employers:', error);
+    res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
 
 export const loginAdmin = async (req, res) => {
   try {
@@ -51,11 +79,14 @@ export const loginAdmin = async (req, res) => {
     }
     admin.lastLogin = new Date();
     await admin.save();
-    const token = jwt.sign({ id: admin._id, role: admin.role }, process.env.SECRET_KEY, { expiresIn: '1h' });
+    const accessToken = jwt.sign({ id: admin._id, role: admin.role }, process.env.SECRET_KEY, { expiresIn: '24h' });
+    const refreshToken = jwt.sign({ id: admin._id }, process.env.SECRET_KEY, { expiresIn: '7d' });
+    
     res.status(200).json({ 
       message: 'Login successful', 
       success: true, 
-      token, 
+      accessToken,
+      refreshToken,
       role: admin.role,
       permissions: admin.permissions,
       admin: {

@@ -7,8 +7,6 @@ import cloudinary from "../utils/cloudinary.js";
 import { sendRegistrationReminderEmail, sendPasswordResetEmail } from "../utils/emailService.js";
 import crypto from "crypto";
 
-
-
 export const register = async (req, res) => {
 	try {
 		const { fullname, email, phoneNumber, password, role } = req.body;
@@ -349,4 +347,43 @@ export const uploadResume = async (req, res) => {
 			success: false
 		});
 	}
+};
+
+
+
+// Get all Jobseekers
+export const getAllJobseekers = async (req, res) => {
+  try {
+    const jobseekers = await User.find({ role: "Jobseeker" })
+      .select("-password")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: jobseekers.length,
+      jobseekers
+    });
+  } catch (error) {
+    console.error("Error fetching jobseekers:", error);
+    return res.status(500).json({ message: "Server error", success: false });
+  }
+};
+
+// Get all Employers
+export const getAllEmployers = async (req, res) => {
+  try {
+    const employers = await User.find({ role: "Employer" })
+      .select("-password")
+      .populate("profile.company") // populate company details if linked
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: employers.length,
+      employers
+    });
+  } catch (error) {
+    console.error("Error fetching employers:", error);
+    return res.status(500).json({ message: "Server error", success: false });
+  }
 };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Building2, Briefcase,   FileText,   Settings,   LogOut,  Menu,  X,  BarChart3,  Shield,  Flag,  UserCheck,Gavel,Activity, Target
+import { LayoutDashboard, Users, Building2, Briefcase, FileText, Settings, LogOut, Menu, X, BarChart3, Shield, Flag, UserCheck, Gavel, Activity, Target, FolderOpen
 } from 'lucide-react';
 import { Button } from '../ui/button';
 
@@ -14,6 +14,7 @@ const AdminLayout = ({ children }) => {
 
   const baseNavigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+  { name: 'CV Management', href: '/admin/cv-management', icon: FolderOpen },
   { name: 'Jobseekers', href: '/admin/jobseekers', icon: Users },
   { name: 'Employers', href: '/admin/employers', icon: Building2 },
   { name: 'Companies', href: '/admin/companies', icon: Building2 },

@@ -1,5 +1,5 @@
 import express from "express";
-import { login, logout, register, updateProfile, getUserProfile, forgotPassword, resetPassword, uploadResume } from "../controllers/user.controller.js";
+import { login, logout, register, updateProfile, getUserProfile, forgotPassword, resetPassword, uploadResume,getAllEmployers,getAllJobseekers } from "../controllers/user.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import { singleUpload, resumeUpload } from "../middlewares/mutler.js";
  
@@ -13,6 +13,9 @@ router.route("/profile/update").post(isAuthenticated,singleUpload,updateProfile)
 router.route("/forgot-password").post(forgotPassword);
 router.route("/reset-password").post(resetPassword);
 router.route("/upload-resume").post(isAuthenticated, resumeUpload, uploadResume);
+router.route("/jobseekers").get(getAllJobseekers);
+router.route("/employers").get(getAllEmployers);
+
 
 export default router;
 

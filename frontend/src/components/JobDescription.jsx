@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
 import { setSingleJob } from '@/redux/jobSlice';
@@ -21,8 +21,23 @@ const JobDescription = () => {
     const params = useParams();
     const jobId = params.id;
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const applyJobHandler = async () => {
+        // Check if user is logged in
+        if (!user) {
+            // Store job info for after login
+            localStorage.setItem('pendingJobApplication', JSON.stringify({
+                jobId: jobId,
+                jobTitle: singleJob?.title,
+                returnUrl: window.location.pathname
+            }));
+            
+            toast.info('Please login to apply for this job');
+            navigate('/login');
+            return;
+        }
+
         try {
             const res = await axios.get(`${APPLICATION_API_END_POINT}/apply/${jobId}`, {withCredentials:true});
             
@@ -30,11 +45,11 @@ const JobDescription = () => {
                 setIsApplied(true); 
                 const updatedSingleJob = {...singleJob, applications:[...singleJob.applications,{applicant:user?._id}]}
                 dispatch(setSingleJob(updatedSingleJob)); 
-                toast.success('Application submitted successfully!');
+                toast.success('Great! Your application has been sent successfully!');
             }
         } catch (error) {
             console.log(error);
-            toast.error(error.response?.data?.message || 'Failed to apply for job');
+            toast.error(error.response?.data?.message || 'Something went wrong. Please try again.');
         }
     }
 
@@ -53,6 +68,28 @@ const JobDescription = () => {
         }
         fetchSingleJob(); 
     },[jobId,dispatch, user?._id]);
+
+    // Handle auto-apply after login
+    useEffect(() => {
+        if (user && singleJob) {
+            const pendingApplication = localStorage.getItem('pendingJobApplication');
+            if (pendingApplication) {
+                const applicationData = JSON.parse(pendingApplication);
+                
+                // Check if this is the same job the user wanted to apply for
+                if (applicationData.jobId === jobId) {
+                    localStorage.removeItem('pendingJobApplication');
+                    
+                    // Auto-apply if not already applied
+                    if (!isApplied) {
+                        setTimeout(() => {
+                            applyJobHandler();
+                        }, 1000); // Small delay for better UX
+                    }
+                }
+            }
+        }
+    }, [user, singleJob, jobId, isApplied]);
 
     if (!singleJob) {
         return (

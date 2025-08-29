@@ -33,12 +33,8 @@ const Login = () => {
       toast.error('Please enter a valid email address.');
       return false;
     }
-    if (input.password.length < 6 || input.password.length > 20) {
-      toast.error('Password must be 6-20 characters.');
-      return false;
-    }
-    if (input.password !== input.confirmPassword) {
-      toast.error('Passwords do not match.');
+    if (input.password.length < 6) {
+      toast.error('Password must be at least 6 characters.');
       return false;
     }
     return true;
@@ -61,8 +57,17 @@ const Login = () => {
 
       if (res.data.success) {
         dispatch(setUser(res.data.user));
-        navigate("/");
-        toast.success(res.data.message);
+        
+        // Check if user was trying to apply for a job
+        const pendingApplication = localStorage.getItem('pendingJobApplication');
+        if (pendingApplication) {
+          const applicationData = JSON.parse(pendingApplication);
+          toast.success('Welcome back! Redirecting to apply for the job...');
+          navigate(applicationData.returnUrl);
+        } else {
+          navigate("/");
+          toast.success('Welcome back!');
+        }
       }
     } catch (error) {
       console.log(error);
@@ -129,26 +134,6 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* Confirm Password */}
-              <div className='space-y-2'>
-                <Label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">Confirm Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                  <Input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    value={input.confirmPassword}
-                    name="confirmPassword"
-                    onChange={changeEventHandler}
-                    placeholder="Re-enter your password"
-                    className="pl-10 py-3 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                    required
-                  />
-                  <button type="button" onClick={() => setShowConfirmPassword(v => !v)} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 focus:outline-none">
-                    {showConfirmPassword ? "🙈" : "👁️"}
-                  </button>
-                </div>
-              </div>
 
               {/* Submit Button */}
               <Button

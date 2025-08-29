@@ -1,40 +1,51 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
+import { tokenManager } from '../../utils/tokenManager';
 
-const AdminProtectedRoute = ({ children, allowedRoles = [] }) => {
-  const navigate = useNavigate();
-
+const AdminProtectedRoute = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  
   useEffect(() => {
-    const adminToken = localStorage.getItem('adminToken');
-    const adminRole = localStorage.getItem('adminRole');
-    const admin = localStorage.getItem('admin');
+    const checkAuth = async () => {
+      try {
+        // Ensure tokenManager has loaded tokens from localStorage
+        if (!tokenManager.accessToken) {
+          tokenManager.accessToken = localStorage.getItem('adminAccessToken');
+          tokenManager.refreshToken = localStorage.getItem('adminRefreshToken');
+        }
+        
+        if (tokenManager.isAuthenticated()) {
+          // Setup interceptors for token management
+          tokenManager.setupInterceptors();
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    if (!adminToken || !adminRole || !admin) {
-      navigate("/admin/login");
-      return;
-    }
+    checkAuth();
+  }, []);
 
-    // Check if admin has required role
-    if (allowedRoles.length > 0 && !allowedRoles.includes(adminRole)) {
-      navigate("/admin/dashboard");
-      return;
-    }
-  }, [navigate, allowedRoles]);
-
-  const adminToken = localStorage.getItem('adminToken');
-  const adminRole = localStorage.getItem('adminRole');
-  const admin = localStorage.getItem('admin');
-
-  if (!adminToken || !adminRole || !admin) {
-    return null;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
-
-  // Check if admin has required role
-  if (allowedRoles.length > 0 && !allowedRoles.includes(adminRole)) {
-    return null;
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/admin/login" replace />;
   }
-
-  return <>{children}</>;
+  
+  return children;
 };
 
 export default AdminProtectedRoute; 

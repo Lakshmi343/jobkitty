@@ -31,10 +31,12 @@ import AdminUsers from './components/admin/AdminUsers'
 import AdminCategories from './components/admin/AdminCategories'
 import AdminAnalytics from './components/admin/AdminAnalytics'
 import AdminApplications from './components/admin/AdminApplications'
+import AdminCVManagement from './components/admin/AdminCVManagement'
 import EmployerJobs from './components/employer/EmployerJobs'
 
 
 import EmployerProfile from './components/employer/EmployerProfile'
+
 import JobseekerTable from './components/admin/JobseekerTable.jsx'
 import EmployerTable from './components/admin/EmployerTable.jsx'
 
@@ -96,8 +98,7 @@ const appRouter = createBrowserRouter([
   element: (
     <AdminProtectedRoute allowedRoles={['superadmin']}>
       <AdminLayout>
-        <JobseekerTable/>
-
+       <JobseekerTable/>
       </AdminLayout>
     </AdminProtectedRoute>
   )
@@ -107,7 +108,7 @@ const appRouter = createBrowserRouter([
   element: (
     <AdminProtectedRoute allowedRoles={['superadmin']}>
       <AdminLayout>
-       <EmployerTable/>
+<EmployerTable/>
       </AdminLayout>
     </AdminProtectedRoute>
   )
@@ -179,6 +180,16 @@ const appRouter = createBrowserRouter([
       <AdminProtectedRoute>
         <AdminLayout>
           <AdminApplications />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/cv-management",
+    element: (
+      <AdminProtectedRoute>
+        <AdminLayout>
+          <AdminCVManagement />
         </AdminLayout>
       </AdminProtectedRoute>
     )
