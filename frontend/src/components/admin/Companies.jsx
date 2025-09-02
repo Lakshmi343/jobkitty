@@ -4,11 +4,14 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import CompaniesTable from './CompaniesTable'
 import { useNavigate } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import axios from 'axios'
 import { ADMIN_API_END_POINT } from '@/utils/constant'
 import { Building2, Search, TrendingUp, Users, Briefcase } from 'lucide-react'
+import { toast } from 'sonner'
 
 const Companies = () => {
+	const { user } = useSelector(store => store.auth)
 	const [companies, setCompanies] = useState([])
 	const [loading, setLoading] = useState(true)
 	const [input, setInput] = useState("")
@@ -30,8 +33,8 @@ const Companies = () => {
 			// Try different API endpoints
 			let res;
 			try {
-				// First try with admin token
-				const token = localStorage.getItem('adminToken')
+				// First try with admin token (correct token key)
+				const token = localStorage.getItem('adminAccessToken')
 				if (token) {
 					res = await axios.get(`${ADMIN_API_END_POINT}/companies`, {
 						headers: { Authorization: `Bearer ${token}` },
@@ -61,13 +64,16 @@ const Companies = () => {
 					pending: companiesData.filter(c => c.status === 'pending').length
 				}
 				setStats(statsData)
+				toast.success(`Loaded ${companiesData.length} companies`)
 			} else {
 				console.error('API returned unsuccessful response')
 				setCompanies([])
+				toast.error('Failed to load companies data')
 			}
 		} catch (error) {
 			console.error('Failed to fetch companies:', error)
 			setCompanies([])
+			toast.error('Unable to fetch companies. Please check your connection.')
 		} finally {
 			setLoading(false)
 		}
@@ -80,7 +86,7 @@ const Companies = () => {
 
 	const handleUpdateStatus = async (companyId, status) => {
 		try {
-			const token = localStorage.getItem('adminToken')
+			const token = localStorage.getItem('adminAccessToken')
 			if (!token) {
 				console.error('No admin token available')
 				return
@@ -119,7 +125,7 @@ const Companies = () => {
 	const handleDelete = async (companyId) => {
 		if (!window.confirm('Delete this company? This cannot be undone.')) return
 		try {
-			const token = localStorage.getItem('adminToken')
+			const token = localStorage.getItem('adminAccessToken')
 			if (!token) {
 				console.error('No admin token available')
 				return

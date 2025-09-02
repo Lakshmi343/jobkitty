@@ -1,16 +1,18 @@
-import React, { useEffect, useState } from 'react'
-import Navbar from '../shared/Navbar'
-import { Label } from '../ui/label'
-import { Input } from '../ui/input'
-import { Button } from '../ui/button'
-import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
-import { USER_API_END_POINT } from '@/utils/constant'
-import { toast } from 'sonner'
-import { useDispatch, useSelector } from 'react-redux'
-import { setLoading, setUser } from '@/redux/authSlice'
-import { Mail, Lock } from 'lucide-react'
-import LoadingSpinner from '../shared/LoadingSpinner'
+import React, { useState, useEffect } from 'react';
+import { Label } from '../ui/label';
+import { Input } from '../ui/input';
+import { RadioGroup, RadioGroupItem } from '../ui/radio-group'; // (currently unused, but imported)
+import { Button } from '../ui/button';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { USER_API_END_POINT } from '@/utils/constant';
+import { toast } from 'sonner';
+import { useDispatch, useSelector } from 'react-redux';
+import { setLoading, setUser } from '@/redux/authSlice';
+import { Loader2, Eye, EyeOff, Lock, Mail } from 'lucide-react'; // ✅ added Lock + grouped all icons
+import { tokenManager } from '../../utils/tokenManager';
+import LoadingSpinner from '../shared/LoadingSpinner';
+import Navbar from '../shared/Navbar';
 
 const Login = () => {
   const [input, setInput] = useState({
@@ -66,6 +68,15 @@ const Login = () => {
 
       if (res.data.success) {
         dispatch(setUser(res.data.user));
+        
+        // If user is admin, also set admin tokens for AdminProtectedRoute compatibility
+        if (res.data.user.role === 'admin') {
+          // Create mock admin tokens to satisfy AdminProtectedRoute
+          const mockToken = 'admin-session-' + Date.now();
+          tokenManager.setTokens(mockToken, mockToken);
+          localStorage.setItem('adminRole', res.data.user.role);
+          localStorage.setItem('admin', JSON.stringify(res.data.user));
+        }
         
         // Check if user was trying to apply for a job
         const pendingApplication = localStorage.getItem('pendingJobApplication');

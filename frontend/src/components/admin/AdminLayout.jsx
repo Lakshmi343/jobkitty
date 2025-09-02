@@ -24,7 +24,6 @@ const AdminLayout = ({ children }) => {
   { name: 'CV Management', href: '/admin/cv-management', icon: FolderOpen },
   { name: 'Categories', href: '/admin/categories', icon: Settings },
 
-  { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
 ];
 
 

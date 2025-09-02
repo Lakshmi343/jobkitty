@@ -1,15 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { tokenManager } from '../../utils/tokenManager';
 
 const AdminProtectedRoute = ({ children }) => {
+  const { user } = useSelector(store => store.auth);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Ensure tokenManager has loaded tokens from localStorage
+        // Check if user is logged in via Redux and has admin role
+        if (user && user.role === 'admin') {
+          setIsAuthenticated(true);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Check localStorage for admin data (persists on refresh)
+        const adminData = localStorage.getItem('admin');
+        const adminRole = localStorage.getItem('adminRole');
+        if (adminData && adminRole === 'admin') {
+          setIsAuthenticated(true);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Fallback to token-based authentication
         if (!tokenManager.accessToken) {
           tokenManager.accessToken = localStorage.getItem('adminAccessToken');
           tokenManager.refreshToken = localStorage.getItem('adminRefreshToken');
@@ -31,7 +49,7 @@ const AdminProtectedRoute = ({ children }) => {
     };
 
     checkAuth();
-  }, []);
+  }, [user]);
 
   if (isLoading) {
     return (

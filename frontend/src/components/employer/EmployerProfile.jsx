@@ -572,3 +572,4 @@ const InputField = ({ label, ...props }) => (
 );
 
 export default EmployerProfile;
+

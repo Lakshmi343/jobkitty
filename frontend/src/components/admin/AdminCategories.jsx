@@ -13,6 +13,7 @@ import {
   Trash2,
   X
 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -34,7 +35,7 @@ const AdminCategories = () => {
 
   const fetchCategories = async () => {
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('adminAccessToken');
       const response = await axios.get(`${ADMIN_API_END_POINT}/categories`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -44,6 +45,7 @@ const AdminCategories = () => {
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
+      toast.error('Failed to fetch categories');
     } finally {
       setLoading(false);
     }
@@ -53,7 +55,7 @@ const AdminCategories = () => {
     e.preventDefault();
     
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('adminAccessToken');
       const url = editingCategory 
         ? `${ADMIN_API_END_POINT}/categories/${editingCategory._id}`
         : `${ADMIN_API_END_POINT}/categories`;
@@ -69,13 +71,16 @@ const AdminCategories = () => {
           setCategories(categories.map(cat => 
             cat._id === editingCategory._id ? response.data.category : cat
           ));
+          toast.success('Category updated successfully');
         } else {
           setCategories([...categories, response.data.category]);
+          toast.success('Category created successfully');
         }
         handleCloseDialog();
       }
     } catch (error) {
       console.error('Error saving category:', error);
+      toast.error(error.response?.data?.message || 'Failed to save category');
     }
   };
 
@@ -91,16 +96,18 @@ const AdminCategories = () => {
     }
 
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('adminAccessToken');
       const response = await axios.delete(`${ADMIN_API_END_POINT}/categories/${categoryId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
         setCategories(categories.filter(cat => cat._id !== categoryId));
+        toast.success('Category deleted successfully');
       }
     } catch (error) {
       console.error('Error deleting category:', error);
+      toast.error(error.response?.data?.message || 'Failed to delete category');
     }
   };
 

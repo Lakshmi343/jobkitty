@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setSearchedQuery } from '@/redux/jobSlice';
 import useGetAllJobs from '@/hooks/useGetAllJobs';
 import { Search, Briefcase } from 'lucide-react';
+import Footer from './shared/Footer';
 
 const Browse = () => {
     useGetAllJobs();
@@ -21,7 +22,7 @@ const Browse = () => {
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             <Navbar />
             <div className='max-w-7xl mx-auto px-4 py-8'>
-                {/* Header Section */}
+        
                 <div className='text-center mb-8 lg:mb-12'>
                     <div className='flex items-center justify-center gap-3 mb-4'>
                         <div className='p-3 bg-blue-100 rounded-full'>
@@ -36,7 +37,6 @@ const Browse = () => {
                     </p>
                 </div>
 
-                {/* Results Count */}
                 <div className='mb-8'>
                     <div className='flex items-center justify-between'>
                         <div className='flex items-center gap-2 text-gray-600'>
@@ -49,7 +49,7 @@ const Browse = () => {
                     </div>
                 </div>
 
-                {/* Jobs Grid */}
+             
                 {allJobs.length === 0 ? (
                     <div className="text-center py-16">
                         <div className="p-8 bg-white rounded-2xl shadow-lg max-w-md mx-auto">
@@ -68,6 +68,7 @@ const Browse = () => {
                     </div>
                 )}
             </div>
+            <Footer/>
         </div>
     )
 }

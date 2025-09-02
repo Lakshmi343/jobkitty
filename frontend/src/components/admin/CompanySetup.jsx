@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Button } from '../ui/button'
-import { ArrowLeft, AlertCircle } from 'lucide-react'
+import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react'
 import { Label } from '../ui/label'
 import { Input } from '../ui/input'
 import axios from 'axios'
@@ -46,7 +46,7 @@ const CompanySetup = () => {
 		}
 		try {
 			setLoading(true);
-			const token = localStorage.getItem('adminToken');
+			const token = localStorage.getItem('adminAccessToken');
 			const res = await axios.put(`${ADMIN_API_END_POINT}/companies/${params.id}`, formData, {
 				headers: {
 					'Content-Type': 'multipart/form-data',

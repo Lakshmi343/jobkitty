@@ -57,10 +57,7 @@ const appRouter = createBrowserRouter([
     path: '/signup',
     element: <Signup />
   },
-  {
-    path: '/blog',
-    element: <BlogPage />
-  },
+  
   {
     path: '/contact',
     element: <Contact />
@@ -278,7 +275,7 @@ const appRouter = createBrowserRouter([
 ])
 
 function App() {
-  // Setup global axios interceptors on app initialization
+
   setupGlobalInterceptors();
   
   return (

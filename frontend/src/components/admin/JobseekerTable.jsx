@@ -1,17 +1,17 @@
 
-
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { FileText, FileDown, UserCheck, UserX, Trash2, MoreHorizontal } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '../ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 
 const JobseekerTable = () => {
   const [jobseekers, setJobseekers] = useState([]);
   const [selectedJobseeker, setSelectedJobseeker] = useState(null);
   const [actionDialog, setActionDialog] = useState({ open: false, action: '', title: '', description: '', userId: null });
+  const [resumeDialog, setResumeDialog] = useState({ open: false, url: '' });
 
   useEffect(() => {
     const fetchJobseekers = async () => {
@@ -35,10 +35,19 @@ const JobseekerTable = () => {
     }
   };
 
+  
   const viewCV = (user) => {
     if (user.profile?.resume) window.open(user.profile.resume, "_blank");
   };
 
+  
+  const previewCV = (user) => {
+    if (user.profile?.resume) {
+      setResumeDialog({ open: true, url: user.profile.resume });
+    }
+  };
+
+  
   const downloadCV = (user) => {
     if (user.profile?.resume) {
       const link = document.createElement("a");
@@ -57,7 +66,6 @@ const JobseekerTable = () => {
       );
       
       if (response.data.success) {
-        // Update local state
         setJobseekers(jobseekers.map(jobseeker => 
           jobseeker._id === id ? { ...jobseeker, status } : jobseeker
         ));
@@ -81,14 +89,10 @@ const JobseekerTable = () => {
       );
       
       if (response.data.success) {
-        // Update local state
         setJobseekers(jobseekers.filter(jobseeker => jobseeker._id !== id));
-        
-        // If we're viewing this jobseeker's details, close the dialog
         if (selectedJobseeker && selectedJobseeker._id === id) {
           setSelectedJobseeker(null);
         }
-        
         toast.success("Jobseeker deleted successfully");
       }
       
@@ -106,15 +110,15 @@ const JobseekerTable = () => {
     switch(action) {
       case 'activate':
         title = 'Activate Jobseeker Account';
-        description = `Are you sure you want to activate ${jobseeker.fullname}'s account? This will allow them to access the website and apply for jobs.`;
+        description = `Are you sure you want to activate ${jobseeker.fullname}'s account?`;
         break;
       case 'block':
         title = 'Block Jobseeker Account';
-        description = `Are you sure you want to block ${jobseeker.fullname}'s account? This will restrict their access to the website until you unblock them.`;
+        description = `Are you sure you want to block ${jobseeker.fullname}'s account?`;
         break;
       case 'delete':
         title = 'Delete Jobseeker Account';
-        description = `Are you sure you want to delete ${jobseeker.fullname}'s account? This will permanently remove their profile and all applications. This action cannot be undone.`;
+        description = `Are you sure you want to delete ${jobseeker.fullname}'s account? This cannot be undone.`;
         break;
       default:
         return;
@@ -131,7 +135,6 @@ const JobseekerTable = () => {
 
   const executeAction = () => {
     const { action, userId } = actionDialog;
-    
     switch(action) {
       case 'activate':
         handleStatusUpdate(userId, 'active');
@@ -168,6 +171,9 @@ const JobseekerTable = () => {
                 <div className="flex gap-2">
                   {user.profile?.resume ? (
                     <>
+                      <Button variant="outline" size="sm" onClick={() => previewCV(user)}>
+                        <FileText className="mr-1 h-4 w-4" /> Preview
+                      </Button>
                       <Button variant="outline" size="sm" onClick={() => viewCV(user)}>
                         <FileText className="mr-1 h-4 w-4" /> View
                       </Button>
@@ -246,7 +252,6 @@ const JobseekerTable = () => {
           <DialogHeader>
             <DialogTitle>Jobseeker Details</DialogTitle>
           </DialogHeader>
-
           {selectedJobseeker && (
             <div className="space-y-3 text-sm">
               <p><strong>Name:</strong> {selectedJobseeker.fullname}</p>
@@ -257,18 +262,33 @@ const JobseekerTable = () => {
               <p><strong>Education:</strong> {selectedJobseeker.profile?.education ? `${selectedJobseeker.profile.education.degree}, ${selectedJobseeker.profile.education.institution}, ${selectedJobseeker.profile.education.yearOfCompletion}` : 'N/A'}</p>
               <p><strong>Experience:</strong> {selectedJobseeker.profile?.experience ? `${selectedJobseeker.profile.experience.years} yrs, ${selectedJobseeker.profile.experience.field}` : 'N/A'}</p>
               <p><strong>Bio:</strong> {selectedJobseeker.profile?.bio || 'N/A'}</p>
-              {selectedJobseeker.profile?.resume && (
-                <p>
-                  <strong>Resume:</strong>
-                  <Button variant="outline" size="sm" onClick={() => viewCV(selectedJobseeker)} className="ml-2"><FileText className="mr-1 h-4 w-4" /> View</Button>
-                  <Button variant="outline" size="sm" onClick={() => downloadCV(selectedJobseeker)} className="ml-2"><FileDown className="mr-1 h-4 w-4" /> Download</Button>
-                </p>
-              )}
             </div>
           )}
-
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedJobseeker(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resume Preview Dialog (iframe) */}
+      <Dialog open={resumeDialog.open} onOpenChange={() => setResumeDialog({ open: false, url: '' })}>
+        <DialogContent className="max-w-4xl h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Resume Preview</DialogTitle>
+          </DialogHeader>
+          {resumeDialog.url ? (
+            <iframe 
+              src={resumeDialog.url} 
+              className="w-full h-[75vh] border rounded" 
+              title="Resume Preview"
+            />
+          ) : (
+            <p>No resume available</p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResumeDialog({ open: false, url: '' })}>
+              Close
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -304,3 +324,4 @@ const JobseekerTable = () => {
 };
 
 export default JobseekerTable;
+

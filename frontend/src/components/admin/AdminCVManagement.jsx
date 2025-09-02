@@ -5,17 +5,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { toast } from 'sonner';
-import { 
-  FileText, 
-  Download, 
-  Eye, 
-  Search, 
-  Filter,
-  Users,
-  Calendar,
-  Briefcase,
-  Mail
-} from 'lucide-react';
+import {  FileText,  Download,  Eye,  Search,  Filter, Users, Calendar, Briefcase, Mail} from 'lucide-react';
 import { ADMIN_API_END_POINT } from '../../utils/constant';
 
 const AdminCVManagement = () => {
@@ -85,7 +75,7 @@ const AdminCVManagement = () => {
       );
     }
 
-    // Only show jobseekers with CVs
+    
     filtered = filtered.filter(user => user.profile?.resume);
 
     setFilteredUsers(filtered);
@@ -137,7 +127,7 @@ const AdminCVManagement = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
+
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">CV Management</h1>
@@ -145,7 +135,6 @@ const AdminCVManagement = () => {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -192,7 +181,6 @@ const AdminCVManagement = () => {
         </Card>
       </div>
 
-      {/* Filters */}
       <Card>
         <CardHeader>
           <CardTitle>Search & Filter</CardTitle>
@@ -224,7 +212,6 @@ const AdminCVManagement = () => {
         </CardContent>
       </Card>
 
-      {/* User List */}
       <Card>
         <CardHeader>
           <CardTitle>User Profiles & CVs</CardTitle>
@@ -238,10 +225,21 @@ const AdminCVManagement = () => {
             ) : (
               filteredUsers.map((user) => (
                 <div key={user._id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+
                   <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
-                      {user.fullname?.charAt(0)?.toUpperCase() || 'U'}
-                    </div>
+                  <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gray-200">
+  {user.profile?.profilePhoto ? (
+    <img 
+      src={user.profile.profilePhoto} 
+      alt="Profile" 
+      className="w-full h-full object-cover" 
+    />
+  ) : (
+    <span className="text-gray-600 font-semibold">
+      {user.fullname?.charAt(0)?.toUpperCase() || 'U'}
+    </span>
+  )}
+</div>
                     <div>
                       <h3 className="font-semibold text-gray-900">{user.fullname || 'No Name'}</h3>
                       <div className="flex items-center space-x-2 text-sm text-gray-500">
@@ -286,7 +284,7 @@ const AdminCVManagement = () => {
         </CardContent>
       </Card>
 
-      {/* CV Preview Modal */}
+    
       {showPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white rounded-lg shadow-xl w-11/12 h-5/6 max-w-4xl">
