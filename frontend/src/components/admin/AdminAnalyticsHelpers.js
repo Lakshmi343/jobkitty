@@ -1,4 +1,3 @@
-// Helper functions for AdminAnalytics data processing
 
 export const calculateUserRoles = (users) => {
   const roleCounts = users.reduce((acc, user) => {

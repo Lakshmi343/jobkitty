@@ -8,6 +8,7 @@ import { Application } from '../models/application.model.js';
 import { Report } from '../models/report.model.js';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import getDataUri from '../utils/datauri.js';
 import cloudinary from '../utils/cloudinary.js';
 import axios from 'axios';
@@ -1493,5 +1494,107 @@ export const getApplicationStats = async (req, res) => {
   } catch (error) {
     console.error('Application stats error:', error);
     res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+// Forgot Password
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        message: "Email is required",
+        success: false
+      });
+    }
+
+    const admin = await Admin.findOne({ email });
+    if (!admin) {
+      return res.status(404).json({
+        message: "No admin found with this email address",
+        success: false
+      });
+    }
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = Date.now() + 3600000; // 1 hour from now
+
+    // Save reset token to admin
+    admin.resetPasswordToken = resetToken;
+    admin.resetPasswordExpires = resetTokenExpiry;
+    await admin.save();
+
+    // In a real application, you would send an email here
+    // For now, we'll just return the token (remove this in production)
+    res.status(200).json({
+      message: "Password reset instructions have been sent to your email",
+      success: true,
+      resetToken: resetToken // Remove this in production - only for testing
+    });
+
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({
+      message: "Internal server error",
+      success: false
+    });
+  }
+};
+
+// Reset Password
+export const resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({
+        message: "Token and new password are required",
+        success: false
+      });
+    }
+
+    // Password validation
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        message: "Password must be at least 8 characters long",
+        success: false
+      });
+    }
+
+    // Find admin with valid reset token
+    const admin = await Admin.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!admin) {
+      return res.status(400).json({
+        message: "Invalid or expired reset token",
+        success: false
+      });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update admin password and clear reset token
+    admin.password = hashedPassword;
+    admin.resetPasswordToken = undefined;
+    admin.resetPasswordExpires = undefined;
+    await admin.save();
+
+    res.status(200).json({
+      message: "Password has been reset successfully",
+      success: true
+    });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({
+      message: "Internal server error",
+      success: false
+    });
   }
 };

@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Shield, Eye, EyeOff } from 'lucide-react';
 import { tokenManager } from '../../utils/tokenManager';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
@@ -26,7 +27,6 @@ const AdminLogin = () => {
     try {
       const response = await axios.post(`${ADMIN_API_END_POINT}/login`, { email, password });
       if (response.data.success) {
-        // Store admin token and data
         localStorage.setItem('adminToken', response.data.token);
         localStorage.setItem('adminData', JSON.stringify(response.data.admin));
         
@@ -97,6 +97,14 @@ const AdminLogin = () => {
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
+                <div className="mt-4 text-right">
+                              <Link
+                                to="/forgot-password"
+                                className="text-sm text-blue-600 hover:text-blue-700 transition-colors duration-200"
+                              >
+                                Forgot Password?
+                              </Link>
+                            </div>
               </div>
               
               <Button 

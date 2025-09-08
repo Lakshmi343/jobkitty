@@ -41,7 +41,9 @@ import {
     getApplicationById,
     updateApplicationStatus,
     deleteApplication,
-    getApplicationStats
+    getApplicationStats,
+    forgotPassword,
+    resetPassword
 } from "../controllers/admin.Controller.js";
 
 import { singleUpload } from "../middlewares/mutler.js";
@@ -53,6 +55,8 @@ const router = express.Router();
 router.post('/login', loginAdmin);
 router.post('/register', registerAdmin); // Temporary registration endpoint
 router.post('/create-admin', adminAuth, createAdmin);
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
 
 // Dashboard
 router.get('/dashboard', adminAuth, getDashboardStats);

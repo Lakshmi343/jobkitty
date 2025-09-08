@@ -1,12 +1,10 @@
+
 import React, { useEffect, useState } from 'react';
 import { Button } from '../ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import {
-  Loader2, Pen, Mail, Contact, Building, Globe, MapPin, 
-  Briefcase, Users, Calendar, User, Save, X
-} from 'lucide-react';
+import { Loader2, Pen, Mail, Contact, Building, Globe, MapPin, Briefcase, Users, Calendar, Save, X, ChevronDown, ChevronUp, Phone, Link, User} from 'lucide-react';
 import Navbar from '../shared/Navbar';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
@@ -15,28 +13,41 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { COMPANY_API_END_POINT } from '../../utils/constant';
 
-// InfoItem component for consistent profile detail display
-const InfoItem = ({ icon, label, value, color = "blue" }) => {
-  const colorClasses = {
-    blue: "bg-blue-100 text-blue-600",
-    green: "bg-green-100 text-green-600",
-    purple: "bg-purple-100 text-purple-600",
-    red: "bg-red-100 text-red-600",
-    orange: "bg-orange-100 text-orange-600",
-    indigo: "bg-indigo-100 text-indigo-600"
-  };
-
+const InfoItem = ({ icon, label, value, className }) => {
   return (
-    <div className="flex items-start gap-4 p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
-      <div className={cn("p-2.5 rounded-lg flex-shrink-0", colorClasses[color])}>
+    <div className={cn("flex items-start gap-4 p-4", className)}>
+      <div className="p-2 rounded-lg bg-blue-50 text-blue-600 flex-shrink-0">
         {icon}
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-gray-500 mb-1">{label}</p>
-        <div className="text-gray-900 font-medium break-words">
-          {typeof value === 'string' ? value : value}
-        </div>
+        <p className="text-gray-900 font-medium break-words">{value || 'Not provided'}</p>
       </div>
+    </div>
+  );
+};
+
+const AccordionSection = ({ title, icon, children, defaultOpen = true }) => {
+  const [open, setOpen] = useState(defaultOpen);
+  
+  return (
+    <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full px-6 py-4 bg-white hover:bg-gray-50 transition-colors"
+      >
+        <div className="flex items-center gap-3">
+          <div className="text-blue-600">
+            {icon}
+          </div>
+          <span className="text-lg font-semibold text-gray-900">{title}</span>
+        </div>
+        {open ? 
+          <ChevronUp className="h-5 w-5 text-gray-500" /> : 
+          <ChevronDown className="h-5 w-5 text-gray-500" />
+        }
+      </button>
+      {open && <div className="border-t border-gray-200">{children}</div>}
     </div>
   );
 };
@@ -111,296 +122,185 @@ const EmployerProfile = () => {
   };
 
   if (fetching) return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-      <div className="flex flex-col items-center">
-        <Loader2 className="h-12 w-12 animate-spin text-blue-500 mb-4" />
-        <p className="text-gray-600">Loading your company profile...</p>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
+          <p className="text-gray-600">Loading your company profile...</p>
+        </div>
       </div>
     </div>
   );
 
   if (!company) return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
-      <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">No Company Profile Found</h2>
-        <p className="text-gray-600 mb-6">It looks like you haven't created a company profile yet.</p>
-        <Button onClick={() => navigate('/create-company')}>
-          Create Company Profile
-        </Button>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex items-center justify-center px-4">
+        <div className="text-center p-8 bg-white rounded-xl shadow-sm border border-gray-200 max-w-md w-full">
+          <div className="bg-blue-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+            <Building className="h-10 w-10 text-blue-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">No Company Profile Found</h2>
+          <p className="text-gray-600 mb-6">Create a company profile to start posting jobs and managing candidates.</p>
+          <Button 
+            onClick={() => navigate('/create-company')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3"
+          >
+            Create Company Profile
+          </Button>
+        </div>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        {/* Enhanced Header Section */}
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden mb-8 border border-gray-100">
-          <div className="h-40 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 relative">
-            <div className="absolute inset-0 bg-black/10"></div>
-            <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/20 to-transparent"></div>
-          </div>
-          
-          <div className="px-8 pb-8 relative">
-            <div className="flex flex-col lg:flex-row items-center lg:items-end gap-8 -mt-24">
-              {/* Avatar Section */}
-              <div className="relative group flex-shrink-0">
-                <div className="p-1 bg-white rounded-full shadow-2xl">
-                  <Avatar className="h-36 w-36 border-4 border-white shadow-lg">
-                    {company.logo ? (
-                      <AvatarImage src={company.logo} className="object-cover" />
-                    ) : (
-                      <AvatarFallback className="text-5xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-bold">
-                        {company.name?.[0]?.toUpperCase()}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                </div>
-                {editMode && (
-                  <label htmlFor="logo-upload" className="absolute bottom-3 right-3 bg-blue-600 p-3 rounded-full text-white cursor-pointer shadow-lg hover:bg-blue-700 transition-all duration-300 hover:scale-110">
-                    <Pen className="h-5 w-5" />
-                    <input 
-                      id="logo-upload" 
-                      type="file" 
-                      accept="image/*" 
-                      onChange={handleFileChange} 
-                      className="hidden" 
-                    />
-                  </label>
-                )}
-              </div>
-              
-              {/* Company Info Section */}
-              <div className="flex-1 text-center lg:text-left min-w-0">
-                <div className="mb-4">
-                  <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-3 leading-tight">
-                    {company.name}
-                  </h1>
-                  <p className="text-lg text-gray-600 leading-relaxed max-w-3xl">
-                    {company.description || 'No description available'}
-                  </p>
-                </div>
-                
-                <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
-                  {company.companyType && (
-                    <span className="px-4 py-2 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 rounded-full text-sm font-semibold shadow-sm border border-blue-200">
-                      <Building className="h-4 w-4 inline mr-2" />
-                      {company.companyType}
-                    </span>
-                  )}
-                  {company.location && (
-                    <span className="px-4 py-2 bg-gradient-to-r from-purple-100 to-purple-200 text-purple-800 rounded-full text-sm font-semibold shadow-sm border border-purple-200">
-                      <MapPin className="h-4 w-4 inline mr-2" />
-                      {company.location}
-                    </span>
-                  )}
-                  {company.experience && (
-                    <span className="px-4 py-2 bg-gradient-to-r from-green-100 to-green-200 text-green-800 rounded-full text-sm font-semibold shadow-sm border border-green-200">
-                      <Briefcase className="h-4 w-4 inline mr-2" />
-                      {company.experience} years
-                    </span>
-                  )}
-                  {company.numberOfEmployees && (
-                    <span className="px-4 py-2 bg-gradient-to-r from-orange-100 to-orange-200 text-orange-800 rounded-full text-sm font-semibold shadow-sm border border-orange-200">
-                      <Users className="h-4 w-4 inline mr-2" />
-                      {company.numberOfEmployees} employees
-                    </span>
-                  )}
-                </div>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex gap-3 flex-shrink-0">
-                {!editMode ? (
-                  <Button 
-                    onClick={() => setEditMode(true)} 
-                    className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                  >
-                    <Pen className="h-5 w-5" /> 
-                    Edit Profile
-                  </Button>
+      <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 space-y-6">
+        
+        {/* Header Section */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            <div className="relative group flex-shrink-0">
+              <Avatar className="h-32 w-32 border-4 border-white shadow-lg ring-2 ring-blue-100">
+                {input.file ? (
+                  <AvatarImage src={URL.createObjectURL(input.file)} className="object-cover" />
+                ) : company.logo ? (
+                  <AvatarImage src={company.logo} className="object-cover" />
                 ) : (
-                  <div className="flex gap-3">
-                    <Button 
-                      type="button" 
-                      onClick={() => setEditMode(false)} 
-                      variant="outline" 
-                      className="flex items-center gap-2 border-2 border-red-300 text-red-600 hover:bg-red-50 px-6 py-3 rounded-xl transition-all duration-300"
-                    >
-                      <X className="h-5 w-5" /> 
-                      Cancel
-                    </Button>
-                    <Button 
-                      type="submit" 
-                      form="profile-form"
-                      className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                    >
-                      {loading ? (
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                      ) : (
-                        <Save className="h-5 w-5" />
-                      )} 
-                      Save Changes
-                    </Button>
-                  </div>
+                  <AvatarFallback className="bg-blue-100 text-blue-700 font-bold text-4xl">
+                    {company.name?.[0]?.toUpperCase()}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              {editMode && (
+                <label htmlFor="logo-upload" className="absolute bottom-2 right-2 bg-blue-600 p-2 rounded-full text-white cursor-pointer shadow-md hover:bg-blue-700 transition-all">
+                  <Pen className="h-4 w-4" />
+                  <input id="logo-upload" type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+                </label>
+              )}
+            </div>
+            
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-3xl font-bold text-gray-900">{company.name}</h1>
+              <p className="text-gray-600 mt-2 text-lg">{company.description || 'No description available'}</p>
+              
+              <div className="flex flex-wrap gap-3 mt-4 justify-center md:justify-start">
+                {company.companyType && (
+                  <Tag icon={<Building size={16} />} text={company.companyType} />
+                )}
+                {company.location && (
+                  <Tag icon={<MapPin size={16} />} text={company.location} />
+                )}
+                {company.experience && (
+                  <Tag icon={<Briefcase size={16} />} text={`${company.experience} yrs experience`} />
+                )}
+                {company.numberOfEmployees && (
+                  <Tag icon={<Users size={16} />} text={`${company.numberOfEmployees} employees`} />
                 )}
               </div>
+            </div>
+            
+            <div className="flex gap-3 mt-4 md:mt-0">
+              {!editMode ? (
+                <Button 
+                  onClick={() => setEditMode(true)} 
+                  className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2 shadow-sm"
+                >
+                  <Pen className="h-4 w-4" /> Edit Profile
+                </Button>
+              ) : (
+                <>
+                  <Button 
+                    onClick={() => setEditMode(false)} 
+                    variant="outline" 
+                    className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <X className="h-4 w-4" /> Cancel
+                  </Button>
+                  <Button 
+                    form="profile-form" 
+                    type="submit" 
+                    className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 shadow-sm"
+                    disabled={loading}
+                  >
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} 
+                    Save Changes
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Enhanced Profile Details Card */}
+        {/* Profile Details */}
         {!editMode ? (
-          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-6 border-b border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <Building className="h-6 w-6 text-blue-600" />
-                Company Details
-              </h2>
-              <p className="text-gray-600 mt-1">Complete information about your company</p>
-            </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <AccordionSection title="Company Information" icon={<Building size={20} />}>
+              <InfoItem 
+                icon={<Briefcase size={20} />} 
+                label="Experience" 
+                value={company.experience ? `${company.experience} years` : undefined} 
+                className="border-b border-gray-100"
+              />
+              <InfoItem 
+                icon={<Globe size={20} />} 
+                label="Website" 
+                value={company.website} 
+                className="border-b border-gray-100"
+              />
+              <InfoItem 
+                icon={<MapPin size={20} />} 
+                label="Location" 
+                value={company.location} 
+                className="border-b border-gray-100"
+              />
+              <InfoItem 
+                icon={<Calendar size={20} />} 
+                label="Founded Year" 
+                value={company.foundedYear} 
+              />
+            </AccordionSection>
             
-            <div className="p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                {/* Company Information */}
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-                    Company Information
-                  </h3>
-                  
-                  <div className="space-y-5">
-                    <InfoItem 
-                      icon={<Building className="h-5 w-5" />}
-                      label="Company Type"
-                      value={company.companyType || 'Not specified'}
-                      color="blue"
-                    />
-                    
-                    <InfoItem 
-                      icon={<Briefcase className="h-5 w-5" />}
-                      label="Experience"
-                      value={company.experience ? `${company.experience} years` : 'Not specified'}
-                      color="green"
-                    />
-                    
-                    <InfoItem 
-                      icon={<Globe className="h-5 w-5" />}
-                      label="Website"
-                      value={company.website ? (
-                        <a 
-                          href={company.website.startsWith('http') ? company.website : `https://${company.website}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="text-blue-600 hover:text-blue-800 hover:underline transition-colors duration-200"
-                        >
-                          {company.website}
-                        </a>
-                      ) : 'Not provided'}
-                      color="purple"
-                    />
-                    
-                    <InfoItem 
-                      icon={<MapPin className="h-5 w-5" />}
-                      label="Location"
-                      value={company.location || 'Not specified'}
-                      color="red"
-                    />
-                    
-                    <InfoItem 
-                      icon={<Calendar className="h-5 w-5" />}
-                      label="Founded Year"
-                      value={company.foundedYear || 'Not specified'}
-                      color="orange"
-                    />
-                  </div>
-                </div>
-                
-                {/* Contact & Team Information */}
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-                    Contact & Team Details
-                  </h3>
-                  
-                  <div className="space-y-5">
-                    <InfoItem 
-                      icon={<Users className="h-5 w-5" />}
-                      label="Team Size"
-                      value={company.numberOfEmployees ? `${company.numberOfEmployees} employees` : 'Not specified'}
-                      color="indigo"
-                    />
-                    
-                    <InfoItem 
-                      icon={<Mail className="h-5 w-5" />}
-                      label="Contact Email"
-                      value={company.contactEmail || user?.email || 'Not provided'}
-                      color="blue"
-                    />
-                    
-                    <InfoItem 
-                      icon={<Contact className="h-5 w-5" />}
-                      label="Contact Phone"
-                      value={company.contactPhone || user?.phoneNumber || 'Not provided'}
-                      color="green"
-                    />
-                    
-                    {/* <InfoItem 
-                      icon={<User className="h-5 w-5" />}
-                      label="Profile Owner"
-                      value={user?.name || 'Not available'}
-                      color="purple"
-                    /> */}
-                    
-                    <InfoItem 
-                      icon={<Mail className="h-5 w-5" />}
-                      label="Owner Email"
-                      value={user?.email || 'Not available'}
-                      color="red"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AccordionSection title="Contact & Team" icon={<Users size={20} />}>
+              <InfoItem 
+                icon={<Users size={20} />} 
+                label="Team Size" 
+                value={company.numberOfEmployees} 
+                className="border-b border-gray-100"
+              />
+              <InfoItem 
+                icon={<Mail size={20} />} 
+                label="Contact Email" 
+                value={company.contactEmail || user?.email} 
+                className="border-b border-gray-100"
+              />
+              <InfoItem 
+                icon={<Phone size={20} />} 
+                label="Contact Phone" 
+                value={company.contactPhone || user?.phoneNumber} 
+              />
+            </AccordionSection>
           </div>
         ) : (
-          <form id="profile-form" onSubmit={handleSubmit} className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-orange-50 to-red-50 px-8 py-6 border-b border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <Pen className="h-6 w-6 text-orange-600" />
-                Edit Company Profile
-              </h2>
-              <p className="text-gray-600 mt-1">Update your company information and details</p>
-            </div>
-            
-            <div className="p-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-                    Basic Information
-                  </h3>
-                  
-                  <div className="space-y-5">
-                    <InputField 
-                      label="Company Name" 
-                      name="name" 
-                      value={input.name} 
-                      onChange={handleChange} 
-                      required 
-                      placeholder="Enter company name"
-                    />
-                    
-                    <div>
-                  <Label htmlFor="description" className="text-gray-700 mb-2 block">Description</Label>
+          <form id="profile-form" onSubmit={handleSubmit} className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6 pb-4 border-b border-gray-200">Edit Company Profile</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <InputField label="Company Name" name="name" value={input.name} onChange={handleChange} required />
+                
+                <div className="md:col-span-2">
+                  <Label className="text-sm font-medium text-gray-700 mb-2">Company Description</Label>
                   <textarea 
-                    id="description"
                     name="description" 
                     value={input.description} 
-                    onChange={handleChange}
-                    rows="4"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Describe your company"
-                  ></textarea>
+                    onChange={handleChange} 
+                    rows="4" 
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" 
+                    placeholder="Describe your company's mission, values, and what makes it unique..."
+                  />
                 </div>
                 
                 <InputField 
@@ -408,7 +308,8 @@ const EmployerProfile = () => {
                   name="website" 
                   value={input.website} 
                   onChange={handleChange} 
-                  placeholder="https://example.com"
+                  placeholder="https://company.com" 
+                  icon={<Link size={16} />}
                 />
                 
                 <InputField 
@@ -416,140 +317,94 @@ const EmployerProfile = () => {
                   name="location" 
                   value={input.location} 
                   onChange={handleChange} 
-                  placeholder="City, Country"
+                  placeholder="City, Country" 
+                  icon={<MapPin size={16} />}
                 />
                 
-                    <div>
-                      <Label htmlFor="companyType" className="text-gray-700 mb-2 block">Company Type</Label>
-                      <select 
-                        id="companyType"
-                        name="companyType" 
-                        value={input.companyType} 
-                        onChange={handleChange} 
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      >
-                        <option value="">Select Type</option>
-                        {['Startup','MNC','SME','Government','Non-Profit','HR','Manufacturing','IT Services','Education','Healthcare','Finance','E-commerce','Consulting','Real Estate','Media & Entertainment','Telecommunications','Energy','Logistics','Agriculture','Automobile','Hospitality','Pharmaceutical','Retail','Construction','Legal','Cybersecurity','AI & Machine Learning','Gaming','Research & Development'].map(t => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">Company Type</Label>
+                  <select 
+                    name="companyType" 
+                    value={input.companyType} 
+                    onChange={handleChange} 
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  >
+                    <option value="">Select Company Type</option>
+                    {['Startup', 'MNC', 'SME', 'Government', 'Non-Profit', 'IT Services', 
+                      'Finance', 'Healthcare', 'Education', 'E-commerce', 'Manufacturing', 'Other'].map(t => 
+                      <option key={t} value={t}>{t}</option>
+                    )}
+                  </select>
                 </div>
                 
-                <div className="space-y-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-                    Additional Details
-                  </h3>
-                  
-                  <div className="space-y-5">
-                    <InputField 
-                      label="Experience (Years)" 
-                      name="experience" 
-                      value={input.experience} 
-                      onChange={handleChange} 
-                      type="number" 
-                      min="0"
-                      placeholder="0"
-                    />
-                    
-                    <InputField 
-                      label="Contact Email" 
-                      name="contactEmail" 
-                      value={input.contactEmail} 
-                      onChange={handleChange} 
-                      type="email" 
-                      placeholder="contact@company.com"
-                    />
-                    
-                    <InputField 
-                      label="Contact Phone" 
-                      name="contactPhone" 
-                      value={input.contactPhone} 
-                      onChange={handleChange} 
-                      placeholder="+1234567890"
-                    />
-                    
-                    <InputField 
-                      label="Founded Year" 
-                      name="foundedYear" 
-                      value={input.foundedYear} 
-                      onChange={handleChange} 
-                      type="number" 
-                      min="1900" 
-                      max={new Date().getFullYear()}
-                      placeholder="2020"
-                    />
-                    
-                    <InputField 
-                      label="Number of Employees" 
-                      name="numberOfEmployees" 
-                      value={input.numberOfEmployees} 
-                      onChange={handleChange} 
-                      type="number" 
-                      min="0"
-                      placeholder="50"
-                    />
-                    
+                <InputField 
+                  label="Years of Experience" 
+                  name="experience" 
+                  type="number" 
+                  value={input.experience} 
+                  onChange={handleChange} 
+                  min="0" 
+                  icon={<Briefcase size={16} />}
+                />
+                
+                <InputField 
+                  label="Contact Email" 
+                  name="contactEmail" 
+                  type="email" 
+                  value={input.contactEmail} 
+                  onChange={handleChange} 
+                  icon={<Mail size={16} />}
+                />
+                
+                <InputField 
+                  label="Contact Phone" 
+                  name="contactPhone" 
+                  value={input.contactPhone} 
+                  onChange={handleChange} 
+                  icon={<Phone size={16} />}
+                />
+                
+                <InputField 
+                  label="Founded Year" 
+                  name="foundedYear" 
+                  type="number" 
+                  value={input.foundedYear} 
+                  onChange={handleChange} 
+                  min="1800" 
+                  max={new Date().getFullYear()} 
+                  icon={<Calendar size={16} />}
+                />
+                
+                <InputField 
+                  label="Number of Employees" 
+                  name="numberOfEmployees" 
+                  type="number" 
+                  value={input.numberOfEmployees} 
+                  onChange={handleChange} 
+                  min="1" 
+                  icon={<User size={16} />}
+                />
+                
+                <div className="md:col-span-2">
+                  <Label className="text-sm font-medium text-gray-700 mb-2">Company Logo</Label>
+                  <div className="flex items-center gap-4 mt-2">
+                    <Avatar className="h-20 w-20 border border-gray-300">
+                      {input.file ? 
+                        <AvatarImage src={URL.createObjectURL(input.file)} className="object-cover" /> : 
+                        company.logo ? 
+                        <AvatarImage src={company.logo} className="object-cover" /> : 
+                        <AvatarFallback className="bg-blue-100 text-blue-700">{input.name?.[0]?.toUpperCase() || 'C'}</AvatarFallback>
+                      }
+                    </Avatar>
                     <div>
-                      <Label htmlFor="logo" className="text-gray-700 mb-2 block">Company Logo</Label>
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          <Avatar className="h-16 w-16 border">
-                            {input.file ? (
-                              <AvatarImage src={URL.createObjectURL(input.file)} />
-                            ) : company.logo ? (
-                              <AvatarImage src={company.logo} />
-                            ) : (
-                              <AvatarFallback className="bg-blue-100 text-blue-600">
-                                {input.name?.[0]?.toUpperCase() || 'C'}
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
-                        </div>
-                        <div>
-                          <input 
-                            id="logo"
-                            type="file" 
-                            accept="image/*" 
-                            onChange={handleFileChange} 
-                            className="hidden" 
-                          />
-                          <label htmlFor="logo" className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-sm cursor-pointer transition">
-                            Change Logo
-                          </label>
-                          <p className="text-xs text-gray-500 mt-1">JPG, PNG or GIF (max 5MB)</p>
-                        </div>
-                      </div>
+                      <label htmlFor="logo-upload" className="px-4 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm font-medium cursor-pointer hover:bg-gray-200 transition-colors inline-block">
+                        Change Logo
+                      </label>
+                      <p className="text-xs text-gray-500 mt-1">Recommended: 300×300 pixels, JPG or PNG</p>
                     </div>
+                    <input id="logo-upload" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
                   </div>
                 </div>
-            </div>
-            
-              <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
-                <Button 
-                  type="button" 
-                  onClick={() => setEditMode(false)} 
-                  variant="outline" 
-                  className="mr-4 border-gray-300"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={loading}
-                  className="bg-blue-600 hover:bg-blue-700 px-6"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" /> Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" /> Save Changes
-                    </>
-                  )}
-                </Button>
               </div>
             </div>
           </form>
@@ -559,16 +414,32 @@ const EmployerProfile = () => {
   );
 };
 
-const InputField = ({ label, ...props }) => (
+const InputField = ({ label, icon, ...props }) => (
   <div>
-    <Label htmlFor={props.name} className="text-gray-700 mb-2 block">{label}</Label>
-    <Input 
-      id={props.name}
-      {...props} 
-      className="w-full focus:ring-blue-500 focus:border-blue-500"
-    />
+    <Label className="text-sm font-medium text-gray-700 mb-2 block">{label}</Label>
+    <div className="relative">
+      {icon && (
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+          {icon}
+        </div>
+      )}
+      <Input 
+        {...props} 
+        className={cn(
+          "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors",
+          icon ? "pl-10" : ""
+        )} 
+      />
+    </div>
   </div>
 );
 
-export default EmployerProfile;
+const Tag = ({ icon, text }) => {
+  return (
+    <span className="px-3 py-1.5 rounded-full text-sm font-medium bg-blue-100 text-blue-700 inline-flex items-center gap-1.5">
+      {icon} {text}
+    </span>
+  );
+};
 
+export default EmployerProfile;

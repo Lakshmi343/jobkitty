@@ -20,6 +20,8 @@ const adminSchema = new mongoose.Schema({
   },
   isActive: { type: Boolean, default: true },
   lastLogin: { type: Date },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
   activityLog: [{
     action: { type: String, required: true },
     target: { type: String },

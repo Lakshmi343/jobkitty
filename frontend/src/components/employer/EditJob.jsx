@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-
 import axios from 'axios';
 import { JOB_API_END_POINT, CATEGORY_API_END_POINT } from '../../utils/constant';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/card';
