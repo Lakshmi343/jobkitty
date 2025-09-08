@@ -21,7 +21,7 @@ const Profile = () => {
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const { user } = useSelector((store) => store.auth);
   
-  // Fetch applied jobs data
+  
   useGetAppliedJobs();
 
  
@@ -66,7 +66,7 @@ const Profile = () => {
       {user?.role === "Jobseeker" && (
         <div className="min-h-screen bg-gray-50">
           <div className="max-w-6xl mx-auto p-6">
-            {/* Header Profile Card */}
+    
             <Card className="shadow-md border border-gray-200 mb-6">
               <CardHeader className="bg-white">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -102,11 +102,11 @@ const Profile = () => {
               </CardHeader>
             </Card>
 
-            {/* Main Content Grid */}
+            
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column - Skills & Education */}
+           
               <div className="lg:col-span-2 space-y-6">
-                {/* Skills Card */}
+            
                 <Card className="shadow-md border border-gray-200">
                   <CardHeader className="bg-white border-b border-gray-200">
                     <CardTitle className="flex items-center gap-3 text-gray-800">
@@ -143,7 +143,7 @@ const Profile = () => {
                   </CardContent>
                 </Card>
 
-                {/* Education Card */}
+ 
                 <Card className="shadow-md border border-gray-200">
                   <CardHeader className="bg-white border-b border-gray-200">
                     <CardTitle className="flex items-center gap-3 text-gray-800">
@@ -182,7 +182,7 @@ const Profile = () => {
                 </Card>
               </div>
 
-              {/* Right Column - Resume */}
+             
               <div className="space-y-6">
                 <Card className="shadow-md border border-gray-200">
                   <CardHeader className="bg-white border-b border-gray-200">

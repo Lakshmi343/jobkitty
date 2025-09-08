@@ -9,10 +9,10 @@ import { Textarea } from '../ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import axios from 'axios';
-import { JOB_API_END_POINT, CATEGORY_API_END_POINT, USER_API_END_POINT } from '@/utils/constant';
+import { JOB_API_END_POINT, CATEGORY_API_END_POINT, USER_API_END_POINT } from '../../utils/constant';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, MapPin,  DollarSign, Clock, Users,  Building,  FileText,ArrowLeft,Plus,CheckCircle, AlertCircle} from 'lucide-react';
+import { Briefcase, MapPin,  DollarSign, Clock, Users,  Building,  FileText,ArrowLeft,Plus,CheckCircle, AlertCircle, X} from 'lucide-react';
 import LoadingSpinner from '../shared/LoadingSpinner';
 
 const locations = [
@@ -112,7 +112,7 @@ const PostJob = () => {
     const validateStep = (step) => {
         switch (step) {
             case 1:
-                return input.title && input.description && input.category;
+                return input.title && input.description && input.category && requirements.length > 0;
             case 2:
                 return input.location && input.jobType; // openings is collected in step 3
             case 3:
@@ -149,6 +149,7 @@ const PostJob = () => {
             // Format the data properly
             const formData = {
                 ...input,
+                requirements: requirements.length > 0 ? requirements : ["No specific requirements"],
                 salary: {
                     min: Number(input.salaryMin),
                     max: Number(input.salaryMax)
@@ -168,7 +169,6 @@ const PostJob = () => {
             delete formData.experienceMax;
             delete formData.position; // not used by backend
             if (!formData.experience) delete formData.experience;
-            if (!requirements.length) delete formData.requirements;
             
             const response = await axios.post(`${JOB_API_END_POINT}/post`, formData, {
                 withCredentials: true,
@@ -280,6 +280,42 @@ const PostJob = () => {
                                 <div>
                                     <Label>Job Description</Label>
                                     <Textarea name="description" value={input.description} onChange={changeEventHandler} placeholder="Describe the role and responsibilities" />
+                                </div>
+                                <div>
+                                    <Label>Requirements* (Point-based format)</Label>
+                                    <div className="flex gap-2 mb-2">
+                                        <Input 
+                                            value={newRequirement}
+                                            onChange={(e) => setNewRequirement(e.target.value)}
+                                            placeholder="Add a requirement (e.g., Bachelor's degree in Computer Science)"
+                                            onKeyPress={handleKeyPress}
+                                        />
+                                        <Button 
+                                            type="button" 
+                                            onClick={addRequirement}
+                                            variant="outline"
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    <div className="space-y-2 mt-2">
+                                        {requirements.map((req, index) => (
+                                            <div key={index} className="bg-gray-50 border border-gray-200 px-4 py-2 rounded-lg flex items-start gap-2">
+                                                <span className="text-blue-600 font-semibold mt-1">•</span>
+                                                <span className="flex-1">{req}</span>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => removeRequirement(index)}
+                                                    className="text-gray-400 hover:text-red-500 transition-colors"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {requirements.length === 0 && (
+                                        <p className="text-sm text-gray-500 mt-2">Add job requirements as bullet points. Each requirement will be displayed as a separate point.</p>
+                                    )}
                                 </div>
                             </CardContent>
                         </div>
@@ -401,7 +437,7 @@ const PostJob = () => {
                                 Next
                             </Button>
                         ) : (
-                            <Button onClick={submitHandler} disabled={loading} className="bg-green-600 hover:bg-green-700">
+                            <Button onClick={submitHandler} disabled={loading || requirements.length === 0} className="bg-green-600 hover:bg-green-700">
                                 {loading ? (
                                     <div className="flex items-center justify-center">
                                         <LoadingSpinner size={20} color="#ffffff" />
@@ -414,6 +450,11 @@ const PostJob = () => {
                                     </>
                                 )}
                             </Button>
+                        )}
+                        {requirements.length === 0 && (
+                            <p className="text-amber-600 text-sm mt-2 text-center">
+                                ⚠️ Please add at least one requirement to post the job
+                            </p>
                         )}
                     </div>
                 </form>

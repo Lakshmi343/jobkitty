@@ -1,4 +1,5 @@
-// This file holds predefined skill suggestions
+
+
 export const skillSuggestions = [
   { id: "JavaScript", text: "JavaScript" },
   { id: "React", text: "React" },

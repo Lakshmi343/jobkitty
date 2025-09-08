@@ -14,7 +14,7 @@ const AdminAddSection = () => {
   const [activeTab, setActiveTab] = useState('company');
   const [loading, setLoading] = useState(false);
   
-  // Company form state
+
   const [companyForm, setCompanyForm] = useState({
     name: '',
     description: '',
@@ -24,7 +24,6 @@ const AdminAddSection = () => {
     size: ''
   });
 
-  // User form state
   const [userForm, setUserForm] = useState({
     fullname: '',
     email: '',
@@ -33,7 +32,7 @@ const AdminAddSection = () => {
     password: 'defaultpass123'
   });
 
-  // Job form state
+  
   const [jobForm, setJobForm] = useState({
     title: '',
     description: '',
@@ -46,7 +45,6 @@ const AdminAddSection = () => {
     companyId: ''
   });
 
-  // Category form state
   const [categoryForm, setCategoryForm] = useState({
     name: '',
     description: ''
@@ -192,7 +190,7 @@ const AdminAddSection = () => {
           <p className="text-gray-600 mt-2">Add new companies, users, jobs, and categories to the system</p>
         </div>
 
-        {/* Tab Navigation */}
+      
         <div className="flex space-x-1 bg-white rounded-lg p-1 mb-6 shadow-sm">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -213,7 +211,7 @@ const AdminAddSection = () => {
           })}
         </div>
 
-        {/* Add Company Form */}
+    
         {activeTab === 'company' && (
           <Card>
             <CardHeader>
@@ -290,7 +288,7 @@ const AdminAddSection = () => {
           </Card>
         )}
 
-        {/* Add User Form */}
+        
         {activeTab === 'user' && (
           <Card>
             <CardHeader>
@@ -356,7 +354,7 @@ const AdminAddSection = () => {
           </Card>
         )}
 
-        {/* Add Job Form */}
+        
         {activeTab === 'job' && (
           <Card>
             <CardHeader>
@@ -462,7 +460,7 @@ const AdminAddSection = () => {
           </Card>
         )}
 
-        {/* Add Category Form */}
+        
         {activeTab === 'category' && (
           <Card>
             <CardHeader>

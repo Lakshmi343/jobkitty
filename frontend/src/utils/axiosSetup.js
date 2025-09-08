@@ -1,19 +1,45 @@
 import axios from 'axios';
 
-// Global axios interceptor to handle blocked accounts
 export const setupGlobalInterceptors = () => {
-  // Response interceptor to handle blocked accounts
+  // Request interceptor to add admin token
+  axios.interceptors.request.use(
+    (config) => {
+      // Add admin token if exists and URL contains admin
+      const adminToken = localStorage.getItem('adminToken');
+      if (adminToken && adminToken !== 'null' && adminToken !== 'undefined' && config.url?.includes('/admin/')) {
+        config.headers.Authorization = `Bearer ${adminToken}`;
+      }
+      
+      // Add regular user token if exists and URL doesn't contain admin
+      const userToken = localStorage.getItem('token');
+      if (userToken && userToken !== 'null' && userToken !== 'undefined' && !config.url?.includes('/admin/')) {
+        config.headers.Authorization = `Bearer ${userToken}`;
+      }
+      
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
+    }
+  );
+
+  // Response interceptor for error handling
   axios.interceptors.response.use(
     (response) => response,
     (error) => {
-      // Check if user account is blocked
+      // Handle blocked account
       if (error.response?.status === 403 && error.response?.data?.blocked) {
-        // Clear user data from localStorage and redirect to blocked page
         localStorage.removeItem('user');
         localStorage.removeItem('token');
-        
-        // Redirect to blocked account page
         window.location.href = '/blocked-account';
+        return Promise.reject(error);
+      }
+      
+      // Handle admin auth errors
+      if (error.response?.status === 401 && error.config?.url?.includes('/admin/')) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminData');
+        window.location.href = '/admin/login';
         return Promise.reject(error);
       }
       

@@ -187,34 +187,57 @@ const EmployerApplicants = () => {
 
     const toInline = (url) => {
         if (!url) return url;
-        let out = url.replace('/upload/', '/upload/fl_inline/');
-        if (out.includes('/raw/')) {
-            try {
-                const u = new URL(out);
-                const segments = u.pathname.split('/');
-                const last = segments[segments.length - 1];
-                if (!last.includes('.')) {
-                    segments[segments.length - 1] = `${last}.pdf`;
-                    u.pathname = segments.join('/');
-                    out = u.toString();
-                }
-            } catch {}
+        
+        // Handle Cloudinary URLs properly
+        if (url.includes('cloudinary.com')) {
+            // For PDF files uploaded as raw, convert to viewable format
+            if (url.includes('/raw/upload/')) {
+                // Convert raw PDF to image for preview
+                return url.replace('/raw/upload/', '/image/upload/f_auto,q_auto,pg_1/');
+            } else if (url.includes('/upload/')) {
+                // Add inline flag for direct viewing
+                return url.replace('/upload/', '/upload/fl_attachment/');
+            }
         }
-        return out;
+        
+        return url;
     };
 
     const previewOrDownload = async (url, filenameHint) => {
-        const inline = toInline(url);
+        if (!url) {
+            toast.error('Resume URL not available');
+            return;
+        }
+
         try {
-            await axios.head(inline);
-            setPreviewUrl(inline);
-        } catch {
+            // For Cloudinary PDFs, create a preview URL
+            let previewUrl = url;
+            
+            if (url.includes('cloudinary.com')) {
+                if (url.includes('/raw/upload/')) {
+                    // Convert raw PDF to viewable format - show first page as image
+                    previewUrl = url.replace('/raw/upload/', '/image/upload/f_auto,q_auto,pg_1,w_800,h_1000/');
+                } else {
+                    // For other formats, use Google Docs viewer as fallback
+                    previewUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+                }
+            } else {
+                // For non-Cloudinary URLs, use Google Docs viewer
+                previewUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+            }
+            
+            setPreviewUrl(previewUrl);
+        } catch (error) {
+            console.error('Preview error:', error);
+            // Fallback to download
             const link = document.createElement('a');
             link.href = url;
             if (filenameHint) link.download = filenameHint;
+            link.target = '_blank';
             document.body.appendChild(link);
             link.click();
             link.remove();
+            toast.info('Resume downloaded');
         }
     };
 
@@ -403,12 +426,58 @@ const EmployerApplicants = () => {
                                                                 <FileText className="w-3 h-3 mr-1" /> Preview
                                                             </Button>
                                                         </DialogTrigger>
-                                                        <DialogContent className="max-w-5xl w-[90vw] h-[85vh] p-0">
-                                                            <DialogHeader className="p-4 pb-2">
-                                                                <DialogTitle>Resume Preview</DialogTitle>
+                                                        <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0">
+                                                            <DialogHeader className="p-4 pb-2 border-b">
+                                                                <DialogTitle className="flex items-center gap-2">
+                                                                    <FileText className="w-5 h-5" />
+                                                                    Resume Preview - {item.applicant?.profile?.resumeOriginalName || 'Resume'}
+                                                                </DialogTitle>
+                                                                <div className="flex gap-2 mt-2">
+                                                                    <Button 
+                                                                        variant="outline" 
+                                                                        size="sm"
+                                                                        onClick={() => window.open(item.applicant.profile.resume, '_blank')}
+                                                                    >
+                                                                        <ExternalLink className="w-4 h-4 mr-1" /> Open in New Tab
+                                                                    </Button>
+                                                                    <Button 
+                                                                        variant="outline" 
+                                                                        size="sm"
+                                                                        onClick={() => {
+                                                                            const link = document.createElement('a');
+                                                                            link.href = item.applicant.profile.resume;
+                                                                            link.download = item.applicant?.profile?.resumeOriginalName || 'resume.pdf';
+                                                                            link.click();
+                                                                        }}
+                                                                    >
+                                                                        <Download className="w-4 h-4 mr-1" /> Download
+                                                                    </Button>
+                                                                </div>
                                                             </DialogHeader>
-                                                            <div className="w-full h-[calc(85vh-56px)]">
-                                                                <iframe src={previewUrl} title="Resume Preview" width="100%" height="100%" />
+                                                            <div className="w-full h-[calc(90vh-120px)] bg-gray-50">
+                                                                {previewUrl ? (
+                                                                    <iframe 
+                                                                        src={previewUrl} 
+                                                                        title="Resume Preview" 
+                                                                        width="100%" 
+                                                                        height="100%" 
+                                                                        className="border-0"
+                                                                        onError={() => {
+                                                                            toast.error('Unable to preview resume. Please download to view.');
+                                                                            setPreviewUrl(null);
+                                                                        }}
+                                                                    />
+                                                                ) : (
+                                                                    <div className="flex items-center justify-center h-full">
+                                                                        <div className="text-center">
+                                                                            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                                                            <p className="text-gray-600 mb-4">Unable to preview this resume</p>
+                                                                            <Button onClick={() => window.open(item.applicant.profile.resume, '_blank')}>
+                                                                                <ExternalLink className="w-4 h-4 mr-2" /> View in New Tab
+                                                                            </Button>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </DialogContent>
                                                     </Dialog>
@@ -629,7 +698,13 @@ const EmployerApplicants = () => {
                                         variant="outline" 
                                         onClick={() => previewOrDownload(profileDetails.applicant.profile.resume, profileDetails.applicant?.profile?.resumeOriginalName)}
                                     >
-                                        <FileText className="w-4 h-4 mr-2" /> Preview Resume
+                                        <Eye className="w-4 h-4 mr-2" /> Preview Resume
+                                    </Button>
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={() => window.open(profileDetails.applicant.profile.resume, '_blank')}
+                                    >
+                                        <ExternalLink className="w-4 h-4 mr-2" /> Open in New Tab
                                     </Button>
                                     <a
                                         href={profileDetails.applicant.profile.resume}

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { USER_API_END_POINT } from '../../utils/constant';
 import { Users, UserCheck, UserX, Briefcase, FileText, TrendingUp } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -30,13 +31,13 @@ const UserManagementDashboard = () => {
         setLoading(true);
         
         // Fetch jobseekers
-        const jobseekersRes = await axios.get("http://localhost:8000/api/v1/user/jobseekers", { 
+        const jobseekersRes = await axios.get(`${USER_API_END_POINT}/jobseekers`, { 
           withCredentials: true 
         });
         const jobseekers = jobseekersRes.data.jobseekers || [];
         
         // Fetch employers
-        const employersRes = await axios.get("http://localhost:8000/api/v1/user/employers", { 
+        const employersRes = await axios.get(`${USER_API_END_POINT}/employers`, { 
           withCredentials: true 
         });
         const employers = employersRes.data.employers || [];

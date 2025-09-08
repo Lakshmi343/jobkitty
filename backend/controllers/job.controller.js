@@ -99,46 +99,116 @@ export const postJob = async (req, res) => {
 
 export const getAllJobs = async (req, res) => {
     try {
-        const keyword = req.query.keyword || "";
-        const query = {
-            $or: [
-                { title: { $regex: keyword, $options: "i" } },
-                { description: { $regex: keyword, $options: "i" } },
-            ]
-        };
-        const jobs = await Job.find(query).populate({
-            path: "company"
-        }).sort({ createdAt: -1 });
-        if (!jobs) {
-            return res.status(404).json({
-                message: "Jobs not found.",
-                success: false
+        const { 
+            keyword = "", 
+            location = "", 
+            jobType = "", 
+            categoryId = "",
+            salaryMin = 0,
+            salaryMax = 0,
+            experienceMin = 0,
+            experienceMax = 0
+        } = req.query;
+
+        // Build dynamic query
+        let query = {};
+        let conditions = [];
+
+        // Keyword search (case-insensitive)
+        if (keyword) {
+            conditions.push({
+                $or: [
+                    { title: { $regex: keyword, $options: "i" } },
+                    { description: { $regex: keyword, $options: "i" } },
+                    { location: { $regex: keyword, $options: "i" } }
+                ]
+            });
+        }
+
+        // Location filter (case-insensitive)
+        if (location) {
+            conditions.push({ location: { $regex: location, $options: "i" } });
+        }
+
+        // Job type filter (case-insensitive)
+        if (jobType) {
+            conditions.push({ jobType: { $regex: `^${jobType}$`, $options: "i" } });
+        }
+
+        // Category filter
+        if (categoryId) {
+            conditions.push({ category: categoryId });
+        }
+
+        // Salary range filter
+        if (salaryMin > 0 || salaryMax > 0) {
+            let salaryCondition = {};
+            if (salaryMin > 0) salaryCondition['salary.min'] = { $gte: parseInt(salaryMin) };
+            if (salaryMax > 0) salaryCondition['salary.max'] = { $lte: parseInt(salaryMax) };
+            conditions.push(salaryCondition);
+        }
+
+        // Experience range filter
+        if (experienceMin >= 0 || experienceMax > 0) {
+            let expCondition = {};
+            if (experienceMin >= 0) expCondition['experience.min'] = { $gte: parseInt(experienceMin) };
+            if (experienceMax > 0) expCondition['experience.max'] = { $lte: parseInt(experienceMax) };
+            conditions.push(expCondition);
+        }
+
+        // Combine all conditions
+        if (conditions.length > 0) {
+            query = { $and: conditions };
+        }
+
+        const jobs = await Job.find(query)
+            .populate({
+                path: "company"
             })
-        };
+            .populate({
+                path: "category"
+            })
+            .sort({ createdAt: -1 });
+
         return res.status(200).json({
             jobs,
             success: true
-        })
+        });
     } catch (error) {
-        console.log(error);
+        console.error("Get all jobs error:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false
+        });
     }
 }
 
 export const getJobById = async (req, res) => {
     try {
         const jobId = req.params.id;
-        const job = await Job.findById(jobId).populate({
-            path:"applications"
-        });
+        const job = await Job.findById(jobId)
+            .populate({
+                path: "company"
+            })
+            .populate({
+                path: "category"
+            })
+            .populate({
+                path: "applications"
+            });
         if (!job) {
             return res.status(404).json({
-                message: "Jobs not found.",
+                message: "Job not found.",
                 success: false
             })
         };
         return res.status(200).json({ job, success: true });
     } catch (error) {
-        console.log(error);
+        console.error("Get job by ID error:", error);
+        return res.status(500).json({
+            message: "Internal server error",
+            success: false
+        });
     }
 }
 

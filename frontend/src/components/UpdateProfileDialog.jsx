@@ -7,7 +7,7 @@
 // import { Button } from './ui/button'
 // import { useDispatch, useSelector } from 'react-redux'
 // import axios from 'axios'
-// import { USER_API_END_POINT } from '@/utils/constant'
+// import { USER_API_END_POINT } from './utils/constant'
 // import { setUser } from '@/redux/authSlice'
 // import { toast } from 'sonner'
 // import LoadingSpinner from './shared/LoadingSpinner'
@@ -245,7 +245,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
-import { USER_API_END_POINT } from "@/utils/constant";
+import { USER_API_END_POINT } from "../utils/constant";
 import { setUser } from "@/redux/authSlice";
 import { toast } from "sonner";
 
@@ -387,10 +387,23 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
 
     try {
       setLoading(true);
+      console.log("📤 Submitting form data:", {
+        fullname: input.fullname,
+        email: input.email,
+        phoneNumber: input.phoneNumber,
+        bio: input.bio,
+        skills: skillsString,
+        place: input.place,
+        hasFile: !!input.file,
+        fileName: input.file?.name
+      });
+      
       const res = await axios.post(`${USER_API_END_POINT}/profile/update`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true,
       });
+
+      console.log("✅ Profile update response:", res.data);
 
       if (res.data.success) {
         dispatch(setUser(res.data.user));
@@ -398,7 +411,8 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
         setOpen(false); // close dialog
       }
     } catch (error) {
-      console.error("Profile update error:", error);
+      console.error("❌ Profile update error:", error);
+      console.error("Error response:", error.response?.data);
       toast.error(error.response?.data?.message || "Failed to update profile");
     } finally {
       setLoading(false);
@@ -551,7 +565,7 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
 
           {/* Resume Upload */}
           <div>
-            <Label htmlFor="file">Resume</Label>
+            <Label htmlFor="file">Resume (PDF, DOC, DOCX)</Label>
             <Input
               id="file"
               name="file"
@@ -559,6 +573,11 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
               accept=".pdf,.doc,.docx"
               onChange={fileChangeHandler}
             />
+            {input.file && (
+              <p className="text-sm text-green-600 mt-1">
+                ✅ Selected: {input.file.name} ({(input.file.size / 1024 / 1024).toFixed(2)} MB)
+              </p>
+            )}
           </div>
 
           {/* Submit */}

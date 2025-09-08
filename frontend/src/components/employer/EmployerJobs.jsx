@@ -75,13 +75,13 @@ const EmployerJobs = () => {
   };
 
   const deleteJob = async (jobId) => {
-    if (!window.confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+    if (!window.confirm('Are you sure you want to remove this job? This action cannot be undone.')) {
       return;
     }
 
     try {
       if (!user) {
-        toast.error('Please login to delete jobs');
+        toast.error('Please log in to continue.');
         navigate('/login');
         return;
       }
@@ -100,9 +100,9 @@ const EmployerJobs = () => {
         toast.error('Please login to continue');
         navigate('/login');
       } else if (error.response?.status === 403) {
-        toast.error('Access denied. Only employers can delete jobs.');
+        toast.error('You do not have permission to remove this job.');
       } else {
-        toast.error('Failed to delete job');
+        toast.error('Could not remove job. Please try again.');
       }
     }
   };

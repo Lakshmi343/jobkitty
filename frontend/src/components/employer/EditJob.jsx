@@ -30,7 +30,11 @@ const EditJob = () => {
         jobType: "",
         position: "1",
         openings: "1",
-        category: ""
+        category: "",
+        skills: "",
+        benefits: "",
+        workMode: "",
+        deadline: ""
     });
     
     const [loading, setLoading] = useState(false);
@@ -65,7 +69,7 @@ const EditJob = () => {
             }
         } catch (error) {
             console.error("Error fetching categories:", error);
-            toast.error("Failed to load job categories");
+            toast.error("Could not load job categories. Please try again.");
         }
     };
 
@@ -87,13 +91,17 @@ const EditJob = () => {
                     jobType: job.jobType || "",
                     position: job.position?.toString() || "",
                     openings: job.openings?.toString() || "",
-                    category: job.category?._id || ""
+                    category: job.category?._id || "",
+                    skills: job.skills?.join(", ") || "",
+                    benefits: job.benefits?.join(", ") || "",
+                    workMode: job.workMode || "",
+                    deadline: job.deadline ? new Date(job.deadline).toISOString().split('T')[0] : ""
                 });
                 setRequirements(job.requirements || []);
             }
         } catch (error) {
             console.error("Error fetching job data:", error);
-            toast.error("Failed to fetch job data");
+            toast.error("Could not load job information. Please try again.");
         } finally {
             setFetching(false);
         }
@@ -175,9 +183,13 @@ const EditJob = () => {
                 experienceLevel: updatedInput.experienceLevel,
                 location: updatedInput.location,
                 jobType: updatedInput.jobType,
+                workMode: updatedInput.workMode || "On-site",
                 position: parseInt(updatedInput.position) || 1,
                 openings: openingsCount,
-                category: updatedInput.category
+                category: updatedInput.category,
+                skills: updatedInput.skills ? updatedInput.skills.split(',').map(s => s.trim()).filter(s => s) : [],
+                benefits: updatedInput.benefits ? updatedInput.benefits.split(',').map(b => b.trim()).filter(b => b) : [],
+                deadline: updatedInput.deadline ? new Date(updatedInput.deadline) : null
             };
 
             console.log("Sending job data to backend:", jobData);
@@ -204,7 +216,9 @@ const EditJob = () => {
         "Kozhikode", "Wayanad", "Kannur", "Kasaragod"
     ];
 
-    const jobTypes = ["Full-time", "Part-time", "Contract", "Temporary", "Internship", "Remote"];
+    const jobTypes = ["Full-time", "Part-time", "Contract", "Temporary", "Internship"];
+    
+    const workModes = ["On-site", "Remote", "Hybrid"];
 
     const experienceLevels = ["Entry Level", "Junior", "Mid-Level", "Senior", "Lead", "Manager", "Executive"];
 
@@ -223,64 +237,83 @@ const EditJob = () => {
     }
 
     return (
-        <div>
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
             <Navbar />
-            <div className="max-w-4xl mx-auto my-10 px-4">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h1 className="text-2xl font-bold">Edit Job</h1>
-                        <p className="text-gray-600">Update your job posting details</p>
+            <div className="max-w-6xl mx-auto py-12 px-6">
+                {/* Hero Header */}
+                <div className="relative mb-12">
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl transform rotate-1"></div>
+                    <div className="relative bg-white rounded-3xl p-8 shadow-2xl border border-gray-100">
+                        <div className="flex flex-col md:flex-row items-center justify-between">
+                            <div className="flex items-center gap-4 mb-4 md:mb-0">
+                                <div className="p-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-lg">
+                                    <FileText className="h-10 w-10 text-white" />
+                                </div>
+                                <div>
+                                    <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                        Edit Job Posting
+                                    </h1>
+                                    <p className="text-gray-600 text-lg mt-1">
+                                        Transform your job listing to attract top talent
+                                    </p>
+                                </div>
+                            </div>
+                            <Button 
+                                onClick={() => navigate('/employer/jobs')} 
+                                variant="outline" 
+                                className="border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 transition-all duration-300 px-6 py-3"
+                            >
+                                <ArrowLeft className="h-5 w-5 mr-2" />
+                                Back to Jobs
+                            </Button>
+                        </div>
                     </div>
-                    <Button 
-                        onClick={() => navigate('/employer/jobs')} 
-                        variant="outline" 
-                        className="flex items-center gap-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to Jobs
-                    </Button>
                 </div>
 
-                <form onSubmit={submitHandler}>
+                <form onSubmit={submitHandler} className="space-y-10">
                     {/* Job Details */}
-                    <div className='bg-white p-8 rounded-lg shadow-md border mb-6'>
-                        <CardHeader className="px-0 pt-0">
-                            <CardTitle className="flex items-center gap-2">
-                                <FileText className="h-6 w-6 text-blue-600" />
-                                Job Details
-                            </CardTitle>
-                        </CardHeader>
+                    <div className='relative group'>
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 rounded-2xl transform rotate-1 group-hover:rotate-2 transition-transform duration-300"></div>
+                        <div className='relative bg-white p-10 rounded-2xl shadow-xl border border-gray-100'>
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-500 rounded-xl">
+                                    <FileText className="h-6 w-6 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-800">Job Details</h2>
+                                <div className="flex-1 h-px bg-gradient-to-r from-blue-200 to-purple-200 ml-4"></div>
+                            </div>
                         <CardContent className="px-0 pb-0">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
-                                    <Label>Job Title*</Label>
+                                    <Label className="text-lg font-semibold text-gray-700 mb-3 block">Job Title*</Label>
                                     <Input 
                                         name="title"
                                         value={input.title}
                                         onChange={changeEventHandler}
                                         placeholder="e.g., Senior Software Engineer"
                                         required
+                                        className="h-14 text-lg border-2 border-gray-200 focus:border-purple-400 rounded-xl transition-all duration-300"
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <Label>Job Description*</Label>
+                                    <Label className="text-lg font-semibold text-gray-700 mb-3 block">Job Description*</Label>
                                     <Textarea 
                                         name="description"
                                         value={input.description}
                                         onChange={changeEventHandler}
                                         placeholder="Describe the role, responsibilities, and ideal candidate..."
-                                        className="min-h-[150px]"
+                                        className="min-h-[180px] text-lg border-2 border-gray-200 focus:border-purple-400 rounded-xl transition-all duration-300 resize-none"
                                         required
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <Label>Category*</Label>
+                                    <Label className="text-lg font-semibold text-gray-700 mb-3 block">Category*</Label>
                                     <Select
                                         value={input.category}
                                         onValueChange={(value) => selectChangeHandler("category", value)}
                                         required
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="h-14 text-lg border-2 border-gray-200 focus:border-purple-400 rounded-xl">
                                             <SelectValue placeholder="Select a category" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -297,23 +330,25 @@ const EditJob = () => {
                     </div>
 
                     {/* Location & Job Type */}
-                    <div className='bg-white p-8 rounded-lg shadow-md border mb-6'>
-                        <CardHeader className="px-0 pt-0">
-                            <CardTitle className="flex items-center gap-2">
-                                <MapPin className="h-6 w-6 text-blue-600" />
-                                Location & Job Type
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="px-0 pb-0">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className='relative group'>
+                        <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-blue-400 rounded-2xl transform -rotate-1 group-hover:-rotate-2 transition-transform duration-300"></div>
+                        <div className='relative bg-white p-10 rounded-2xl shadow-xl border border-gray-100'>
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-3 bg-gradient-to-br from-green-500 to-blue-500 rounded-xl">
+                                    <MapPin className="h-6 w-6 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-800">Location & Job Type</h2>
+                                <div className="flex-1 h-px bg-gradient-to-r from-green-200 to-blue-200 ml-4"></div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                                 <div>
-                                    <Label>Location*</Label>
+                                    <Label className="text-lg font-semibold text-gray-700 mb-3 block">Location*</Label>
                                     <Select
                                         value={input.location}
                                         onValueChange={(value) => selectChangeHandler("location", value)}
                                         required
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="h-14 text-lg border-2 border-gray-200 focus:border-green-400 rounded-xl">
                                             <SelectValue placeholder="Select a location" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -326,13 +361,13 @@ const EditJob = () => {
                                     </Select>
                                 </div>
                                 <div>
-                                    <Label>Job Type*</Label>
+                                    <Label className="text-lg font-semibold text-gray-700 mb-3 block">Job Type*</Label>
                                     <Select
                                         value={input.jobType}
                                         onValueChange={(value) => selectChangeHandler("jobType", value)}
                                         required
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="h-14 text-lg border-2 border-gray-200 focus:border-green-400 rounded-xl">
                                             <SelectValue placeholder="Select a job type" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -344,22 +379,54 @@ const EditJob = () => {
                                         </SelectContent>
                                     </Select>
                                 </div>
+                                <div>
+                                    <Label className="text-lg font-semibold text-gray-700 mb-3 block">Work Mode*</Label>
+                                    <Select
+                                        value={input.workMode}
+                                        onValueChange={(value) => selectChangeHandler("workMode", value)}
+                                        required
+                                    >
+                                        <SelectTrigger className="h-14 text-lg border-2 border-gray-200 focus:border-green-400 rounded-xl">
+                                            <SelectValue placeholder="Select work mode" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {workModes.map(mode => (
+                                                    <SelectItem key={mode} value={mode}>{mode}</SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <Label className="text-lg font-semibold text-gray-700 mb-3 block">Application Deadline</Label>
+                                    <Input 
+                                        type="date" 
+                                        name="deadline" 
+                                        value={input.deadline} 
+                                        onChange={changeEventHandler} 
+                                        min={new Date().toISOString().split('T')[0]}
+                                        className="h-14 text-lg border-2 border-gray-200 focus:border-green-400 rounded-xl"
+                                    />
+                                </div>
                             </div>
-                        </CardContent>
+                        </div>
                     </div>
 
                     {/* Compensation & Openings */}
-                    <div className='bg-white p-8 rounded-lg shadow-md border mb-6'>
-                        <CardHeader className="px-0 pt-0">
-                            <CardTitle className="flex items-center gap-2">
-                                <DollarSign className="h-6 w-6 text-blue-600" />
-                                Compensation & Openings
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="px-0 pb-0">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className='relative group'>
+                        <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl transform rotate-1 group-hover:rotate-2 transition-transform duration-300"></div>
+                        <div className='relative bg-white p-10 rounded-2xl shadow-xl border border-gray-100'>
+                            <div className="flex items-center gap-3 mb-8">
+                                <div className="p-3 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl">
+                                    <DollarSign className="h-6 w-6 text-white" />
+                                </div>
+                                <h2 className="text-2xl font-bold text-gray-800">Compensation & Openings</h2>
+                                <div className="flex-1 h-px bg-gradient-to-r from-yellow-200 to-orange-200 ml-4"></div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div>
-                                    <Label>Minimum Salary*</Label>
+                                    <Label className="text-lg font-semibold text-gray-700 mb-3 block">Minimum Salary*</Label>
                                     <Input 
                                         type="number" 
                                         name="salaryMin" 
@@ -367,10 +434,11 @@ const EditJob = () => {
                                         onChange={changeEventHandler} 
                                         placeholder="e.g., 30000"
                                         min="0"
+                                        className="h-14 text-lg border-2 border-gray-200 focus:border-yellow-400 rounded-xl transition-all duration-300"
                                     />
                                 </div>
                                 <div>
-                                    <Label>Maximum Salary*</Label>
+                                    <Label className="text-lg font-semibold text-gray-700 mb-3 block">Maximum Salary*</Label>
                                     <Input 
                                         type="number" 
                                         name="salaryMax" 
@@ -378,10 +446,11 @@ const EditJob = () => {
                                         onChange={changeEventHandler} 
                                         placeholder="e.g., 50000"
                                         min={input.salaryMin || 0}
+                                        className="h-14 text-lg border-2 border-gray-200 focus:border-yellow-400 rounded-xl transition-all duration-300"
                                     />
                                 </div>
                                 <div>
-                                    <Label>Number of Positions*</Label>
+                                    <Label className="text-lg font-semibold text-gray-700 mb-3 block">Number of Positions*</Label>
                                     <Input 
                                         type="number" 
                                         name="position" 
@@ -389,10 +458,11 @@ const EditJob = () => {
                                         onChange={changeEventHandler} 
                                         placeholder="e.g., 1"
                                         min="1"
+                                        className="h-14 text-lg border-2 border-gray-200 focus:border-yellow-400 rounded-xl transition-all duration-300"
                                     />
                                 </div>
                                 <div>
-                                    <Label>Number of Openings*</Label>
+                                    <Label className="text-lg font-semibold text-gray-700 mb-3 block">Number of Openings*</Label>
                                     <Input 
                                         type="number" 
                                         name="openings" 
@@ -400,14 +470,15 @@ const EditJob = () => {
                                         onChange={changeEventHandler} 
                                         placeholder="e.g., 1"
                                         min="1"
+                                        className="h-14 text-lg border-2 border-gray-200 focus:border-yellow-400 rounded-xl transition-all duration-300"
                                     />
                                 </div>
                             </div>
-                        </CardContent>
+                        </div>
                     </div>
 
                     {/* Experience & Requirements */}
-                    <div className='bg-white p-8 rounded-lg shadow-md border mb-6'>
+                    <div className='bg-white p-8 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300'>
                         <CardHeader className="px-0 pt-0">
                             <CardTitle className="flex items-center gap-2">
                                 <Briefcase className="h-6 w-6 text-blue-600" />
@@ -457,12 +528,18 @@ const EditJob = () => {
                                     />
                                 </div>
                                 <div className="md:col-span-2">
-                                    <Label>Requirements*</Label>
+                                    <Label>Requirements* (Point-based format)</Label>
                                     <div className="flex gap-2 mb-2">
                                         <Input 
                                             value={newRequirement}
                                             onChange={(e) => setNewRequirement(e.target.value)}
-                                            placeholder="Add a requirement"
+                                            placeholder="Add a requirement (e.g., Bachelor's degree in Computer Science)"
+                                            onKeyPress={(e) => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    addRequirement();
+                                                }
+                                            }}
                                         />
                                         <Button 
                                             type="button" 
@@ -472,51 +549,104 @@ const EditJob = () => {
                                             <Plus className="h-4 w-4" />
                                         </Button>
                                     </div>
-                                    <div className="flex flex-wrap gap-2 mt-2">
+                                    <div className="space-y-2 mt-2">
                                         {requirements.map((req, index) => (
-                                            <div key={index} className="bg-gray-100 px-3 py-1 rounded-full flex items-center gap-1">
-                                                <span>{req}</span>
+                                            <div key={index} className="bg-gray-50 border border-gray-200 px-4 py-2 rounded-lg flex items-start gap-2">
+                                                <span className="text-blue-600 font-semibold mt-1">•</span>
+                                                <span className="flex-1">{req}</span>
                                                 <button 
                                                     type="button" 
                                                     onClick={() => removeRequirement(index)}
-                                                    className="text-gray-500 hover:text-red-500"
+                                                    className="text-gray-400 hover:text-red-500 transition-colors"
                                                 >
-                                                    <X className="h-3 w-3" />
+                                                    <X className="h-4 w-4" />
                                                 </button>
                                             </div>
                                         ))}
                                     </div>
+                                    {requirements.length === 0 && (
+                                        <p className="text-sm text-gray-500 mt-2">Add job requirements as bullet points. Each requirement will be displayed as a separate point.</p>
+                                    )}
                                 </div>
                             </div>
                         </CardContent>
                     </div>
 
-                    <div className="flex justify-between mt-6">
-                        <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={() => navigate('/employer/jobs')}
-                        >
-                            Cancel
-                        </Button>
-                        
-                        <Button 
-                            type="submit" 
-                            disabled={loading || requirements.length === 0} 
-                            className="bg-green-600 hover:bg-green-700"
-                        >
-                            {loading ? (
-                                <div className="flex items-center justify-center">
-                                    <LoadingSpinner size={20} color="#ffffff" />
-                                    <span className="ml-2">Updating...</span>
+                    {/* Additional Details */}
+                    <div className='bg-white p-8 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300'>
+                        <CardHeader className="px-0 pt-0">
+                            <CardTitle className="flex items-center gap-2">
+                                <Building className="h-6 w-6 text-blue-600" />
+                                Additional Details
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="px-0 pb-0">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <Label>Required Skills (comma-separated)</Label>
+                                    <Input 
+                                        name="skills"
+                                        value={input.skills}
+                                        onChange={changeEventHandler}
+                                        placeholder="e.g., JavaScript, React, Node.js"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">Separate multiple skills with commas</p>
                                 </div>
-                            ) : (
-                                <>
-                                    <CheckCircle className='mr-2 h-4 w-4' />
-                                    Update Job
-                                </>
+                                <div>
+                                    <Label>Benefits (comma-separated)</Label>
+                                    <Input 
+                                        name="benefits"
+                                        value={input.benefits}
+                                        onChange={changeEventHandler}
+                                        placeholder="e.g., Health Insurance, Flexible Hours, Remote Work"
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">Separate multiple benefits with commas</p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className='relative group'>
+                        <div className="absolute inset-0 bg-gradient-to-r from-pink-400 to-purple-400 rounded-2xl transform rotate-1 group-hover:rotate-2 transition-transform duration-300"></div>
+                        <div className="relative bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
+                            <div className="flex flex-col lg:flex-row gap-6 justify-between items-center">
+                                <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    onClick={() => navigate('/employer/jobs')}
+                                    className="w-full lg:w-auto px-10 py-4 text-lg font-semibold border-2 border-gray-300 hover:border-gray-500 hover:bg-gray-50 rounded-xl transition-all duration-300"
+                                >
+                                    <ArrowLeft className="mr-3 h-5 w-5" />
+                                    Cancel Changes
+                                </Button>
+                                
+                                <Button 
+                                    type="submit" 
+                                    disabled={loading || requirements.length === 0} 
+                                    className="w-full lg:w-auto bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 hover:from-purple-700 hover:via-pink-700 hover:to-orange-600 px-12 py-4 text-lg font-bold shadow-2xl hover:shadow-3xl rounded-xl transform hover:scale-105 transition-all duration-300"
+                                >
+                                    {loading ? (
+                                        <div className="flex items-center justify-center">
+                                            <LoadingSpinner size={24} color="#ffffff" />
+                                            <span className="ml-3">Updating Job...</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <CheckCircle className='mr-3 h-6 w-6' />
+                                            Update Job Posting
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
+                            {requirements.length === 0 && (
+                                <div className="mt-6 p-4 bg-amber-50 border-2 border-amber-200 rounded-xl">
+                                    <p className="text-amber-700 text-center font-semibold">
+                                        ⚠️ Please add at least one requirement to update the job
+                                    </p>
+                                </div>
                             )}
-                        </Button>
+                        </div>
                     </div>
                 </form>
             </div>

@@ -1,41 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import { tokenManager } from '../../utils/tokenManager';
 
-const AdminProtectedRoute = ({ children }) => {
-  const { user } = useSelector(store => store.auth);
+const AdminProtectedRoute = ({ children, allowedRoles = [] }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuth = () => {
       try {
-        // Check if user is logged in via Redux and has admin role
-        if (user && user.role === 'admin') {
-          setIsAuthenticated(true);
-          setIsLoading(false);
-          return;
-        }
+        // Check for admin token and data
+        const adminToken = localStorage.getItem('adminToken');
+        const adminData = localStorage.getItem('adminData');
         
-        // Check localStorage for admin data (persists on refresh)
-        const adminData = localStorage.getItem('admin');
-        const adminRole = localStorage.getItem('adminRole');
-        if (adminData && adminRole === 'admin') {
-          setIsAuthenticated(true);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Fallback to token-based authentication
-        if (!tokenManager.accessToken) {
-          tokenManager.accessToken = localStorage.getItem('adminAccessToken');
-          tokenManager.refreshToken = localStorage.getItem('adminRefreshToken');
-        }
-        
-        if (tokenManager.isAuthenticated()) {
-          // Setup interceptors for token management
-          tokenManager.setupInterceptors();
+        if (adminToken && adminToken !== 'null' && adminToken !== 'undefined' && adminData) {
+          const admin = JSON.parse(adminData);
+          
+          // Check if role is allowed (if allowedRoles is specified)
+          if (allowedRoles.length > 0 && !allowedRoles.includes(admin.role)) {
+            setIsAuthenticated(false);
+            setIsLoading(false);
+            return;
+          }
+          
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
@@ -49,7 +35,7 @@ const AdminProtectedRoute = ({ children }) => {
     };
 
     checkAuth();
-  }, [user]);
+  }, [allowedRoles]);
 
   if (isLoading) {
     return (

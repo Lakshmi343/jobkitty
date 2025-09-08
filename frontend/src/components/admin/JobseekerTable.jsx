@@ -1,6 +1,6 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { USER_API_END_POINT, ADMIN_API_END_POINT } from '../../utils/constant';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -16,7 +16,7 @@ const JobseekerTable = () => {
   useEffect(() => {
     const fetchJobseekers = async () => {
       try {
-        const res = await axios.get("http://localhost:8000/api/v1/user/jobseekers", { withCredentials: true });
+        const res = await axios.get(`${USER_API_END_POINT}/jobseekers`, { withCredentials: true });
         setJobseekers(res.data.jobseekers || []);
       } catch (error) {
         console.error("Failed to fetch jobseekers:", error);
@@ -60,7 +60,7 @@ const JobseekerTable = () => {
   const handleStatusUpdate = async (id, status) => {
     try {
       const response = await axios.patch(
-        `http://localhost:8000/api/v1/admin/users/${id}/status`,
+        `${ADMIN_API_END_POINT}/users/${id}/status`,
         { status },
         { withCredentials: true }
       );
@@ -84,7 +84,7 @@ const JobseekerTable = () => {
   const handleDeleteUser = async (id) => {
     try {
       const response = await axios.delete(
-        `http://localhost:8000/api/v1/admin/users/${id}`, 
+        `${ADMIN_API_END_POINT}/users/${id}`, 
         { withCredentials: true }
       );
       

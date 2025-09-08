@@ -33,8 +33,9 @@ const FilterCard = () => {
     },[])
 
     const query = useMemo(() => {
-        return [location, role, salary, jobType, experience].filter(Boolean).join(' ')
-    }, [location, role, salary, jobType, experience])
+        // Only include role in search query, other filters are handled separately
+        return role || ''
+    }, [role])
     
     useEffect(() => {
         dispatch(setSearchedQuery(query))

@@ -1,20 +1,24 @@
 import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { CATEGORY_API_END_POINT } from '../utils/constant';
 import { Button } from './ui/button';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { setSearchedQuery } from '@/redux/jobSlice';
-import axios from 'axios';
 import { motion } from "framer-motion";
 import { Briefcase, Monitor, Stethoscope, Hammer, GraduationCap, Building2 } from "lucide-react";
 
 const CategoryCarousel = () => {
   const [categories, setCategories] = useState([]);
+  const [showAll, setShowAll] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  
+  const INITIAL_DISPLAY_COUNT = 8;
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/v1/category/get/');
+      const response = await axios.get(`${CATEGORY_API_END_POINT}/get/`);
       if (response.data.success) {
         setCategories(response.data.categories);
       }
@@ -51,7 +55,7 @@ const CategoryCarousel = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
       >
-        FEATURED TOURS PACKAGES
+BROWSE BY CATEGORY
       </motion.p>
 
       {/* Title */}
@@ -66,7 +70,7 @@ const CategoryCarousel = () => {
 
       {/* Categories Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto px-4">
-        {categories.map((cat, i) => (
+        {(showAll ? categories : categories.slice(0, INITIAL_DISPLAY_COUNT)).map((cat, i) => (
           <motion.div
             key={cat._id}
             className="bg-white rounded-xl border border-blue-100 p-6 text-center shadow-sm hover:shadow-xl hover:-translate-y-2 transition-all duration-300 cursor-pointer"
@@ -96,7 +100,19 @@ const CategoryCarousel = () => {
         ))}
       </div>
 
-      {/* Browse All Button */}
+      {/* Show More/Less Button */}
+      {categories.length > INITIAL_DISPLAY_COUNT && (
+        <div className="text-center mt-8">
+          <motion.button
+            onClick={() => setShowAll(!showAll)}
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300 font-medium"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {showAll ? 'Show Less Categories' : `Show More Categories (${categories.length - INITIAL_DISPLAY_COUNT} more)`}
+          </motion.button>
+        </div>
+      )}
 
     </div>
   );

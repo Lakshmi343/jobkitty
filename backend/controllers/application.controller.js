@@ -158,15 +158,16 @@ export const updateStatus = async (req, res) => {
                     applicant.email,
                     applicant.fullname,
                     job.title,
-                    job.company?.name || 'the employer'
+                    job.company?.name || 'the employer',
+                    applicant.profile?.resume || null,
+                    applicant.profile?.resumeOriginalName || 'Resume'
                 );
             } else if (status === 'rejected') {
                 await sendApplicationRejectionEmail(
                     applicant.email,
                     applicant.fullname,
                     job.title,
-                    job.company?.name || 'the employer',
-                    rejectionReason || 'No specific reason provided'
+                    job.company?.name || 'the employer'
                 );
             } else if (status === 'pending') {
                 await sendApplicationPendingEmail(

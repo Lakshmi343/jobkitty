@@ -26,13 +26,9 @@ const AdminLogin = () => {
     try {
       const response = await axios.post(`${ADMIN_API_END_POINT}/login`, { email, password });
       if (response.data.success) {
-        // Store tokens using token manager
-        tokenManager.setTokens(response.data.accessToken, response.data.refreshToken);
-        localStorage.setItem('adminRole', response.data.role);
-        localStorage.setItem('admin', JSON.stringify(response.data.admin));
-        
-        // Setup token interceptors
-        tokenManager.setupInterceptors();
+        // Store admin token and data
+        localStorage.setItem('adminToken', response.data.token);
+        localStorage.setItem('adminData', JSON.stringify(response.data.admin));
         
         toast.success('Welcome to Admin Dashboard!');
         navigate('/admin/dashboard');

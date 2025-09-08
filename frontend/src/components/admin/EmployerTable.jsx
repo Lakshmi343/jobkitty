@@ -1,19 +1,10 @@
-
-
-
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { USER_API_END_POINT, ADMIN_API_END_POINT } from '../../utils/constant';
 import { toast } from "sonner";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
-import { 
-  UserCheck, 
-  UserX, 
-  Trash2, 
-  Globe, 
-  MapPin, 
-  Phone, 
-  Mail, 
+import { UserCheck, UserX, Trash2, Globe, MapPin, Phone, Mail, 
   MoreHorizontal,
   Building,
   Users,
@@ -30,12 +21,12 @@ const EmployerTable = () => {
   const [loading, setLoading] = useState(true);
   const [actionDialog, setActionDialog] = useState({ open: false, action: '', title: '', description: '' });
 
-  // Fetch employers from your API
+ 
   useEffect(() => {
     const fetchEmployers = async () => {
       try {
         setLoading(true);
-        const res = await axios.get("http://localhost:8000/api/v1/user/employers", { withCredentials: true });
+        const res = await axios.get(`${USER_API_END_POINT}/employers`, { withCredentials: true });
         setEmployers(res.data.employers || []);
       } catch (error) {
         console.error("Failed to fetch employers:", error);
@@ -67,18 +58,17 @@ const EmployerTable = () => {
   const handleStatusUpdate = async (id, status) => {
     try {
       const response = await axios.patch(
-        `http://localhost:8000/api/v1/admin/users/${id}/status`, 
+        `${ADMIN_API_END_POINT}/users/${id}/status`, 
         { status }, 
         { withCredentials: true }
       );
       
       if (response.data.success) {
-        // Update local state
+        
         setEmployers(employers.map(employer => 
           employer._id === id ? { ...employer, status } : employer
         ));
-        
-        // If we're viewing this employer's details, update that too
+
         if (selectedEmployer && selectedEmployer._id === id) {
           setSelectedEmployer({ ...selectedEmployer, status });
         }
@@ -96,15 +86,14 @@ const EmployerTable = () => {
   const handleDeleteUser = async (id) => {
     try {
       const response = await axios.delete(
-        `http://localhost:8000/api/v1/admin/users/${id}`, 
+        `${ADMIN_API_END_POINT}/users/${id}`, 
         { withCredentials: true }
       );
       
       if (response.data.success) {
-        // Update local state
+    
         setEmployers(employers.filter(employer => employer._id !== id));
-        
-        // If we're viewing this employer's details, close the dialog
+     
         if (selectedEmployer && selectedEmployer._id === id) {
           setSelectedEmployer(null);
         }
@@ -269,7 +258,7 @@ const EmployerTable = () => {
           </CardContent>
         </Card>
 
-        {/* Employer Details Dialog */}
+       
         <Dialog open={!!selectedEmployer} onOpenChange={(open) => !open && setSelectedEmployer(null)}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -278,7 +267,7 @@ const EmployerTable = () => {
 
             {selectedEmployer && (
               <div className="space-y-6">
-                {/* Personal Information */}
+       
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center gap-2">
@@ -317,7 +306,7 @@ const EmployerTable = () => {
                   </CardContent>
                 </Card>
 
-                {/* Company Information */}
+               
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center gap-2">
@@ -368,7 +357,6 @@ const EmployerTable = () => {
                   </CardContent>
                 </Card>
 
-                {/* Actions */}
                 <Card>
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg">Account Actions</CardTitle>

@@ -64,7 +64,7 @@ const CreateJob = () => {
             }
         } catch (error) {
             console.error("Error fetching categories:", error);
-            toast.error("Failed to load job categories");
+            toast.error("Could not load job categories. Please try again.");
         }
     };
 

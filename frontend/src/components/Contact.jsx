@@ -1,12 +1,11 @@
-
-
-
-
 import React, { useState } from 'react';
+import axios from 'axios';
+import { CONTACT_API_END_POINT } from '../utils/constant';
 import Navbar from './shared/Navbar';
 import Footer from './shared/Footer';
 import { Mail, MapPin, Phone, Send, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+
 const Contact = () => {
   
   const address = "306, 3rd Floor, Penta Towers, Bus Stand, Banerji Rd, opposite Kaloor, Kaloor, Kochi, Ernakulam, Kerala 682017";
@@ -46,13 +45,9 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/v1/contact/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
+      const response = await axios.post(`${CONTACT_API_END_POINT}`, formData);
 
-      const result = await response.json();
+      const result = await response.data;
 
       if (result.success) {
         toast.success(result.message || 'Message sent successfully!');

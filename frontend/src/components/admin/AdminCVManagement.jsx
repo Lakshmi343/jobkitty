@@ -41,7 +41,7 @@ const AdminCVManagement = () => {
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to load user data');
+      toast.error('Could not load user information. Please try again.');
     } finally {
       setLoading(false);
     }

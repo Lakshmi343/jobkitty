@@ -8,25 +8,95 @@ import { Filter, X } from 'lucide-react';
 import Footer from './shared/Footer';
 
 const Jobs = () => {
-    const { allJobs, searchedQuery } = useSelector(store => store.job);
+    const { allJobs, searchedQuery, filters } = useSelector(store => store.job);
     const [filterJobs, setFilterJobs] = useState(allJobs);
     const [showFilters, setShowFilters] = useState(false);
 
     useEffect(() => {
+        let filteredJobs = [...allJobs];
+
+        // Apply text search filter (case-insensitive)
         if (searchedQuery) {
             const q = searchedQuery.toLowerCase();
-            const filteredJobs = allJobs.filter((job) => {
+            filteredJobs = filteredJobs.filter((job) => {
                 return (
                     job.title?.toLowerCase().includes(q) ||
                     job.description?.toLowerCase().includes(q) ||
-                    job.location?.toLowerCase().includes(q)
+                    job.location?.toLowerCase().includes(q) ||
+                    job.company?.name?.toLowerCase().includes(q)
                 )
             })
-            setFilterJobs(filteredJobs)
-        } else {
-            setFilterJobs(allJobs)
         }
-    }, [allJobs, searchedQuery]);
+
+        // Apply location filter (case-insensitive)
+        if (filters.location) {
+            filteredJobs = filteredJobs.filter((job) => 
+                job.location?.toLowerCase().includes(filters.location.toLowerCase())
+            );
+        }
+
+        // Apply job type filter (case-insensitive)
+        if (filters.jobType) {
+            filteredJobs = filteredJobs.filter((job) => 
+                job.jobType?.toLowerCase() === filters.jobType.toLowerCase()
+            );
+        }
+
+        // Apply category filter
+        if (filters.categoryId) {
+            filteredJobs = filteredJobs.filter((job) => 
+                job.category?._id === filters.categoryId || job.category === filters.categoryId
+            );
+        }
+
+        // Apply salary range filter
+        if (filters.salaryRange) {
+            filteredJobs = filteredJobs.filter((job) => {
+                if (!job.salary || (job.salary.min === 0 && job.salary.max === 0)) return true;
+                
+                const salaryRange = filters.salaryRange;
+                const jobMaxSalary = job.salary.max || job.salary.min || 0;
+                
+                switch (salaryRange) {
+                    case '0-40k':
+                        return jobMaxSalary <= 40000;
+                    case '42-1lakh':
+                        return jobMaxSalary >= 42000 && jobMaxSalary <= 100000;
+                    case '1lakh to 5lakh':
+                        return jobMaxSalary >= 100000 && jobMaxSalary <= 500000;
+                    case '5lakh+':
+                        return jobMaxSalary >= 500000;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        // Apply experience range filter
+        if (filters.experienceRange) {
+            filteredJobs = filteredJobs.filter((job) => {
+                if (!job.experience) return true;
+                
+                const expRange = filters.experienceRange;
+                const jobMaxExp = job.experience.max || job.experience.min || 0;
+                
+                switch (expRange) {
+                    case '0-1 years':
+                        return jobMaxExp <= 1;
+                    case '1-3 years':
+                        return jobMaxExp >= 1 && jobMaxExp <= 3;
+                    case '3-5 years':
+                        return jobMaxExp >= 3 && jobMaxExp <= 5;
+                    case '5+ years':
+                        return jobMaxExp >= 5;
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        setFilterJobs(filteredJobs);
+    }, [allJobs, searchedQuery, filters]);
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

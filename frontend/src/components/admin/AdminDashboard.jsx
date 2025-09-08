@@ -10,40 +10,61 @@ import {
   Building2, 
   Briefcase, 
   FileText, 
-  CheckCircle, 
-  XCircle, 
+  TrendingUp, 
+  Calendar,
+  MapPin,
+  DollarSign,
   Clock,
-  TrendingUp,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  BarChart3,
+  PieChart as PieChartIcon,
   Settings,
-  UserCheck,
-  Shield
+  Plus
 } from 'lucide-react';
+import PieChart from '../PieChart';
+import LineChart from '../LineChart';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [recentJobs, setRecentJobs] = useState([]);
   const [recentApplications, setRecentApplications] = useState([]);
+  const [graphData, setGraphData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [adminData, setAdminData] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchDashboardData();
+    loadAdminData();
   }, []);
+
+  const loadAdminData = () => {
+    try {
+      const adminDataString = localStorage.getItem('adminData');
+      if (adminDataString) {
+        const admin = JSON.parse(adminDataString);
+        setAdminData(admin);
+      }
+    } catch (error) {
+      console.error('Error loading admin data:', error);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
-      const token = localStorage.getItem('adminToken');
-      const response = await axios.get(`${ADMIN_API_END_POINT}/dashboard`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await axios.get(`${ADMIN_API_END_POINT}/dashboard`);
 
       if (response.data.success) {
         setStats(response.data.stats);
         setRecentJobs(response.data.recentJobs);
         setRecentApplications(response.data.recentApplications);
+        setGraphData(response.data.graphData);
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
+      console.error('Full error:', error.response?.data || error.message);
     } finally {
       setLoading(false);
     }
@@ -71,8 +92,28 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-          <p className="text-gray-600 mt-2">Welcome back! Here's what's happening with your job portal.</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+              <p className="text-gray-600 mt-2">
+                Welcome back{adminData?.name ? `, ${adminData.name}` : ''}! Here's what's happening with your job portal.
+              </p>
+            </div>
+            {adminData && (
+              <div className="bg-white rounded-lg shadow-md p-4 border-l-4 border-blue-500">
+                <div className="flex items-center space-x-3">
+                  <div className="bg-blue-100 rounded-full p-2">
+                    <Settings className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">{adminData.name}</h3>
+                    <p className="text-sm text-gray-600">{adminData.role}</p>
+                    <p className="text-xs text-gray-500">{adminData.email}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -159,9 +200,10 @@ const AdminDashboard = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <Button 
             onClick={() => navigate('/admin/jobs')}
+            variant="outline"
             className="flex items-center gap-2"
           >
             <Briefcase className="h-4 w-4" />
@@ -184,73 +226,46 @@ const AdminDashboard = () => {
             Manage Companies
           </Button>
           <Button 
-            onClick={() => navigate('/admin/categories')}
+            onClick={() => navigate('/admin/jobseekers')}
             variant="outline"
             className="flex items-center gap-2"
           >
-            <Settings className="h-4 w-4" />
-            Categories
+            <Users className="h-4 w-4" />
+            Manage Jobseekers
+          </Button>
+          <Button 
+            onClick={() => navigate('/admin/employers')}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Building2 className="h-4 w-4" />
+            Manage Employers
           </Button>
         </div>
 
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Jobs */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Briefcase className="h-5 w-5" />
-                Recent Jobs
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentJobs.map((job) => (
-                  <div key={job._id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm">{job.title}</h4>
-                      <p className="text-xs text-gray-500">{job.company?.name || 'Unknown Company'}</p>
-                    </div>
-                    <Badge className={getStatusColor(job.status)}>
-                      {job.status}
-                    </Badge>
-                  </div>
-                ))}
-                {recentJobs.length === 0 && (
-                  <p className="text-gray-500 text-sm">No recent jobs</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        {/* Analytics Graphs */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Monthly Job Creation Chart */}
+          <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-1">
+            <LineChart 
+              data={graphData?.monthlyJobs || []}
+              title="Monthly Job Creation Trends"
+              height={320}
+              width={550}
+            />
+          </div>
 
-          {/* Recent Applications */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Recent Applications
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {recentApplications.map((application) => (
-                  <div key={application._id} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm">{application.job?.title || 'Unknown Job'}</h4>
-                      <p className="text-xs text-gray-500">{application.user?.name || 'Unknown User'}</p>
-                    </div>
-                    <Badge className={getStatusColor(application.status)}>
-                      {application.status}
-                    </Badge>
-                  </div>
-                ))}
-                {recentApplications.length === 0 && (
-                  <p className="text-gray-500 text-sm">No recent applications</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Applications Status Pie Chart */}
+          <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg p-1">
+            <PieChart 
+              data={graphData?.applications || []}
+              title="Applications by Status"
+              size={280}
+            />
+          </div>
         </div>
+
+     
       </div>
     </div>
   );

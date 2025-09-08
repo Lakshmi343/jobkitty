@@ -55,7 +55,7 @@ const EnhancedAdminDashboard = () => {
       // Ensure we have a token before making the request
       const token = tokenManager.getAccessToken() || localStorage.getItem('adminAccessToken');
       if (!token) {
-        toast.error('No authentication token found. Please login again.');
+        toast.error('Please log in again to continue.');
         handleLogout();
         return;
       }
@@ -74,7 +74,7 @@ const EnhancedAdminDashboard = () => {
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       if (error.response?.status === 401) {
-        toast.error('Session expired. Please login again.');
+        toast.error('Your session has expired. Please log in again.');
         handleLogout();
       } else {
         // Don't logout for other errors, just show a message

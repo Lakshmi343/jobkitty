@@ -1,119 +1,122 @@
+import express from "express";
 import { 
-  loginAdmin, 
-  createAdmin, 
-  getDashboardStats,
-  getAllUsers,
-  updateUserStatus,
-  deleteUser,
-  getAllJobs,
-  approveJob,
-  rejectJob,
-  deleteJob,
-  getAllCompanies,
-  updateCompanyStatus,
-  getAllCategories,
-  createCategory,
-  updateCategory,
-  deleteCategory,
-  getAnalytics,
-  // New super admin functions
-  getAllReports,
-  getReportById,
-  assignReport,
-  resolveReport,
-  getUserActivity,
-  warnUser,
-  suspendUser,
-  checkJobQuality,
-  getAdminActivity,
-  enforceCompliance,
-  // Applications management
-  getAllApplications,
-  getApplicationById,
-  updateApplicationStatus,
-  deleteApplication,
-  getApplicationStats,
-  // Company management
-  getCompanyByIdAdmin,
-  updateCompanyDetailsAdmin,
-  deleteCompany,
-  // Job details (admin)
-  getJobByIdAdmin,
-  getAllJobseekers,
-  getAllEmployers,
-  updateJobDetailsAdmin,
-  // User resume
-  getUserResume,
+    loginAdmin, 
+    registerAdmin,
+    createAdmin, 
+    getDashboardStats,
+    getAnalytics,
+    getAllUsers,
+    updateUserStatus,
+    deleteUser,
+    getUserResume,
+    getAllJobs,
+    approveJob,
+    rejectJob,
+    deleteJob,
+    getJobByIdAdmin,
+    updateJobDetailsAdmin,
+    getAllCompanies,
+    getCompanyByIdAdmin,
+    updateCompanyDetailsAdmin,
+    updateCompanyStatus,
+    deleteCompany,
+    getAllCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    getAllAdmins,
+    getAdminById,
+    updateAdmin,
+    deleteAdmin,
+    toggleAdminStatus,
+    getAllJobseekers,
+    getAllEmployers,
+    checkJobQuality,
+    getUserActivity,
+    warnUser,
+    suspendUser,
+    getAdminActivity,
+    enforceCompliance,
+    getAllApplications,
+    getApplicationById,
+    updateApplicationStatus,
+    deleteApplication,
+    getApplicationStats
+} from "../controllers/admin.Controller.js";
 
-} from '../controllers/admin.Controller.js';
-import { adminAuth, requireRole } from '../middlewares/adminAuth.js';
-import { singleUpload } from '../middlewares/mutler.js';
+import { singleUpload } from "../middlewares/mutler.js";
+import { adminAuth } from "../middlewares/adminAuth.js";
 
-import express from "express"
 const router = express.Router();
 
-// Authentication (no middleware needed)
+// Authentication
 router.post('/login', loginAdmin);
-router.post('/register', createAdmin);
+router.post('/register', registerAdmin); // Temporary registration endpoint
+router.post('/create-admin', adminAuth, createAdmin);
 
-// Protected routes (require admin authentication)
+// Dashboard
 router.get('/dashboard', adminAuth, getDashboardStats);
 router.get('/analytics', adminAuth, getAnalytics);
 
-// User Management (superadmin only)
-router.get('/users', adminAuth, requireRole(['superadmin']), getAllUsers);
-router.patch('/users/:userId/status', adminAuth, requireRole(['superadmin']), updateUserStatus);
-router.delete('/users/:userId', adminAuth, requireRole(['superadmin']), deleteUser);
-router.get('/users/:userId/resume', adminAuth, requireRole(['superadmin']), getUserResume);
-router.get("/jobseekers", getAllJobseekers);
-router.get("/employers", getAllEmployers);
+// User Management
+router.get('/users', adminAuth, getAllUsers);
+router.patch('/users/:userId/status', adminAuth, updateUserStatus);
+router.delete('/users/:userId', adminAuth, deleteUser);
+router.get('/users/:userId/resume', adminAuth, getUserResume);
+router.get("/jobseekers", adminAuth, getAllJobseekers);
+router.get("/employers", adminAuth, getAllEmployers);
 
-// Enhanced User Monitoring (superadmin only)
-router.get('/users/:userId/activity', adminAuth, requireRole(['superadmin']), getUserActivity);
-router.post('/users/:userId/warn', adminAuth, requireRole(['superadmin']), warnUser);
-router.post('/users/:userId/suspend', adminAuth, requireRole(['superadmin']), suspendUser);
+// Enhanced User Monitoring
+router.get('/users/:userId/activity', adminAuth, getUserActivity);
+router.post('/users/:userId/warn', adminAuth, warnUser);
+router.post('/users/:userId/suspend', adminAuth, suspendUser);
 
-// Job Management (all admin roles)
+// Job Management
 router.get('/jobs', adminAuth, getAllJobs);
 router.get('/jobs/:jobId', adminAuth, getJobByIdAdmin);
 router.put('/jobs/:jobId', adminAuth, updateJobDetailsAdmin);
 router.patch('/jobs/:jobId/approve', adminAuth, approveJob);
 router.patch('/jobs/:jobId/reject', adminAuth, rejectJob);
-router.delete('/jobs/:jobId', adminAuth, requireRole(['superadmin']), deleteJob);
+router.delete('/jobs/:jobId', adminAuth, deleteJob);
+router.post('/jobs/:jobId/quality-check', adminAuth, checkJobQuality);
 
-// Job Quality Check (superadmin and moderator)
-router.post('/jobs/:jobId/quality-check', adminAuth, requireRole(['superadmin', 'moderator']), checkJobQuality);
-
-// Company Management (all admin roles)
+// Company Management
 router.get('/companies', adminAuth, getAllCompanies);
 router.get('/companies/:companyId', adminAuth, getCompanyByIdAdmin);
 router.patch('/companies/:companyId/status', adminAuth, updateCompanyStatus);
 router.put('/companies/:companyId', adminAuth, singleUpload, updateCompanyDetailsAdmin);
-router.delete('/companies/:companyId', adminAuth, requireRole(['superadmin']), deleteCompany);
+router.delete('/companies/:companyId', adminAuth, deleteCompany);
 
-// Category Management (all admin roles)
+// Category Management
 router.get('/categories', adminAuth, getAllCategories);
 router.post('/categories', adminAuth, createCategory);
 router.put('/categories/:categoryId', adminAuth, updateCategory);
-router.delete('/categories/:categoryId', adminAuth, requireRole(['superadmin']), deleteCategory);
+router.delete('/categories/:categoryId', adminAuth, deleteCategory);
 
-// Applications Management (all admin roles)
+// Applications Management
 router.get('/applications', adminAuth, getAllApplications);
 router.get('/applications/stats', adminAuth, getApplicationStats);
 router.get('/applications/:applicationId', adminAuth, getApplicationById);
 router.patch('/applications/:applicationId/status', adminAuth, updateApplicationStatus);
-router.delete('/applications/:applicationId', adminAuth, requireRole(['superadmin']), deleteApplication);
+router.delete('/applications/:applicationId', adminAuth, deleteApplication);
 
-// Report Handling (superadmin and moderator)
-router.get('/reports', adminAuth, requireRole(['superadmin', 'moderator']), getAllReports);
-router.get('/reports/:reportId', adminAuth, requireRole(['superadmin', 'moderator']), getReportById);
-router.patch('/reports/:reportId/assign', adminAuth, requireRole(['superadmin', 'moderator']), assignReport);
-router.patch('/reports/:reportId/resolve', adminAuth, requireRole(['superadmin', 'moderator']), resolveReport);
+// Admin Management
+router.get('/admins', adminAuth, getAllAdmins);
+router.get('/admins/:adminId', adminAuth, getAdminById);
+router.put('/admins/:adminId', adminAuth, updateAdmin);
+router.delete('/admins/:adminId', adminAuth, deleteAdmin);
+router.patch('/admins/:adminId/status', adminAuth, toggleAdminStatus);
 
-// Admin Activity Log (superadmin only)
-router.get('/activity/:adminId', adminAuth, requireRole(['superadmin']), getAdminActivity);
+// Report Handling (commented out - controllers not implemented)
+// router.get('/reports', adminAuth, getAllReports);
+// router.get('/reports/:reportId', adminAuth, getReportById);
+// router.patch('/reports/:reportId/assign', adminAuth, assignReport);
+// router.patch('/reports/:reportId/resolve', adminAuth, resolveReport);
 
-// Compliance Enforcement (superadmin only)
-router.post('/compliance/:targetType/:targetId', adminAuth, requireRole(['superadmin']), enforceCompliance);
+// Admin Activity Log
+router.get('/activity/:adminId', adminAuth, getAdminActivity);
+
+// Compliance Enforcement
+router.post('/compliance/:targetType/:targetId', adminAuth, enforceCompliance);
 
 export default router;

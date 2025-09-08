@@ -24,6 +24,7 @@ const AdminUsers = () => {
         });
         if (res.data.success) setUsers(res.data.users || []);
       } catch (err) {
+        toast.error('Could not fetch users. Please try again.'); // Use toast for error message
         console.error('Error fetching users:', err);
       } finally {
         setLoading(false);
@@ -56,7 +57,7 @@ const AdminUsers = () => {
   };
 
   const deleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    if (!window.confirm('Are you sure you want to remove this user? This action cannot be undone.')) return;
     try {
       const token = localStorage.getItem('adminToken');
       const res = await axios.delete(`${ADMIN_API_END_POINT}/users/${userId}`, {

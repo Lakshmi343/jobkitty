@@ -7,21 +7,7 @@ import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { toast } from 'sonner';
-import { 
-  Users, 
-  Building2, 
-  Briefcase, 
-  FileText, 
-  TrendingUp,
-  Calendar,
-  BarChart3,
-  PieChart,
-  Activity,
-  Download,
-  RefreshCw,
-  Filter,
-  Search,
-  ChevronDown,
+import {  Users,Building2, Briefcase, FileText, TrendingUp,Calendar,BarChart3,PieChart,Activity,Download,RefreshCw,Filter,Search,ChevronDown,
   ChevronUp,
   Eye,
   Edit,
@@ -77,7 +63,7 @@ const AdminAnalytics = () => {
       const token = localStorage.getItem('adminAccessToken');
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Fetch data from all APIs in parallel
+   
       const [
         usersResponse,
         jobsResponse,
@@ -98,7 +84,7 @@ const AdminAnalytics = () => {
         axios.get(`${ADMIN_API_END_POINT}/reports`, { headers })
       ]);
 
-      // Process responses and combine data
+
       const users = usersResponse.status === 'fulfilled' ? usersResponse.value.data.users || [] : [];
       const jobs = jobsResponse.status === 'fulfilled' ? jobsResponse.value.data.jobs || [] : [];
       const companies = companiesResponse.status === 'fulfilled' ? companiesResponse.value.data.companies || [] : [];
@@ -108,7 +94,7 @@ const AdminAnalytics = () => {
       const applicationStats = applicationStatsResponse.status === 'fulfilled' ? applicationStatsResponse.value.data.stats || {} : {};
       const reports = reportsResponse.status === 'fulfilled' ? reportsResponse.value.data.reports || [] : [];
 
-      // Calculate analytics from real data
+   
       const combinedAnalytics = {
         users: {
           total: users.length || dashboardData.totalUsers || 0,
@@ -1087,8 +1073,6 @@ const AdminAnalytics = () => {
               </div>
             </CardContent>
           </Card>
-
-          {/* Top Locations */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -1108,8 +1092,6 @@ const AdminAnalytics = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Export Section */}
         <div className="mt-8">
           <Card>
             <CardHeader>

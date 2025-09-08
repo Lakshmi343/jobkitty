@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setUser } from "@/redux/authSlice";
 import axios from "axios";
-import { USER_API_END_POINT } from "@/utils/constant";
+import { USER_API_END_POINT } from "../../utils/constant";
 
 const ProtectedRoute = ({children, allowedRoles = []}) => {
     const {user} = useSelector(store=>store.auth);

@@ -59,51 +59,155 @@ export const getAllEmployers = async (req, res) => {
   }
 };
 
-
+// Admin Authentication
 export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
+    
     if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required', success: false });
+      return res.status(400).json({
+        message: "Email and password are required",
+        success: false
+      });
     }
+
     const admin = await Admin.findOne({ email });
     if (!admin) {
-      return res.status(401).json({ message: 'Invalid credentials', success: false });
+      return res.status(401).json({
+        message: "Invalid email or password",
+        success: false
+      });
     }
+
+    const isPasswordMatch = await bcrypt.compare(password, admin.password);
+    if (!isPasswordMatch) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+        success: false
+      });
+    }
+
     if (!admin.isActive) {
-      return res.status(401).json({ message: 'Account is deactivated', success: false });
+      return res.status(403).json({
+        message: "Account is deactivated. Contact super admin.",
+        success: false
+      });
     }
-    const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials', success: false });
-    }
-    admin.lastLogin = new Date();
-    await admin.save();
-    const accessToken = jwt.sign({ id: admin._id, role: admin.role }, process.env.SECRET_KEY, { expiresIn: '24h' });
-    const refreshToken = jwt.sign({ id: admin._id }, process.env.SECRET_KEY, { expiresIn: '7d' });
-    
-    res.status(200).json({ 
-      message: 'Login successful', 
-      success: true, 
-      accessToken,
-      refreshToken,
-      role: admin.role,
-      permissions: admin.permissions,
+
+    const token = jwt.sign(
+      { id: admin._id, role: admin.role },
+      process.env.SECRET_KEY,
+      { expiresIn: '24h' }
+    );
+
+    res.status(200).json({
+      message: "Login successful",
+      success: true,
       admin: {
         id: admin._id,
         name: admin.name,
         email: admin.email,
-        role: admin.role
-      }
+        role: admin.role,
+        permissions: admin.permissions
+      },
+      token
     });
   } catch (error) {
     console.error('Admin login error:', error);
-    res.status(500).json({ message: 'Server error', success: false });
+    res.status(500).json({
+      message: "Internal server error",
+      success: false
+    });
   }
 };
 
+// Temporary Admin Registration (for initial setup)
+export const registerAdmin = async (req, res) => {
+  try {
+    const { name, email, password, role = 'admin' } = req.body;
+    
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message: "Name, email, and password are required",
+        success: false
+      });
+    }
 
+    // Check if admin already exists
+    const existingAdmin = await Admin.findOne({ email });
+    if (existingAdmin) {
+      return res.status(400).json({
+        message: "Admin with this email already exists",
+        success: false
+      });
+    }
 
+    // Password validation
+    if (password.length < 8) {
+      return res.status(400).json({
+        message: "Password must be at least 8 characters long",
+        success: false
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Set permissions based on role
+    let permissions = [];
+    switch (role) {
+      case 'super_admin':
+        permissions = ['all'];
+        break;
+      case 'admin':
+        permissions = ['manage_users', 'manage_jobs', 'manage_companies', 'view_analytics'];
+        break;
+      case 'moderator':
+        permissions = ['moderate_content', 'view_reports'];
+        break;
+      default:
+        permissions = ['view_dashboard'];
+    }
+
+    // Create new admin
+    const newAdmin = new Admin({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      permissions,
+      isActive: true
+    });
+
+    await newAdmin.save();
+
+    // Generate token
+    const token = jwt.sign(
+      { id: newAdmin._id, role: newAdmin.role },
+      process.env.SECRET_KEY,
+      { expiresIn: '24h' }
+    );
+
+    res.status(201).json({
+      message: "Admin registered successfully",
+      success: true,
+      admin: {
+        id: newAdmin._id,
+        name: newAdmin.name,
+        email: newAdmin.email,
+        role: newAdmin.role,
+        permissions: newAdmin.permissions
+      },
+      token
+    });
+  } catch (error) {
+    console.error('Admin registration error:', error);
+    res.status(500).json({
+      message: "Internal server error",
+      success: false
+    });
+  }
+};
 
 export const createAdmin = async (req, res) => {
   try {
@@ -136,11 +240,69 @@ export const getDashboardStats = async (req, res) => {
     const totalCompanies = await Company.countDocuments();
     const totalJobs = await Job.countDocuments();
     const totalApplications = await Application.countDocuments();
+    
+    // Job statistics by status
     const pendingJobs = await Job.countDocuments({ status: 'pending' });
     const approvedJobs = await Job.countDocuments({ status: 'approved' });
     const rejectedJobs = await Job.countDocuments({ status: 'rejected' });
-    const recentJobs = await Job.find().sort({ createdAt: -1 }).limit(5);
-    const recentApplications = await Application.find().sort({ createdAt: -1 }).limit(5);
+    
+    // Application statistics by status
+    const pendingApplications = await Application.countDocuments({ status: 'pending' });
+    const acceptedApplications = await Application.countDocuments({ status: 'accepted' });
+    const rejectedApplications = await Application.countDocuments({ status: 'rejected' });
+    
+    const recentJobs = await Job.find().populate('company').sort({ createdAt: -1 }).limit(5);
+    const recentApplications = await Application.find().populate('job').populate('applicant').sort({ createdAt: -1 }).limit(5);
+
+    // Monthly job creation statistics for the last 12 months
+    const currentDate = new Date();
+    const monthlyJobStats = await Job.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(currentDate.getFullYear(), currentDate.getMonth() - 11, 1)
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { '_id.year': 1, '_id.month': 1 }
+      }
+    ]);
+
+    // Create array of last 12 months with job counts
+    const monthlyJobData = [];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    for (let i = 11; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      
+      const stat = monthlyJobStats.find(s => s._id.year === year && s._id.month === month);
+      monthlyJobData.push({
+        month: `${monthNames[month - 1]} ${year}`,
+        shortMonth: monthNames[month - 1],
+        value: stat ? stat.count : 0,
+        year: year,
+        monthNum: month
+      });
+    }
+
+    // Application statistics by status for pie chart
+    const applicationsGraphData = [
+      { name: 'Pending', value: pendingApplications, color: '#2196F3' },
+      { name: 'Accepted', value: acceptedApplications, color: '#4CAF50' },
+      { name: 'Rejected', value: rejectedApplications, color: '#F44336' }
+    ];
 
     res.status(200).json({
       success: true,
@@ -151,10 +313,17 @@ export const getDashboardStats = async (req, res) => {
         totalApplications,
         pendingJobs,
         approvedJobs,
-        rejectedJobs
+        rejectedJobs,
+        pendingApplications,
+        acceptedApplications,
+        rejectedApplications
       },
       recentJobs,
-      recentApplications
+      recentApplications,
+      graphData: {
+        monthlyJobs: monthlyJobData,
+        applications: applicationsGraphData
+      }
     });
   } catch (error) {
     console.error('Dashboard stats error:', error);
@@ -972,6 +1141,169 @@ export const enforceCompliance = async (req, res) => {
     });
   } catch (error) {
     console.error('Compliance enforcement error:', error);
+    res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+// Admin Management APIs
+export const getAllAdmins = async (req, res) => {
+  try {
+    const admins = await Admin.find()
+      .select('-password')
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({ success: true, admins });
+  } catch (error) {
+    console.error('Get all admins error:', error);
+    res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+export const getAdminById = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const admin = await Admin.findById(adminId).select('-password');
+    
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found', success: false });
+    }
+    
+    res.status(200).json({ success: true, admin });
+  } catch (error) {
+    console.error('Get admin by ID error:', error);
+    res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+export const updateAdmin = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const { name, email, role, permissions } = req.body;
+    const { admin: currentAdmin } = req;
+
+    // Check if current admin has permission to update other admins
+    if (!currentAdmin.permissions?.includes('admin_management') && currentAdmin.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Insufficient permissions', success: false });
+    }
+
+    // Validate email uniqueness
+    const existingAdmin = await Admin.findOne({ 
+      email, 
+      _id: { $ne: adminId } 
+    });
+    
+    if (existingAdmin) {
+      return res.status(409).json({ message: 'Email already exists', success: false });
+    }
+
+    const updateData = {
+      name,
+      email,
+      role,
+      permissions: permissions || []
+    };
+
+    const updatedAdmin = await Admin.findByIdAndUpdate(
+      adminId, 
+      updateData, 
+      { new: true }
+    ).select('-password');
+
+    if (!updatedAdmin) {
+      return res.status(404).json({ message: 'Admin not found', success: false });
+    }
+
+    // Log activity
+    await logActivity(currentAdmin._id, 'admin_updated', 'admin', adminId, `Admin ${updatedAdmin.name} updated`);
+
+    res.status(200).json({ 
+      message: 'Admin updated successfully', 
+      success: true, 
+      admin: updatedAdmin 
+    });
+  } catch (error) {
+    console.error('Update admin error:', error);
+    res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+export const deleteAdmin = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const { admin: currentAdmin } = req;
+
+    // Check if current admin has permission to delete other admins
+    if (!currentAdmin.permissions?.includes('admin_management') && currentAdmin.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Insufficient permissions', success: false });
+    }
+
+    // Prevent self-deletion
+    if (adminId === currentAdmin._id.toString()) {
+      return res.status(400).json({ message: 'Cannot delete your own account', success: false });
+    }
+
+    const adminToDelete = await Admin.findById(adminId);
+    if (!adminToDelete) {
+      return res.status(404).json({ message: 'Admin not found', success: false });
+    }
+
+    // Prevent deletion of super admin by non-super admin
+    if (adminToDelete.role === 'super_admin' && currentAdmin.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Cannot delete super admin', success: false });
+    }
+
+    await Admin.findByIdAndDelete(adminId);
+
+    // Log activity
+    await logActivity(currentAdmin._id, 'admin_deleted', 'admin', adminId, `Admin ${adminToDelete.name} deleted`);
+
+    res.status(200).json({ 
+      message: 'Admin deleted successfully', 
+      success: true 
+    });
+  } catch (error) {
+    console.error('Delete admin error:', error);
+    res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+export const toggleAdminStatus = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const { isActive } = req.body;
+    const { admin: currentAdmin } = req;
+
+    // Check permissions
+    if (!currentAdmin.permissions?.includes('admin_management') && currentAdmin.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Insufficient permissions', success: false });
+    }
+
+    // Prevent self-deactivation
+    if (adminId === currentAdmin._id.toString()) {
+      return res.status(400).json({ message: 'Cannot change your own status', success: false });
+    }
+
+    const admin = await Admin.findByIdAndUpdate(
+      adminId,
+      { isActive },
+      { new: true }
+    ).select('-password');
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found', success: false });
+    }
+
+    // Log activity
+    const action = isActive ? 'activated' : 'deactivated';
+    await logActivity(currentAdmin._id, 'admin_status_changed', 'admin', adminId, `Admin ${admin.name} ${action}`);
+
+    res.status(200).json({ 
+      message: `Admin ${action} successfully`, 
+      success: true, 
+      admin 
+    });
+  } catch (error) {
+    console.error('Toggle admin status error:', error);
     res.status(500).json({ message: 'Server error', success: false });
   }
 };

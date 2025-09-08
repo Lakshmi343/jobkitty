@@ -7,7 +7,7 @@ import { Textarea } from '../ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
-import { COMPANY_API_END_POINT } from '@/utils/constant';
+import { COMPANY_API_END_POINT } from '../../utils/constant';
 import { toast } from 'sonner';
 import { setUser } from '@/redux/authSlice';
 import { useNavigate } from 'react-router-dom';

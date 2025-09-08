@@ -190,14 +190,18 @@ export const updateProfile = async (req, res) => {
 
         // ✅ Resume Upload
         if (req.file) {
+            console.log('📄 File received:', req.file.originalname, req.file.mimetype, req.file.size);
             const fileUri = getDataUri(req.file);
             const isPdf = req.file.mimetype === 'application/pdf' || req.file.originalname?.toLowerCase().endsWith('.pdf');
 
             const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
                 folder: process.env.CLOUDINARY_CV_FOLDER || "resumes",
-                resource_type: isPdf ? "raw" : "auto"
+                resource_type: isPdf ? "raw" : "auto",
+                public_id: `resume_${userId}_${Date.now()}`,
+                format: isPdf ? 'pdf' : undefined
             });
 
+            console.log('☁️ Cloudinary response:', cloudResponse.secure_url);
             resumeUrl = cloudResponse.secure_url;
             resumeName = req.file.originalname;
         }
@@ -208,25 +212,28 @@ export const updateProfile = async (req, res) => {
         user.phoneNumber = phoneNumber || user.phoneNumber;
         user.profile.bio = bio || user.profile.bio;
         user.profile.skills = skillsArray || user.profile.skills;
-        user.profile.resume = resumeUrl;
-        user.profile.resumeOriginalName = resumeName;
+        if (resumeUrl) {
+            user.profile.resume = resumeUrl;
+            user.profile.resumeOriginalName = resumeName;
+        }
         user.profile.place = place || user.profile.place;
 
         // ✅ Education (Required)
         if (education) {
-            user.profile.education = JSON.parse(education);
-        }
+			user.profile.education=JSON.parse(education);
+		}
 
         // ✅ Experience (Optional)
         if (experience) {
             user.profile.experience = JSON.parse(experience);
         }
 
-        await user.save();
+        const updatedUser = await user.save();
+        console.log('✅ User saved with resume:', updatedUser.profile.resume);
 
         return res.status(200).json({
             message: "Profile updated successfully.",
-            user,
+            user: updatedUser,
             success: true
         });
 
@@ -349,12 +356,17 @@ export const uploadResume = async (req, res) => {
 		}
 
 		// Upload to Cloudinary
+		console.log('📄 Resume upload - File received:', req.file.originalname, req.file.mimetype, req.file.size);
 		const isPdf = req.file.mimetype === 'application/pdf' || req.file.originalname?.toLowerCase().endsWith('.pdf');
 		const fileUri = getDataUri(req.file);
 		const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
-			resource_type: isPdf ? 'image' : 'auto',
-			folder: process.env.CLOUDINARY_CV_FOLDER || 'resumes'
+			resource_type: isPdf ? 'raw' : 'auto',
+			folder: process.env.CLOUDINARY_CV_FOLDER || 'resumes',
+			public_id: `resume_${userId}_${Date.now()}`,
+			format: isPdf ? 'pdf' : undefined
 		});
+		
+		console.log('☁️ Resume uploaded to Cloudinary:', cloudResponse.secure_url);
 
 		// Update user profile with resume URL
 		user.profile.resume = cloudResponse.secure_url;

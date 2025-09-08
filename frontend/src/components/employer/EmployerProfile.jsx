@@ -13,8 +13,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '../../lib/utils';
-
-const COMPANY_API_END_POINT = "http://localhost:8000/api/v1/company";
+import { COMPANY_API_END_POINT } from '../../utils/constant';
 
 // InfoItem component for consistent profile detail display
 const InfoItem = ({ icon, label, value, color = "blue" }) => {
@@ -346,12 +345,12 @@ const EmployerProfile = () => {
                       color="green"
                     />
                     
-                    <InfoItem 
+                    {/* <InfoItem 
                       icon={<User className="h-5 w-5" />}
                       label="Profile Owner"
                       value={user?.name || 'Not available'}
                       color="purple"
-                    />
+                    /> */}
                     
                     <InfoItem 
                       icon={<Mail className="h-5 w-5" />}

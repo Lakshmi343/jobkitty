@@ -1,4 +1,3 @@
-
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { setupGlobalInterceptors } from './utils/axiosSetup'
 import Navbar from './components/shared/Navbar'
@@ -38,11 +37,11 @@ import BlockedAccount from './components/BlockedAccount'
 import UserManagementDashboard from './components/admin/UserManagementDashboard'
 import JobseekerManagement from './components/admin/JobseekerManagement'
 import EmployerManagement from './components/admin/EmployerManagement'
-
 import EmployerProfile from './components/employer/EmployerProfile'
-
 import JobseekerTable from './components/admin/JobseekerTable.jsx'
 import EmployerTable from './components/admin/EmployerTable.jsx'
+import AdminManagement from './components/admin/AdminManagement'
+import AdminRegister from './components/admin/AdminRegister'
 
 const appRouter = createBrowserRouter([
   {
@@ -87,6 +86,10 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/login",
     element: <AdminLogin />
+  },
+  {
+    path: "/admin/register",
+    element: <AdminRegister />
   },
   {
     path: "/admin/dashboard",
@@ -225,6 +228,16 @@ const appRouter = createBrowserRouter([
       <AdminProtectedRoute>
         <AdminLayout>
           <EmployerManagement />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/admin-management",
+    element: (
+      <AdminProtectedRoute allowedRoles={['super_admin', 'admin']}>
+        <AdminLayout>
+          <AdminManagement />
         </AdminLayout>
       </AdminProtectedRoute>
     )

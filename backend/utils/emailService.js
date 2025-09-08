@@ -18,7 +18,7 @@ export const sendApplicationAcceptanceEmail = async (studentEmail, studentName, 
         const mailOptions = {
             from: 'jobkitty.in@gmail.com',
             to: studentEmail,
-            subject: 'Application Accepted - Please Update Your Resume',
+            subject: `🎉 Application Accepted - ${jobTitle} at ${companyName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                     <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
@@ -87,7 +87,7 @@ export const sendApplicationRejectionEmail = async (studentEmail, studentName, j
         const mailOptions = {
             from: 'jobkitty.in@gmail.com',
             to: studentEmail,
-            subject: 'Application Status Update',
+            subject: `Application Status Update - ${jobTitle} at ${companyName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                     <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
@@ -129,7 +129,7 @@ export const sendApplicationPendingEmail = async (studentEmail, studentName, job
         const mailOptions = {
             from: 'jobkitty.in@gmail.com',
             to: studentEmail,
-            subject: 'Application Status: Pending',
+            subject: `Application Status: Pending - ${jobTitle} at ${companyName}`,
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                     <div style="background-color: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
@@ -169,7 +169,7 @@ export const sendRegistrationReminderEmail = async (studentEmail, studentName) =
                         <h2 style="color: #fff; margin: 0; font-size: 1.7rem;">👋 Hi ${studentName},</h2>
                     </div>
                     <div style="background: #fff; padding: 24px; border-radius: 0 0 10px 10px;">
-                        <p style="font-size: 1.1rem; color: #333;">Thank you for being a part of <b>JobPortal</b>! To help you stand out to recruiters and get the best job matches, please keep your profile up to date.</p>
+                        <p style="font-size: 1.1rem; color: #333;">Thank you for being a part of <b>JobKitty</b>! To help you stand out to recruiters and get the best job matches, please keep your profile up to date.</p>
                         <div style="margin: 24px 0; text-align: center;">
                             <a href="https://your-jobportal-domain.com/profile" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Update Your Profile Now</a>
                         </div>
@@ -186,7 +186,7 @@ export const sendRegistrationReminderEmail = async (studentEmail, studentName) =
                             <strong>Pro Tip:</strong> Upload a recent resume and add new skills to your profile for better visibility!
                         </div>
                         <p style="color: #555;">If you have any questions or need help, just reply to this email or contact our support team.</p>
-                        <p style="margin-top: 24px; color: #6A38C2; font-weight: bold;">Wishing you success,<br/>The JobPortal Team</p>
+                        <p style="margin-top: 24px; color: #6A38C2; font-weight: bold;">Wishing you success,<br/>The JobKitty Team</p>
                     </div>
                     <div style="text-align: center; margin-top: 18px; color: #aaa; font-size: 12px;">
                         <p>This is an automated message. Please do not reply to this email.</p>
@@ -238,7 +238,7 @@ export const sendContactFormEmail = async (contactData) => {
                     </div>
                     
                     <div style="text-align: center; margin-top: 20px; color: #6c757d; font-size: 12px;">
-                        <p>This message was sent from the Right Human Resources contact form.</p>
+                        <p>This message was sent from the JobKitty contact form.</p>
                         <p>Time: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
                     </div>
                 </div>
@@ -259,7 +259,7 @@ export const sendPasswordResetEmail = async (userEmail, resetLink) => {
         const mailOptions = {
             from: 'jobkitty.in@gmail.com',
             to: userEmail,
-            subject: 'Password Reset Request',
+            subject: 'Password Reset Request - JobKitty',
             html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                     <h2>Password Reset Request</h2>

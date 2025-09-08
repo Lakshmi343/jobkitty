@@ -7,7 +7,7 @@ import { Button } from '../ui/button'
 import { MoreHorizontal, User, Mail, Phone, FileText, Calendar, Download, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
-import { APPLICATION_API_END_POINT } from '@/utils/constant';
+import { APPLICATION_API_END_POINT } from '../../utils/constant';
 import axios from 'axios';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 

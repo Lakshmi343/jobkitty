@@ -21,7 +21,7 @@ const reportSchema = new mongoose.Schema({
     maxlength: 1000
   },
   evidence: [{
-    type: String, // URLs to evidence files
+    type: String, 
     description: String
   }],
   status: {

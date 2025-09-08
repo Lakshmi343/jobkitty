@@ -4,7 +4,7 @@ import { ArrowLeft, AlertCircle, Loader2 } from 'lucide-react'
 import { Label } from '../ui/label'
 import { Input } from '../ui/input'
 import axios from 'axios'
-import { ADMIN_API_END_POINT } from '@/utils/constant'
+import { ADMIN_API_END_POINT } from '../../utils/constant'
 import { useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useSelector } from 'react-redux'
@@ -46,7 +46,7 @@ const CompanySetup = () => {
 		}
 		try {
 			setLoading(true);
-			const token = localStorage.getItem('adminAccessToken');
+			const token = localStorage.getItem('adminToken');
 			const res = await axios.put(`${ADMIN_API_END_POINT}/companies/${params.id}`, formData, {
 				headers: {
 					'Content-Type': 'multipart/form-data',

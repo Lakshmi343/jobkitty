@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { USER_API_END_POINT } from '../../utils/constant';
 import { Users, UserCheck, UserX, FileText, TrendingUp, Search } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -21,7 +22,7 @@ const JobseekerManagement = () => {
       try {
         setLoading(true);
         
-        const response = await axios.get("http://localhost:8000/api/v1/user/jobseekers", { 
+        const response = await axios.get(`${USER_API_END_POINT}/jobseekers`, { 
           withCredentials: true 
         });
         const jobseekers = response.data.jobseekers || [];

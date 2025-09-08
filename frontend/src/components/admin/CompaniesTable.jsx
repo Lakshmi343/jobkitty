@@ -1,4 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { JOB_API_END_POINT } from '../../utils/constant';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
@@ -7,7 +9,6 @@ import { Button } from '../ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog'
 import { Edit2, MoreHorizontal, ShieldCheck, ShieldAlert, Trash2, Building, Calendar, Briefcase, MapPin, Globe, Users } from 'lucide-react'
 import LoadingSpinner from '../shared/LoadingSpinner'
-import axios from 'axios'
 
 const CompaniesTable = ({ companies = [], loading = false, onEdit, onUpdateStatus, onDelete }) => {
 	const [selectedCompany, setSelectedCompany] = useState(null)
@@ -31,7 +32,7 @@ const CompaniesTable = ({ companies = [], loading = false, onEdit, onUpdateStatu
 	const fetchCompanyJobs = async (companyId) => {
 		try {
 			setJobsLoading(true)
-			const response = await axios.get(`http://localhost:8000/api/v1/job/get?companyId=${companyId}`, {
+			const response = await axios.get(`${JOB_API_END_POINT}/get?companyId=${companyId}`, {
 				withCredentials: true,
 				timeout: 8000 // 8 second timeout
 			})

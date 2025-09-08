@@ -29,7 +29,7 @@ const AdminJobs = () => {
   const [applications, setApplications] = useState([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
 
-  // Statistics
+ 
   const stats = {
     total: jobs.length,
     pending: jobs.filter(job => job.status === 'pending').length,
@@ -116,7 +116,7 @@ const AdminJobs = () => {
   };
 
   const handleDeleteJob = async (jobId) => {
-    if (!window.confirm('Are you sure you want to delete this job?')) return;
+    if (!window.confirm('Are you sure you want to remove this job? This action cannot be undone.')) return;
 
     try {
       const token = localStorage.getItem('adminToken');
@@ -128,7 +128,7 @@ const AdminJobs = () => {
         setJobs(jobs.filter(job => job._id !== jobId));
       }
     } catch (error) {
-      console.error('Error deleting job:', error);
+      toast.error('Could not remove job. Please try again.');
     }
   };
 
@@ -197,7 +197,7 @@ const AdminJobs = () => {
           </div>
         </div>
 
-        {/* Statistics Cards */}
+     
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="border-l-4 border-l-blue-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -244,7 +244,7 @@ const AdminJobs = () => {
           </Card>
         </div>
 
-        {/* Jobs List */}
+       
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -290,7 +290,7 @@ const AdminJobs = () => {
               </div>
             ) : (
               <>
-                {/* Desktop table */}
+              
                 <div className="hidden md:block">
                   <Table>
                     <TableHeader>
@@ -408,7 +408,6 @@ const AdminJobs = () => {
                   </Table>
                 </div>
 
-                {/* Mobile view */}
                 <div className="md:hidden space-y-4 p-4">
                   {filteredJobs.map((job) => (
                     <Card key={job._id} className="border border-gray-200">
@@ -477,7 +476,7 @@ const AdminJobs = () => {
           </CardContent>
         </Card>
 
-        {/* Job Details Modal */}
+        
         <Dialog open={showJobModal} onOpenChange={setShowJobModal}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
@@ -488,7 +487,7 @@ const AdminJobs = () => {
             
             {selectedJob && (
               <div className="space-y-6">
-                {/* Job Information */}
+       
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
@@ -529,7 +528,7 @@ const AdminJobs = () => {
                   </div>
                 </div>
 
-                {/* Job Description */}
+                
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-2">Description</h3>
                   <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
@@ -537,7 +536,6 @@ const AdminJobs = () => {
                   </div>
                 </div>
 
-                {/* Applications */}
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-4">Applications ({applications.length})</h3>
                   {loadingApplications ? (

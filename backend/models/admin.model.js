@@ -6,7 +6,7 @@ const adminSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { 
     type: String, 
-    enum: ['superadmin', 'moderator', 'support'], 
+    enum: ['superadmin', 'super_admin', 'admin', 'moderator', 'support'], 
     required: true 
   },
   permissions: {
@@ -32,7 +32,7 @@ const adminSchema = new mongoose.Schema({
 
 
 adminSchema.pre('save', function(next) {
-  if (this.role === 'superadmin') {
+  if (this.role === 'superadmin' || this.role === 'super_admin') {
     this.permissions = {
       jobModeration: true,
       employerReview: true,
@@ -41,6 +41,16 @@ adminSchema.pre('save', function(next) {
       userMonitoring: true,
       categoryManagement: true,
       complianceEnforcement: true
+    };
+  } else if (this.role === 'admin') {
+    this.permissions = {
+      jobModeration: true,
+      employerReview: true,
+      reportHandling: true,
+      contentQuality: true,
+      userMonitoring: true,
+      categoryManagement: true,
+      complianceEnforcement: false
     };
   } else if (this.role === 'moderator') {
     this.permissions = {

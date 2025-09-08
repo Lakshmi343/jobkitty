@@ -127,7 +127,7 @@ const AdminApplications = () => {
   };
 
   const deleteApplication = async (applicationId) => {
-    if (!window.confirm('Are you sure you want to delete this application?')) return;
+    if (!window.confirm('Are you sure you want to remove this application? This action cannot be undone.')) return;
 
     try {
       const token = localStorage.getItem('adminToken');
@@ -144,7 +144,7 @@ const AdminApplications = () => {
         fetchStats();
       }
     } catch (error) {
-      console.error('Error deleting application:', error);
+      toast.error('Could not remove application. Please try again.', error);
     }
   };
 

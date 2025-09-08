@@ -1,14 +1,15 @@
-import React, { useEffect, useMemo, useState } from 'react'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import CompaniesTable from './CompaniesTable'
 import { useNavigate } from 'react-router-dom'
-import { useSelector } from 'react-redux'
+import React, { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
-import { ADMIN_API_END_POINT } from '@/utils/constant'
+import { COMPANY_API_END_POINT } from '../../utils/constant'
+import { ADMIN_API_END_POINT } from '../../utils/constant'
 import { Building2, Search, TrendingUp, Users, Briefcase } from 'lucide-react'
 import { toast } from 'sonner'
+import { useSelector } from 'react-redux'
 
 const Companies = () => {
 	const { user } = useSelector(store => store.auth)
@@ -34,7 +35,7 @@ const Companies = () => {
 			let res;
 			try {
 				// First try with admin token (correct token key)
-				const token = localStorage.getItem('adminAccessToken')
+				const token = localStorage.getItem('adminToken')
 				if (token) {
 					res = await axios.get(`${ADMIN_API_END_POINT}/companies`, {
 						headers: { Authorization: `Bearer ${token}` },
@@ -46,7 +47,7 @@ const Companies = () => {
 			} catch (adminError) {
 				console.log('Admin API failed, trying user API:', adminError.message)
 				// Fallback to user API
-				res = await axios.get('http://localhost:8000/api/v1/company/get', {
+				res = await axios.get(`${COMPANY_API_END_POINT}/get`, {
 					withCredentials: true,
 					timeout: 10000
 				})
@@ -68,12 +69,12 @@ const Companies = () => {
 			} else {
 				console.error('API returned unsuccessful response')
 				setCompanies([])
-				toast.error('Failed to load companies data')
+				toast.error('Unable to load companies. Please try again.')
 			}
 		} catch (error) {
 			console.error('Failed to fetch companies:', error)
 			setCompanies([])
-			toast.error('Unable to fetch companies. Please check your connection.')
+			toast.error('Unable to load companies. Please try again.')
 		} finally {
 			setLoading(false)
 		}
@@ -123,7 +124,8 @@ const Companies = () => {
 	}
 
 	const handleDelete = async (companyId) => {
-		if (!window.confirm('Delete this company? This cannot be undone.')) return
+		// Show confirmation toast instead of window.confirm
+		if (!window.confirm('Are you sure you want to delete this company? This action cannot be undone.')) return
 		try {
 			const token = localStorage.getItem('adminAccessToken')
 			if (!token) {

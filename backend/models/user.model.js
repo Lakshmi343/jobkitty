@@ -1,15 +1,15 @@
 import mongoose from "mongoose";
 
 const educationSchema = new mongoose.Schema({
-    degree: { type: String, required: true },       // B.Tech, MCA, etc
-    institution: { type: String, required: true },  // College / University name
+    degree: { type: String, required: true },      
+    institution: { type: String, required: true },  
     yearOfCompletion: { type: Number, required: true },
-    grade: { type: String }, // optional
+    grade: { type: String }, 
 });
 
 const experienceSchema = new mongoose.Schema({
-    years: { type: Number, default: 0 }, // optional
-    field: { type: String },             // optional, like IT, Finance
+    years: { type: Number, default: 0 }, 
+    field: { type: String },             
 });
 
 const userSchema = new mongoose.Schema({
@@ -30,9 +30,9 @@ const userSchema = new mongoose.Schema({
         company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
         profilePhoto: { type: String, default: "" },
 
-        // ✅ New Fields
+   
         place: { type: String },  
-        education: { type: educationSchema, required: true },
+        education: { type: educationSchema, },
         experience: { type: experienceSchema }, 
     },
     resetPasswordToken: String,

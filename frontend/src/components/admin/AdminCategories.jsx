@@ -45,7 +45,7 @@ const AdminCategories = () => {
       }
     } catch (error) {
       console.error('Error fetching categories:', error);
-      toast.error('Failed to fetch categories');
+      toast.error('Could not remove category. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -91,7 +91,7 @@ const AdminCategories = () => {
   };
 
   const handleDelete = async (categoryId) => {
-    if (!window.confirm('Are you sure you want to delete this category?')) {
+    if (!window.confirm('Are you sure you want to remove this category? This action cannot be undone.')) {
       return;
     }
 
