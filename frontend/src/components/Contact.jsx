@@ -3,14 +3,15 @@ import axios from 'axios';
 import { CONTACT_API_END_POINT } from '../utils/constant';
 import Navbar from './shared/Navbar';
 import Footer from './shared/Footer';
-import { Mail, MapPin, Phone, Send, CheckCircle } from 'lucide-react';
+import { Mail, MapPin, Phone, Send, CheckCircle, UserCircle, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Contact = () => {
   
-  const address = "306, 3rd Floor, Penta Towers, Bus Stand, Banerji Rd, opposite Kaloor, Kaloor, Kochi, Ernakulam, Kerala 682017";
   const email = "jobkitty.in@gmail.com";
- 
+  const phoneNumbers = ["9633019801", "9746498640"];
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -20,6 +21,7 @@ const Contact = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -30,7 +32,6 @@ const Contact = () => {
     e.preventDefault();
 
     const { name, email, subject, message } = formData;
-
     if (!name.trim() || !email.trim() || !subject.trim() || !message.trim()) {
       toast.error('Please fill in all fields');
       return;
@@ -46,7 +47,6 @@ const Contact = () => {
 
     try {
       const response = await axios.post(`${CONTACT_API_END_POINT}`, formData);
-
       const result = await response.data;
 
       if (result.success) {
@@ -56,7 +56,6 @@ const Contact = () => {
       } else {
         toast.error(result.message || 'Failed to send message.');
       }
-
     } catch (error) {
       console.error('Error sending message:', error);
       toast.error('Something went wrong. Please try again later.');
@@ -68,16 +67,76 @@ const Contact = () => {
   return (
     <>
       <Navbar />
+
+      {/* Popup Modal */}
+      <AnimatePresence>
+        {showModal && (
+          <motion.div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.7, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative"
+            >
+              <button
+                onClick={() => setShowModal(false)}
+                className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              <div className="flex flex-col items-center text-center">
+                <UserCircle className="w-20 h-20 text-purple-600 mb-4" />
+                <h3 className="text-2xl font-bold text-gray-800 mb-2">Contact Info</h3>
+                <p className="text-gray-600 mb-6">Reach us directly via phone or email</p>
+
+                <div className="space-y-4 w-full">
+                  <div className="flex items-center gap-3 text-gray-700">
+                    <Phone className="w-5 h-5 text-blue-600" />
+                    <span>{phoneNumbers.join(" / ")}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-gray-700">
+                    <Mail className="w-5 h-5 text-blue-600" />
+                    <span>{email}</span>
+                  </div>
+                  
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 flex items-center justify-center py-12 px-2">
         <div className="w-full max-w-3xl mx-auto">
           <div className="text-center mb-10">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-600 to-pink-500 mb-3 drop-shadow-lg">Get in Touch</h1>
-            <p className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto font-medium">We'd love to hear from you. Please reach out with any questions or feedback.</p>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-purple-600 to-pink-500 mb-3 drop-shadow-lg">
+              Get in Touch
+            </h1>
+            <p className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto font-medium">
+              We'd love to hear from you. Please reach out with any questions or feedback.
+            </p>
           </div>
 
+          {/* Extra Button for Modal */}
+          <div className="flex justify-center mb-8">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition-all duration-200"
+            >
+              View Contact Info
+            </button>
+          </div>
+
+          {/* Contact Form */}
           <div className="bg-white/90 rounded-3xl shadow-2xl p-8 md:p-12 border border-blue-100 backdrop-blur-md transition-all duration-300 hover:shadow-blue-200">
             <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">Send us a Message</h2>
-
             {isSubmitted ? (
               <div className="text-center py-12">
                 <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6 animate-bounce" />
@@ -153,13 +212,13 @@ const Contact = () => {
           </div>
         </div>
       </div>
+
       <Footer />
     </>
   );
 };
 
 export default Contact;
-
 
 
 

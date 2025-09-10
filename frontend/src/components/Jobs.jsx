@@ -15,7 +15,6 @@ const Jobs = () => {
     useEffect(() => {
         let filteredJobs = [...allJobs];
 
-        // Apply text search filter (case-insensitive)
         if (searchedQuery) {
             const q = searchedQuery.toLowerCase();
             filteredJobs = filteredJobs.filter((job) => {
