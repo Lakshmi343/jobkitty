@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Email template for application acceptance
+
 export const sendApplicationAcceptanceEmail = async (studentEmail, studentName, jobTitle, companyName, currentResumeUrl, currentResumeName) => {
     try {
         const mailOptions = {
@@ -84,7 +84,7 @@ export const sendApplicationAcceptanceEmail = async (studentEmail, studentName, 
     }
 };
 
-// Email template for application rejection
+
 export const sendApplicationRejectionEmail = async (studentEmail, studentName, jobTitle, companyName) => {
     try {
         const mailOptions = {

@@ -210,12 +210,12 @@ const AdminDashboard = () => {
             Manage Jobs
           </Button>
           <Button 
-            onClick={() => navigate('/admin/users')}
+            onClick={() => navigate('/admin/categories')}
             variant="outline"
             className="flex items-center gap-2"
           >
             <Users className="h-4 w-4" />
-            Manage Users
+            Manage Categories
           </Button>
           <Button 
             onClick={() => navigate('/admin/companies')}

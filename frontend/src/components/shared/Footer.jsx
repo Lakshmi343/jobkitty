@@ -52,7 +52,7 @@ const Footer = () => {
             </div>
             <p className="text-gray-300 mb-6 leading-relaxed">
               Empowering your career journey. Find your dream job or the perfect candidate with us! 
-              We connect talented professionals with innovative companies across India.
+              We connect talented professionals with innovative companies across Kerala.
             </p>
 
             <div className="space-y-4">
