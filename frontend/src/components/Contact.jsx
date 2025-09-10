@@ -10,7 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Contact = () => {
   
   const email = "jobkitty.in@gmail.com";
-  const phoneNumbers = ["9633019801", "9746498640"];
+ 
 
   const [formData, setFormData] = useState({
     name: '',
@@ -96,17 +96,6 @@ const Contact = () => {
                 <h3 className="text-2xl font-bold text-gray-800 mb-2">Contact Info</h3>
                 <p className="text-gray-600 mb-6">Reach us directly via phone or email</p>
 
-                <div className="space-y-4 w-full">
-                  <div className="flex items-center gap-3 text-gray-700">
-                    <Phone className="w-5 h-5 text-blue-600" />
-                    <span>{phoneNumbers.join(" / ")}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-gray-700">
-                    <Mail className="w-5 h-5 text-blue-600" />
-                    <span>{email}</span>
-                  </div>
-                  
-                </div>
               </div>
             </motion.div>
           </motion.div>

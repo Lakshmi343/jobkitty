@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import axios from 'axios'
 import { USER_API_END_POINT } from '@/utils/constant'
 import { setUser } from '@/redux/authSlice'
+import { authUtils } from '@/utils/authUtils'
 import { toast } from 'sonner'
 import logo from "../../assets/jobkitty-01.png"
 
@@ -22,12 +23,17 @@ const Navbar = () => {
             const res = await axios.get(`${USER_API_END_POINT}/logout`, { withCredentials: true });
             if (res.data.success) {
                 dispatch(setUser(null));
+                authUtils.clearTokens();
                 navigate("/");
                 toast.success(res.data.message);
             }
         } catch (error) {
             console.log(error);
-            toast.error(error.response.data.message);
+            // Clear tokens even if logout API fails
+            dispatch(setUser(null));
+            authUtils.clearTokens();
+            navigate("/");
+            toast.error(error.response?.data?.message || "Logout failed");
         }
     }
     return (
@@ -146,7 +152,7 @@ const Navbar = () => {
                                         <li><Link to="/admin/companies" onClick={()=>setMobileMenuOpen(false)}>Companies</Link></li>
                                         <li><Link to="/jobs" onClick={()=>setMobileMenuOpen(false)}>Jobs</Link></li>
                                         <li><Link to="/contact" onClick={()=>setMobileMenuOpen(false)}>Contact</Link></li>
-                                        <li><Link to="/blog" onClick={()=>setMobileMenuOpen(false)}>Blog</Link></li>
+                                        
                                     </>
                                 ) : user && user.role === 'Employer' ? (
                                     <>
@@ -154,7 +160,7 @@ const Navbar = () => {
                                         <li><Link to="/employer/jobs/create" onClick={()=>setMobileMenuOpen(false)}>Post Job</Link></li>
                                         <li><Link to="/jobs" onClick={()=>setMobileMenuOpen(false)}>Browse Jobs</Link></li>
                                         <li><Link to="/contact" onClick={()=>setMobileMenuOpen(false)}>Contact</Link></li>
-                                        <li><Link to="/blog" onClick={()=>setMobileMenuOpen(false)}>Blog</Link></li>
+                                     
                                     </>
                                 ) : user && user.role === 'Jobseeker' ? (
                                     <>
@@ -162,7 +168,7 @@ const Navbar = () => {
                                         <li><Link to="/browse" onClick={()=>setMobileMenuOpen(false)}>Browse</Link></li>
                                         <li><Link to="/jobseeker/applied-jobs" onClick={()=>setMobileMenuOpen(false)}>Applied Jobs</Link></li>
                                         <li><Link to="/contact" onClick={()=>setMobileMenuOpen(false)}>Contact</Link></li>
-                                        <li><Link to="/blog" onClick={()=>setMobileMenuOpen(false)}>Blog</Link></li>
+                                      
                                     </>
                                 ) : (
                                     <>
@@ -170,7 +176,7 @@ const Navbar = () => {
                                         <li><Link to="/jobs" onClick={()=>setMobileMenuOpen(false)}>Jobs</Link></li>
                                         <li><Link to="/browse" onClick={()=>setMobileMenuOpen(false)}>Browse</Link></li>
                                         <li><Link to="/contact" onClick={()=>setMobileMenuOpen(false)}>Contact</Link></li>
-                                        <li><Link to="/blog" onClick={()=>setMobileMenuOpen(false)}>Blog</Link></li>
+                                        
                                     </>
                                 )
                             }

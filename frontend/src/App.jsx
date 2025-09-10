@@ -1,5 +1,9 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import { setupGlobalInterceptors } from './utils/axiosSetup'
+import { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
+import { setUser } from './redux/authSlice'
+import './utils/axiosInterceptor'
+import { authUtils } from './utils/authUtils'
 import Navbar from './components/shared/Navbar'
 import Login from './components/auth/Login'
 import Signup from './components/auth/Signup'
@@ -288,8 +292,15 @@ const appRouter = createBrowserRouter([
 ])
 
 function App() {
+  const dispatch = useDispatch();
 
-  setupGlobalInterceptors();
+  useEffect(() => {
+    // Initialize user from localStorage on app start
+    const storedUser = authUtils.getUser();
+    if (storedUser && authUtils.isAuthenticated()) {
+      dispatch(setUser(storedUser));
+    }
+  }, [dispatch]);
   
   return (
     <div>

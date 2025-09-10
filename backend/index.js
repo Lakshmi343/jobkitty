@@ -26,8 +26,12 @@ app.use(helmet());
 const corsOptions = {
   origin: [
     "http://localhost:5173",       
-    "http://localhost:8000",       
-    "https://jobkitty.in",         
+    "http://localhost:8000", 
+    "https://jobkitty.in",  
+    "http://jobkitty.in", 
+    "http://168.231.123.129:8000",
+    "https://168.231.123.129:8000"
+          
   ],
   credentials: true,
 };
@@ -51,19 +55,19 @@ app.use("/api/v1/category",categoryRoute);
 app.use("/api/v1/contact", contactRoute);
 app.use("/api/v1/admin",adminRoute)
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const frontendDistPath = path.join(__dirname, "../frontend/dist");
-app.use(express.static(frontendDistPath));
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// const frontendDistPath = path.join(__dirname, "../frontend/dist");
+// app.use(express.static(frontendDistPath));
 
 
-app.get("*", (req, res) => {
-    if (req.originalUrl.startsWith("/api/")) {
-        res.status(404).json({ message: "API route not found" });
-    } else {
-        res.sendFile(path.join(frontendDistPath, "index.html"));
-    }
-});
+// app.get("*", (req, res) => {
+//     if (req.originalUrl.startsWith("/api/")) {
+//         res.status(404).json({ message: "API route not found" });
+//     } else {
+//         res.sendFile(path.join(frontendDistPath, "index.html"));
+//     }
+// });
 
 app.listen(PORT,()=>{
     connectDB();

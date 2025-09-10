@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import getDataUri from "../utils/datauri.js";
 import cloudinary from "../utils/cloudinary.js";
-import { sendRegistrationReminderEmail, sendPasswordResetEmail } from "../utils/emailService.js";
+import { sendRegistrationReminderEmail, sendPasswordResetEmail, sendWelcomeEmail } from "../utils/emailService.js";
 import crypto from "crypto";
 
 export const register = async (req, res) => {
@@ -48,6 +48,15 @@ export const register = async (req, res) => {
 		});
 		const user = await User.findOne({ email });
 		if (user) {
+			// Send welcome email immediately
+			try {
+				await sendWelcomeEmail(user.email, user.fullname, user.role);
+				console.log('Welcome email sent to', user.email);
+			} catch (err) {
+				console.error('Failed to send welcome email:', err);
+			}
+			
+			// Send reminder email after 4 minutes
 			setTimeout(async () => {
 				try {
 					await sendRegistrationReminderEmail(
@@ -57,7 +66,8 @@ export const register = async (req, res) => {
 					console.log('Reminder email sent to', user.email);
 				} catch (err) {
 					console.error('Failed to send reminder email:', err);
-				}		}, 4 * 60 * 1000); 
+				}
+			}, 4 * 60 * 1000); 
 		}
 		return res.status(201).json({
 			message: "Account created successfully.",
@@ -124,9 +134,16 @@ export const login = async (req, res) => {
       }
     }
 
-    const tokenData = { userId: user._id };
-    const token = jwt.sign(tokenData, process.env.SECRET_KEY, {
-      expiresIn: "4h"
+    // Create access token (short-lived)
+    const accessTokenData = { userId: user._id, type: 'access' };
+    const accessToken = jwt.sign(accessTokenData, process.env.SECRET_KEY, {
+      expiresIn: "15m" // Short-lived access token
+    });
+
+    // Create refresh token (long-lived)
+    const refreshTokenData = { userId: user._id, type: 'refresh' };
+    const refreshToken = jwt.sign(refreshTokenData, process.env.REFRESH_SECRET_KEY || process.env.SECRET_KEY, {
+      expiresIn: "7d" // Long-lived refresh token
     });
 
     if (user.role === 'Employer' && user.profile.company) {
@@ -142,16 +159,24 @@ export const login = async (req, res) => {
       profile: user.profile
     };
 
-    return res.status(200).cookie("token", token, {
-      maxAge: 86400000,
-      httpOnly: true,
-      sameSite: "strict"
-    }).json({
-      message: `Welcome back ${user.fullname}`,
-      user,
-      token,
-      success: true
-    });
+    return res.status(200)
+      .cookie("token", accessToken, {
+        maxAge: 15 * 60 * 1000, // 15 minutes
+        httpOnly: true,
+        sameSite: "strict"
+      })
+      .cookie("refreshToken", refreshToken, {
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        httpOnly: true,
+        sameSite: "strict"
+      })
+      .json({
+        message: `Welcome back ${user.fullname}`,
+        user,
+        accessToken,
+        refreshToken,
+        success: true
+      });
 
   } catch (error) {
     console.error(error);
@@ -162,10 +187,13 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
 	try {
-		return res.status(200).cookie("token", "", { maxAge: 0 }).json({
-			message: "Logged out successfully.",
-			success: true
-		});
+		return res.status(200)
+			.cookie("token", "", { maxAge: 0 })
+			.cookie("refreshToken", "", { maxAge: 0 })
+			.json({
+				message: "Logged out successfully.",
+				success: true
+			});
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Server error", success: false });
@@ -298,9 +326,28 @@ export const forgotPassword = async (req, res) => {
 		user.resetPasswordToken = token;
 		user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
 		await user.save();
-		// Construct reset link (adjust frontend URL as needed)
-		const resetLink = `${process.env.FRONTEND_URL || "http://localhost:5173"}/reset-password/${token}`;
-		await sendPasswordResetEmail(user.email, resetLink);
+		// Construct reset link with better environment handling
+		let frontendUrl;
+		if (process.env.NODE_ENV === 'production') {
+			// In production, use FRONTEND_URL or fallback to common production patterns
+			frontendUrl = process.env.FRONTEND_URL || 
+						 process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
+						 process.env.NETLIFY_URL || 
+						 'https://your-production-domain.com'; // Replace with your actual domain
+		} else {
+			// Development environment
+			frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+		}
+		
+		const resetLink = `${frontendUrl}/reset-password/${token}`;
+		console.log(`Generated reset link: ${resetLink}`); // For debugging
+		
+		const emailResult = await sendPasswordResetEmail(user.email, resetLink);
+		if (!emailResult.success) {
+			console.error('Failed to send password reset email:', emailResult.error);
+			return res.status(500).json({ message: "Failed to send reset email.", success: false });
+		}
+		
 		return res.status(200).json({ message: "Password reset link sent to your email.", success: true });
 	} catch (error) {
 		console.error(error);
@@ -423,5 +470,86 @@ export const getAllEmployers = async (req, res) => {
   } catch (error) {
     console.error("Error fetching employers:", error);
     return res.status(500).json({ message: "Server error", success: false });
+  }
+};
+
+// Refresh token endpoint
+export const refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    const cookieRefreshToken = req.cookies.refreshToken;
+    
+    const tokenToVerify = refreshToken || cookieRefreshToken;
+    
+    if (!tokenToVerify) {
+      return res.status(401).json({
+        message: "Refresh token is required",
+        success: false
+      });
+    }
+
+    // Verify refresh token
+    const decoded = jwt.verify(tokenToVerify, process.env.REFRESH_SECRET_KEY || process.env.SECRET_KEY);
+    
+    if (decoded.type !== 'refresh') {
+      return res.status(401).json({
+        message: "Invalid token type",
+        success: false
+      });
+    }
+
+    // Check if user still exists and is active
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({
+        message: "User not found",
+        success: false
+      });
+    }
+
+    if (user.status === 'blocked') {
+      return res.status(403).json({
+        message: "Account is blocked",
+        success: false,
+        blocked: true
+      });
+    }
+
+    // Generate new access token
+    const accessTokenData = { userId: user._id, type: 'access' };
+    const newAccessToken = jwt.sign(accessTokenData, process.env.SECRET_KEY, {
+      expiresIn: "15m"
+    });
+
+    // Optionally generate new refresh token for rotation
+    const refreshTokenData = { userId: user._id, type: 'refresh' };
+    const newRefreshToken = jwt.sign(refreshTokenData, process.env.REFRESH_SECRET_KEY || process.env.SECRET_KEY, {
+      expiresIn: "7d"
+    });
+
+    return res.status(200)
+      .cookie("token", newAccessToken, {
+        maxAge: 15 * 60 * 1000, // 15 minutes
+        httpOnly: true,
+        sameSite: "strict"
+      })
+      .cookie("refreshToken", newRefreshToken, {
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        httpOnly: true,
+        sameSite: "strict"
+      })
+      .json({
+        message: "Token refreshed successfully",
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        success: true
+      });
+
+  } catch (error) {
+    console.error("Refresh token error:", error);
+    return res.status(401).json({
+      message: "Invalid or expired refresh token",
+      success: false
+    });
   }
 };

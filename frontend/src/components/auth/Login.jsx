@@ -11,7 +11,7 @@ import { toast } from 'sonner';
 import { useDispatch, useSelector } from 'react-redux';
 import { setLoading, setUser } from '../../redux/authSlice';
 import { Loader2, Eye, EyeOff, Lock, Mail } from 'lucide-react';
-import { tokenManager } from '../../utils/tokenManager';
+import { authUtils } from '../../utils/authUtils';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import Navbar from '../shared/Navbar';
 
@@ -46,6 +46,7 @@ const Login = () => {
   const submitHandler = async (e) => {
     e.preventDefault();
     if (!validateInput()) return;
+    
     try {
       dispatch(setLoading(true));
       const loginData = {
@@ -53,6 +54,7 @@ const Login = () => {
         password: input.password,
       };
 
+      // Add accept code if user is blocked and code is provided
       if (isBlocked && acceptCode) {
         loginData.acceptCode = acceptCode;
       }
@@ -65,14 +67,12 @@ const Login = () => {
       });
 
       if (res.data.success) {
+        // Store user data
         dispatch(setUser(res.data.user));
-
-        if (res.data.user.role === 'admin') {
-          const mockToken = 'admin-session-' + Date.now();
-          tokenManager.setTokens(mockToken, mockToken);
-          localStorage.setItem('adminRole', res.data.user.role);
-          localStorage.setItem('admin', JSON.stringify(res.data.user));
-        }
+        authUtils.setUser(res.data.user);
+        
+        // Store tokens
+        authUtils.setTokens(res.data.accessToken, res.data.refreshToken);
 
         const pendingApplication = localStorage.getItem('pendingJobApplication');
         if (pendingApplication) {

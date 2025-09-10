@@ -57,7 +57,6 @@ const PostJob = () => {
     const [newRequirement, setNewRequirement] = useState("");
     const [userCompany, setUserCompany] = useState(null);
     const navigate = useNavigate();
-
     const { user } = useSelector(store => store.auth);
 
     useEffect(() => {
@@ -114,9 +113,9 @@ const PostJob = () => {
             case 1:
                 return input.title && input.description && input.category && requirements.length > 0;
             case 2:
-                return input.location && input.jobType; // openings is collected in step 3
+                return input.location && input.jobType; 
             case 3:
-                return input.salaryMin && input.salaryMax && input.openings; // final submit on step 3
+                return input.salaryMin && input.salaryMax && input.openings; 
             default:
                 return true;
         }
@@ -145,8 +144,6 @@ const PostJob = () => {
         
         try {
             setLoading(true);
-            
-            // Format the data properly
             const formData = {
                 ...input,
                 requirements: requirements.length > 0 ? requirements : ["No specific requirements"],
@@ -154,7 +151,7 @@ const PostJob = () => {
                     min: Number(input.salaryMin),
                     max: Number(input.salaryMax)
                 },
-                // experience and requirements optional in 3-step flow
+               
                 experience: (input.experienceMin || input.experienceMax) ? {
                     min: Number(input.experienceMin || 0),
                     max: Number(input.experienceMax || 0)
@@ -162,12 +159,12 @@ const PostJob = () => {
                 openings: Number(input.openings)
             };
             
-            // Remove individual fields that are now part of objects or unused
+            
             delete formData.salaryMin;
             delete formData.salaryMax;
             delete formData.experienceMin;
             delete formData.experienceMax;
-            delete formData.position; // not used by backend
+            delete formData.position; 
             if (!formData.experience) delete formData.experience;
             
             const response = await axios.post(`${JOB_API_END_POINT}/post`, formData, {
@@ -200,7 +197,7 @@ const PostJob = () => {
             <Navbar />
             
             <div className="max-w-4xl mx-auto px-4 py-8">
-                {/* Header */}
+               
                 <div className="mb-8">
                     <div className="flex items-center gap-4 mb-6">
                         <button
@@ -220,7 +217,7 @@ const PostJob = () => {
                         </div>
                     </div>
 
-                    {/* Progress Bar */}
+                    
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-lg font-semibold text-gray-900">Step {currentStep} of 3</h2>

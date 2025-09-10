@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setUser } from "@/redux/authSlice";
+import { authUtils } from "../../utils/authUtils";
 import axios from "axios";
 import { USER_API_END_POINT } from "../../utils/constant";
 
@@ -13,13 +14,21 @@ const ProtectedRoute = ({children, allowedRoles = []}) => {
 
     useEffect(()=>{
         const checkUserStatus = async () => {
-            if(!user){
+            if(!user || !authUtils.isAuthenticated()){
                 navigate("/login");
                 setIsChecking(false);
                 return;
             }
             
             try {
+                // Validate token and refresh if needed
+                const isValid = await authUtils.validateToken();
+                if (!isValid) {
+                    navigate("/login");
+                    setIsChecking(false);
+                    return;
+                }
+
                 // Make a simple API call to check if user is still valid/not blocked
                 const response = await axios.get(`${USER_API_END_POINT}/profile`, {
                     withCredentials: true
@@ -42,8 +51,7 @@ const ProtectedRoute = ({children, allowedRoles = []}) => {
                 
                 // For other errors, clear user data and redirect to login
                 dispatch(setUser(null));
-                localStorage.removeItem('user');
-                localStorage.removeItem('token');
+                authUtils.clearTokens();
                 navigate("/login");
                 setIsChecking(false);
             }
