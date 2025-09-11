@@ -29,6 +29,7 @@ const isAuthenticated = async (req, res, next) => {
         };
         
         // Check if it's an access token (for new token system)
+        // Allow tokens without type (backward compatibility) or with 'access' type
         if (decode.type && decode.type !== 'access') {
             return res.status(401).json({
                 message: "Invalid token type",

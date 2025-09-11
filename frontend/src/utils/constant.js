@@ -1,5 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL;
-debugger;
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://jobkitty.in/api/v1';
 console.log("Loaded BASE_URL:", BASE_URL); 
 
 
