@@ -159,18 +159,7 @@ export const login = async (req, res) => {
       profile: user.profile
     };
 
-    return res.status(200)
-      .cookie("token", accessToken, {
-        maxAge: 15 * 60 * 1000, // 15 minutes
-        httpOnly: true,
-        sameSite: "strict"
-      })
-      .cookie("refreshToken", refreshToken, {
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        httpOnly: true,
-        sameSite: "strict"
-      })
-      .json({
+    return res.status(200).json({
         message: `Welcome back ${user.fullname}`,
         user,
         accessToken,
@@ -187,13 +176,10 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
 	try {
-		return res.status(200)
-			.cookie("token", "", { maxAge: 0 })
-			.cookie("refreshToken", "", { maxAge: 0 })
-			.json({
-				message: "Logged out successfully.",
-				success: true
-			});
+		return res.status(200).json({
+			message: "Logged out successfully.",
+			success: true
+		});
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Server error", success: false });
@@ -234,7 +220,7 @@ export const updateProfile = async (req, res) => {
             resumeName = req.file.originalname;
         }
 
-        // ✅ Update fields
+   
         user.fullname = fullname || user.fullname;
         user.email = email || user.email;
         user.phoneNumber = phoneNumber || user.phoneNumber;
@@ -246,12 +232,12 @@ export const updateProfile = async (req, res) => {
         }
         user.profile.place = place || user.profile.place;
 
-        // ✅ Education (Required)
+        
         if (education) {
 			user.profile.education=JSON.parse(education);
 		}
 
-        // ✅ Experience (Optional)
+        
         if (experience) {
             user.profile.experience = JSON.parse(experience);
         }
@@ -329,11 +315,8 @@ export const forgotPassword = async (req, res) => {
 		// Construct reset link with better environment handling
 		let frontendUrl;
 		if (process.env.NODE_ENV === 'production') {
-			// In production, use FRONTEND_URL or fallback to jobkitty.in
-			frontendUrl = process.env.FRONTEND_URL || 
-						 process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
-						 process.env.NETLIFY_URL || 
-						 'https://jobkitty.in'; // Updated to use jobkitty.in
+			// In production, always use jobkitty.in
+			frontendUrl = 'https://jobkitty.in';
 		} else {
 			// Development environment
 			frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -527,18 +510,7 @@ export const refreshToken = async (req, res) => {
       expiresIn: "7d"
     });
 
-    return res.status(200)
-      .cookie("token", newAccessToken, {
-        maxAge: 15 * 60 * 1000, // 15 minutes
-        httpOnly: true,
-        sameSite: "strict"
-      })
-      .cookie("refreshToken", newRefreshToken, {
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        httpOnly: true,
-        sameSite: "strict"
-      })
-      .json({
+    return res.status(200).json({
         message: "Token refreshed successfully",
         accessToken: newAccessToken,
         refreshToken: newRefreshToken,

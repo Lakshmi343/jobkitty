@@ -48,7 +48,7 @@ export const sendApplicationAcceptanceEmail = async (studentEmail, studentName, 
                         ` : ''}
                         
                         <div style="margin: 24px 0; text-align: center;">
-                            <a href="${process.env.FRONTEND_URL || 'https://jobkitty.in'}/profile" style="background: #28a745; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Update Your Profile</a>
+                            <a href="https://jobkitty.in/profile" style="background: #28a745; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Update Your Profile</a>
                         </div>
                         <p>Please log in to your account and update your resume in your profile section.</p>
                         
@@ -174,7 +174,7 @@ export const sendRegistrationReminderEmail = async (studentEmail, studentName) =
                     <div style="background: #fff; padding: 24px; border-radius: 0 0 10px 10px;">
                         <p style="font-size: 1.1rem; color: #333;">Thank you for being a part of <b>JobKitty</b>! To help you stand out to recruiters and get the best job matches, please keep your profile up to date.</p>
                         <div style="margin: 24px 0; text-align: center;">
-                            <a href="${process.env.FRONTEND_URL || 'https://jobkitty.in'}/profile" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Update Your Profile Now</a>
+                            <a href="https://jobkitty.in/profile" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Update Your Profile Now</a>
                         </div>
                         <div style="background: #f3f4f6; border-left: 4px solid #6A38C2; padding: 16px; border-radius: 6px; margin-bottom: 18px;">
                             <h4 style="margin: 0 0 8px 0; color: #6A38C2;">Why update?</h4>
@@ -378,7 +378,7 @@ export const sendWelcomeEmail = async (userEmail, userName, userRole) => {
                         </div>
                         
                         <div style="margin: 24px 0; text-align: center;">
-                            <a href="${process.env.FRONTEND_URL || 'https://jobkitty.in'}/profile" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Complete Your Profile</a>
+                            <a href="https://jobkitty.in/profile" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Complete Your Profile</a>
                         </div>
                         
                         <p style="color: #555;">If you have any questions or need assistance, feel free to contact our support team.</p>
@@ -410,7 +410,7 @@ export const sendJobAlertEmail = async (userEmail, userName, jobs) => {
                 <p style="margin: 4px 0; color: #666;"><strong>Location:</strong> ${job.location}</p>
                 <p style="margin: 4px 0; color: #666;"><strong>Salary:</strong> ${job.salary || 'Not specified'}</p>
                 <div style="margin-top: 12px;">
-                    <a href="${process.env.FRONTEND_URL || 'https://jobkitty.in'}/job/${job._id}" style="background: #6A38C2; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 0.9rem;">View Details</a>
+                    <a href="https://jobkitty.in/job/${job._id}" style="background: #6A38C2; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 0.9rem;">View Details</a>
                 </div>
             </div>
         `).join('');
@@ -433,7 +433,7 @@ export const sendJobAlertEmail = async (userEmail, userName, jobs) => {
                         </div>
                         
                         <div style="margin: 24px 0; text-align: center;">
-                            <a href="${process.env.FRONTEND_URL || 'https://jobkitty.in'}/jobs" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">View All Jobs</a>
+                            <a href="https://jobkitty.in/jobs" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">View All Jobs</a>
                         </div>
                         
                         <p style="color: #555;">Don't miss out on these opportunities! Apply now to increase your chances of landing your dream job.</p>
