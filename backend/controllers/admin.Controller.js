@@ -12,6 +12,7 @@ import crypto from 'crypto';
 import getDataUri from '../utils/datauri.js';
 import cloudinary from '../utils/cloudinary.js';
 import axios from 'axios';
+import { sendAdminPasswordResetEmail } from '../utils/emailService.js';
 
 // Helper function to log admin activity
 const logActivity = async (adminId, action, target, targetId, details) => {
@@ -1526,8 +1527,32 @@ export const forgotPassword = async (req, res) => {
     admin.resetPasswordExpires = resetTokenExpiry;
     await admin.save();
 
-    // In a real application, you would send an email here
-    // For now, we'll just return the token (remove this in production)
+    // Construct reset link with proper environment handling
+    let frontendUrl;
+    if (process.env.NODE_ENV === 'production') {
+      // In production, use FRONTEND_URL or fallback to jobkitty.in
+      frontendUrl = process.env.FRONTEND_URL || 
+                   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
+                   process.env.NETLIFY_URL || 
+                   'https://jobkitty.in'; // Updated to use jobkitty.in
+    } else {
+      // Development environment
+      frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    }
+    
+    const resetLink = `${frontendUrl}/admin/reset-password?token=${resetToken}`;
+    console.log(`Generated admin reset link: ${resetLink}`); // For debugging
+    
+    // Send email with reset link
+    const emailResult = await sendAdminPasswordResetEmail(admin.email, resetLink);
+    if (!emailResult.success) {
+      console.error('Failed to send admin password reset email:', emailResult.error);
+      return res.status(500).json({ 
+        message: "Failed to send reset email.", 
+        success: false 
+      });
+    }
+    
     res.status(200).json({
       message: "Password reset instructions have been sent to your email",
       success: true,

@@ -293,7 +293,7 @@ const JobseekerTable = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Action Confirmation Dialog */}
+ 
       <Dialog open={actionDialog.open} onOpenChange={() => setActionDialog({ open: false, action: '', title: '', description: '', userId: null })}>
         <DialogContent>
           <DialogHeader>

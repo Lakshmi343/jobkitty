@@ -46,6 +46,8 @@ import JobseekerTable from './components/admin/JobseekerTable.jsx'
 import EmployerTable from './components/admin/EmployerTable.jsx'
 import AdminManagement from './components/admin/AdminManagement'
 import AdminRegister from './components/admin/AdminRegister'
+import AdminForgotPassword from './components/admin/AdminForgotPassword'
+import AdminResetPassword from './components/admin/AdminResetPassword'
 
 const appRouter = createBrowserRouter([
   {
@@ -96,6 +98,14 @@ const appRouter = createBrowserRouter([
     element: <AdminRegister />
   },
   {
+    path: "/admin/forgot-password",
+    element: <AdminForgotPassword />
+  },
+  {
+    path: "/admin/reset-password",
+    element: <AdminResetPassword />
+  },
+  {
     path: "/admin/dashboard",
     element: (
       <AdminProtectedRoute>
@@ -108,7 +118,7 @@ const appRouter = createBrowserRouter([
   {
   path: "/admin/jobseekers",
   element: (
-    <AdminProtectedRoute allowedRoles={['superadmin']}>
+    <AdminProtectedRoute >
       <AdminLayout>
        <JobseekerTable/>
       </AdminLayout>
@@ -118,7 +128,7 @@ const appRouter = createBrowserRouter([
 {
   path: "/admin/employers",
   element: (
-    <AdminProtectedRoute allowedRoles={['superadmin']}>
+    <AdminProtectedRoute >
       <AdminLayout>
 <EmployerTable/>
       </AdminLayout>
@@ -209,7 +219,7 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/user-management",
     element: (
-      <AdminProtectedRoute allowedRoles={['superadmin']}>
+      <AdminProtectedRoute >
         <AdminLayout>
           <UserManagementDashboard />
         </AdminLayout>
@@ -239,7 +249,7 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/admin-management",
     element: (
-      <AdminProtectedRoute allowedRoles={['super_admin', 'admin']}>
+      <AdminProtectedRoute >
         <AdminLayout>
           <AdminManagement />
         </AdminLayout>
@@ -295,7 +305,7 @@ function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // Initialize user from localStorage on app start
+  
     const storedUser = authUtils.getUser();
     if (storedUser && authUtils.isAuthenticated()) {
       dispatch(setUser(storedUser));

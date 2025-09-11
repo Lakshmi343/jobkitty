@@ -329,11 +329,11 @@ export const forgotPassword = async (req, res) => {
 		// Construct reset link with better environment handling
 		let frontendUrl;
 		if (process.env.NODE_ENV === 'production') {
-			// In production, use FRONTEND_URL or fallback to common production patterns
+			// In production, use FRONTEND_URL or fallback to jobkitty.in
 			frontendUrl = process.env.FRONTEND_URL || 
 						 process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
 						 process.env.NETLIFY_URL || 
-						 'https://your-production-domain.com'; // Replace with your actual domain
+						 'https://jobkitty.in'; // Updated to use jobkitty.in
 		} else {
 			// Development environment
 			frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';

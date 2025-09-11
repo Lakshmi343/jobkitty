@@ -48,7 +48,7 @@ export const sendApplicationAcceptanceEmail = async (studentEmail, studentName, 
                         ` : ''}
                         
                         <div style="margin: 24px 0; text-align: center;">
-                            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/profile" style="background: #28a745; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Update Your Profile</a>
+                            <a href="${process.env.FRONTEND_URL || 'https://jobkitty.in'}/profile" style="background: #28a745; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Update Your Profile</a>
                         </div>
                         <p>Please log in to your account and update your resume in your profile section.</p>
                         
@@ -174,7 +174,7 @@ export const sendRegistrationReminderEmail = async (studentEmail, studentName) =
                     <div style="background: #fff; padding: 24px; border-radius: 0 0 10px 10px;">
                         <p style="font-size: 1.1rem; color: #333;">Thank you for being a part of <b>JobKitty</b>! To help you stand out to recruiters and get the best job matches, please keep your profile up to date.</p>
                         <div style="margin: 24px 0; text-align: center;">
-                            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/profile" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Update Your Profile Now</a>
+                            <a href="${process.env.FRONTEND_URL || 'https://jobkitty.in'}/profile" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Update Your Profile Now</a>
                         </div>
                         <div style="background: #f3f4f6; border-left: 4px solid #6A38C2; padding: 16px; border-radius: 6px; margin-bottom: 18px;">
                             <h4 style="margin: 0 0 8px 0; color: #6A38C2;">Why update?</h4>
@@ -298,6 +298,52 @@ export const sendPasswordResetEmail = async (userEmail, resetLink) => {
     }
 };
 
+// Admin password reset email
+export const sendAdminPasswordResetEmail = async (adminEmail, resetLink) => {
+    try {
+        const mailOptions = {
+            from: 'jobkitty.in@gmail.com',
+            to: adminEmail,
+            subject: 'Admin Password Reset Request - JobKitty',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
+                    <div style="background: linear-gradient(90deg, #1e40af 0%, #3b82f6 100%); padding: 18px 0; border-radius: 10px 10px 0 0; text-align: center;">
+                        <h2 style="color: #fff; margin: 0; font-size: 1.7rem;">🛡️ Admin Password Reset Request</h2>
+                    </div>
+                    <div style="background: #fff; padding: 24px; border-radius: 0 0 10px 10px;">
+                        <p style="font-size: 1.1rem; color: #333;">You requested a password reset for your <b>JobKitty Admin</b> account. Click the button below to set a new password.</p>
+                        
+                        <div style="margin: 24px 0; text-align: center;">
+                            <a href="${resetLink}" style="background: #1e40af; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Reset Admin Password</a>
+                        </div>
+                        
+                        <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <p style="margin: 0; color: #92400e;"><strong>⚠️ Security Notice:</strong> This admin reset link will expire in 1 hour for security reasons.</p>
+                        </div>
+                        
+                        <div style="background: #dbeafe; border: 1px solid #3b82f6; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                            <p style="margin: 0; color: #1e40af;"><strong>🔒 Admin Security:</strong> If you did not request this password reset, please contact the system administrator immediately.</p>
+                        </div>
+                        
+                        <p style="color: #555;">This is a privileged admin account. Please ensure you're the only one with access to this email.</p>
+                        
+                        <p style="margin-top: 24px; color: #1e40af; font-weight: bold;">Stay secure,<br/>The JobKitty Admin Team</p>
+                    </div>
+                    <div style="text-align: center; margin-top: 18px; color: #aaa; font-size: 12px;">
+                        <p>This is an automated admin security message. Please do not reply to this email.</p>
+                    </div>
+                </div>
+            `
+        };
+        const result = await transporter.sendMail(mailOptions);
+        console.log('Admin password reset email sent:', result.messageId);
+        return { success: true, messageId: result.messageId };
+    } catch (error) {
+        console.error('Error sending admin password reset email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 // Welcome email for new users
 export const sendWelcomeEmail = async (userEmail, userName, userRole) => {
     try {
@@ -332,7 +378,7 @@ export const sendWelcomeEmail = async (userEmail, userName, userRole) => {
                         </div>
                         
                         <div style="margin: 24px 0; text-align: center;">
-                            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/profile" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Complete Your Profile</a>
+                            <a href="${process.env.FRONTEND_URL || 'https://jobkitty.in'}/profile" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">Complete Your Profile</a>
                         </div>
                         
                         <p style="color: #555;">If you have any questions or need assistance, feel free to contact our support team.</p>
@@ -364,7 +410,7 @@ export const sendJobAlertEmail = async (userEmail, userName, jobs) => {
                 <p style="margin: 4px 0; color: #666;"><strong>Location:</strong> ${job.location}</p>
                 <p style="margin: 4px 0; color: #666;"><strong>Salary:</strong> ${job.salary || 'Not specified'}</p>
                 <div style="margin-top: 12px;">
-                    <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/job/${job._id}" style="background: #6A38C2; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 0.9rem;">View Details</a>
+                    <a href="${process.env.FRONTEND_URL || 'https://jobkitty.in'}/job/${job._id}" style="background: #6A38C2; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 0.9rem;">View Details</a>
                 </div>
             </div>
         `).join('');
@@ -387,7 +433,7 @@ export const sendJobAlertEmail = async (userEmail, userName, jobs) => {
                         </div>
                         
                         <div style="margin: 24px 0; text-align: center;">
-                            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/jobs" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">View All Jobs</a>
+                            <a href="${process.env.FRONTEND_URL || 'https://jobkitty.in'}/jobs" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.1rem; display: inline-block;">View All Jobs</a>
                         </div>
                         
                         <p style="color: #555;">Don't miss out on these opportunities! Apply now to increase your chances of landing your dream job.</p>
