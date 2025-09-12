@@ -135,23 +135,29 @@ const EmployerProfile = () => {
 
   if (!company) return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
-      <div className="flex-1 flex items-center justify-center px-4">
-        <div className="text-center p-8 bg-white rounded-xl shadow-sm border border-gray-200 max-w-md w-full">
-          <div className="bg-blue-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-            <Building className="h-10 w-10 text-blue-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">No Company Profile Found</h2>
-          <p className="text-gray-600 mb-6">Create a company profile to start posting jobs and managing candidates.</p>
-          <Button 
-            onClick={() => navigate('/create-company')}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3"
-          >
-            Create Company Profile
-          </Button>
-        </div>
+  <Navbar />
+  <div className="flex-1 flex items-center justify-center px-4">
+    <div className="text-center p-8 bg-white rounded-xl shadow-sm border border-gray-200 max-w-md w-full">
+      <div className="bg-blue-100 p-4 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+        <Building className="h-10 w-10 text-blue-600" />
       </div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-4">
+        Complete Your Company Setup
+      </h2>
+      <p className="text-gray-600 mb-6">
+        You need to complete your company profile setup before you can post jobs or manage candidates. 
+        Please finish this step to continue.
+      </p>
+      <Button
+        onClick={() => navigate('/employer/company/setup')}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3"
+      >
+        Go to Company Setup
+      </Button>
     </div>
+  </div>
+</div>
+
   );
 
   return (

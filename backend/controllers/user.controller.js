@@ -1,4 +1,5 @@
 
+
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -48,15 +49,14 @@ export const register = async (req, res) => {
 		});
 		const user = await User.findOne({ email });
 		if (user) {
-			// Send welcome email immediately
+			
 			try {
 				await sendWelcomeEmail(user.email, user.fullname, user.role);
 				console.log('Welcome email sent to', user.email);
 			} catch (err) {
 				console.error('Failed to send welcome email:', err);
 			}
-			
-			// Send reminder email after 4 minutes
+	
 			setTimeout(async () => {
 				try {
 					await sendRegistrationReminderEmail(
@@ -108,13 +108,13 @@ export const login = async (req, res) => {
       });
     }
 
-    // Check if user account is blocked
+    
     if (user.status === 'blocked') {
-      // Check if accept code is provided and valid
+     
       if (acceptCode) {
         const validAcceptCode = process.env.ADMIN_ACCEPT_CODE || 'ADMIN2024';
         if (acceptCode === validAcceptCode) {
-          // Temporarily allow login with accept code - unblock the user
+         
           user.status = 'active';
           await user.save();
           console.log(`User ${user.email} unblocked via accept code`);
@@ -134,16 +134,16 @@ export const login = async (req, res) => {
       }
     }
 
-    // Create access token (short-lived)
+ 
     const accessTokenData = { userId: user._id, type: 'access' };
     const accessToken = jwt.sign(accessTokenData, process.env.SECRET_KEY, {
-      expiresIn: "15m" // Short-lived access token
+      expiresIn: "15m"
     });
 
-    // Create refresh token (long-lived)
+ 
     const refreshTokenData = { userId: user._id, type: 'refresh' };
     const refreshToken = jwt.sign(refreshTokenData, process.env.REFRESH_SECRET_KEY || process.env.SECRET_KEY, {
-      expiresIn: "7d" // Long-lived refresh token
+      expiresIn: "7d" 
     });
 
     if (user.role === 'Employer' && user.profile.company) {
@@ -158,6 +158,7 @@ export const login = async (req, res) => {
       role: user.role,
       profile: user.profile
     };
+    console.log("Login Response:", { accessToken, refreshToken, user });
 
     return res.status(200).json({
         message: `Welcome back ${user.fullname}`,
@@ -166,6 +167,8 @@ export const login = async (req, res) => {
         refreshToken,
         success: true
       });
+      
+
 
   } catch (error) {
     console.error(error);
@@ -202,7 +205,6 @@ export const updateProfile = async (req, res) => {
         let resumeUrl = user.profile.resume;
         let resumeName = user.profile.resumeOriginalName;
 
-        // ✅ Resume Upload
         if (req.file) {
             console.log('📄 File received:', req.file.originalname, req.file.mimetype, req.file.size);
             const fileUri = getDataUri(req.file);
@@ -296,7 +298,7 @@ export const getUserProfile = async (req, res) => {
 	}
 };
 
-// FORGOT PASSWORD
+
 export const forgotPassword = async (req, res) => {
 	try {
 		const { email } = req.body;
@@ -307,23 +309,23 @@ export const forgotPassword = async (req, res) => {
 		if (!user) {
 			return res.status(404).json({ message: "User not found.", success: false });
 		}
-		// Generate token
+
 		const token = crypto.randomBytes(32).toString("hex");
 		user.resetPasswordToken = token;
-		user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+		user.resetPasswordExpires = Date.now() + 3600000; 
 		await user.save();
-		// Construct reset link with better environment handling
+		
 		let frontendUrl;
 		if (process.env.NODE_ENV === 'production') {
-			// In production, always use jobkitty.in
+		
 			frontendUrl = 'https://jobkitty.in';
 		} else {
-			// Development environment
+	
 			frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 		}
 		
 		const resetLink = `${frontendUrl}/reset-password/${token}`;
-		console.log(`Generated reset link: ${resetLink}`); // For debugging
+		console.log(`Generated reset link: ${resetLink}`); 
 		
 		const emailResult = await sendPasswordResetEmail(user.email, resetLink);
 		if (!emailResult.success) {
@@ -338,7 +340,7 @@ export const forgotPassword = async (req, res) => {
 	}
 };
 
-// RESET PASSWORD
+
 export const resetPassword = async (req, res) => {
 	try {
 		const { token, password } = req.body;
@@ -364,7 +366,7 @@ export const resetPassword = async (req, res) => {
 };
 
 
-// Add this function to the existing user.controller.js file
+
 
 export const uploadResume = async (req, res) => {
 	try {
@@ -385,7 +387,7 @@ export const uploadResume = async (req, res) => {
 			});
 		}
 
-		// Upload to Cloudinary
+
 		console.log('📄 Resume upload - File received:', req.file.originalname, req.file.mimetype, req.file.size);
 		const isPdf = req.file.mimetype === 'application/pdf' || req.file.originalname?.toLowerCase().endsWith('.pdf');
 		const fileUri = getDataUri(req.file);
@@ -398,7 +400,7 @@ export const uploadResume = async (req, res) => {
 		
 		console.log('☁️ Resume uploaded to Cloudinary:', cloudResponse.secure_url);
 
-		// Update user profile with resume URL
+
 		user.profile.resume = cloudResponse.secure_url;
 		user.profile.resumeOriginalName = req.file.originalname;
 		await user.save();
@@ -419,7 +421,6 @@ export const uploadResume = async (req, res) => {
 
 
 
-// Get all Jobseekers
 export const getAllJobseekers = async (req, res) => {
   try {
     const jobseekers = await User.find({ role: "Jobseeker" })
@@ -437,12 +438,12 @@ export const getAllJobseekers = async (req, res) => {
   }
 };
 
-// Get all Employers
+
 export const getAllEmployers = async (req, res) => {
   try {
     const employers = await User.find({ role: "Employer" })
       .select("-password")
-      .populate("profile.company") // populate company details if linked
+      .populate("profile.company") 
       .sort({ createdAt: -1 });
 
     return res.status(200).json({
@@ -456,7 +457,7 @@ export const getAllEmployers = async (req, res) => {
   }
 };
 
-// Refresh token endpoint
+
 export const refreshToken = async (req, res) => {
   try {
     const { refreshToken } = req.body;
@@ -471,7 +472,7 @@ export const refreshToken = async (req, res) => {
       });
     }
 
-    // Verify refresh token
+   
     const decoded = jwt.verify(tokenToVerify, process.env.REFRESH_SECRET_KEY || process.env.SECRET_KEY);
     
     if (decoded.type !== 'refresh') {
@@ -481,7 +482,6 @@ export const refreshToken = async (req, res) => {
       });
     }
 
-    // Check if user still exists and is active
     const user = await User.findById(decoded.userId);
     if (!user) {
       return res.status(401).json({
@@ -498,13 +498,13 @@ export const refreshToken = async (req, res) => {
       });
     }
 
-    // Generate new access token
+ 
     const accessTokenData = { userId: user._id, type: 'access' };
     const newAccessToken = jwt.sign(accessTokenData, process.env.SECRET_KEY, {
       expiresIn: "15m"
     });
 
-    // Optionally generate new refresh token for rotation
+
     const refreshTokenData = { userId: user._id, type: 'refresh' };
     const newRefreshToken = jwt.sign(refreshTokenData, process.env.REFRESH_SECRET_KEY || process.env.SECRET_KEY, {
       expiresIn: "7d"

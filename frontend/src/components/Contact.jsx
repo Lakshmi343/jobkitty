@@ -46,7 +46,7 @@ const Contact = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post(`${CONTACT_API_END_POINT}`, formData);
+      const response = await axios.post(`${CONTACT_API_END_POINT}/submit`, formData);
       const result = await response.data;
 
       if (result.success) {

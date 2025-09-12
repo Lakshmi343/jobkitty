@@ -126,16 +126,16 @@ const AdminCVManagement = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
 
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">CV Management</h1>
-          <p className="text-gray-600 mt-1">Manage user resumes and profiles</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">CV Management</h1>
+          <p className="text-gray-600 mt-1 text-sm sm:text-base">Manage user resumes and profiles</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total CVs</CardTitle>
@@ -186,7 +186,7 @@ const AdminCVManagement = () => {
           <CardTitle>Search & Filter</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -194,7 +194,7 @@ const AdminCVManagement = () => {
                   placeholder="Search by name or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 h-10 sm:h-auto text-sm sm:text-base"
                 />
               </div>
             </div>
@@ -203,7 +203,7 @@ const AdminCVManagement = () => {
               <select
                 value="with-cv"
                 disabled
-                className="px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600"
+                className="px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600 text-sm sm:text-base h-10 sm:h-auto"
               >
                 <option value="with-cv">Candidates with CV</option>
               </select>
@@ -224,45 +224,44 @@ const AdminCVManagement = () => {
               </div>
             ) : (
               filteredUsers.map((user) => (
-                <div key={user._id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-
-                  <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center bg-gray-200">
-  {user.profile?.profilePhoto ? (
-    <img 
-      src={user.profile.profilePhoto} 
-      alt="Profile" 
-      className="w-full h-full object-cover" 
-    />
-  ) : (
-    <span className="text-gray-600 font-semibold">
-      {user.fullname?.charAt(0)?.toUpperCase() || 'U'}
-    </span>
-  )}
-</div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{user.fullname || 'No Name'}</h3>
-                      <div className="flex items-center space-x-2 text-sm text-gray-500">
-                        <Mail className="h-3 w-3" />
-                        <span>{user.email}</span>
+                <div key={user._id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg hover:bg-gray-50 gap-4">
+                  <div className="flex items-center space-x-3 sm:space-x-4 flex-1">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden flex items-center justify-center bg-gray-200 flex-shrink-0">
+                      {user.profile?.profilePhoto ? (
+                        <img 
+                          src={user.profile.profilePhoto} 
+                          alt="Profile" 
+                          className="w-full h-full object-cover" 
+                        />
+                      ) : (
+                        <span className="text-gray-600 font-semibold text-sm sm:text-base">
+                          {user.fullname?.charAt(0)?.toUpperCase() || 'U'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{user.fullname || 'No Name'}</h3>
+                      <div className="flex items-center space-x-2 text-xs sm:text-sm text-gray-500">
+                        <Mail className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{user.email}</span>
                       </div>
-                      <div className="flex items-center space-x-2 mt-1">
-                        <Badge variant="default">
+                      <div className="flex flex-wrap items-center gap-1 sm:gap-2 mt-1">
+                        <Badge variant="default" className="text-xs">
                           Job Seeker
                         </Badge>
-                        <Badge variant="outline" className="text-green-600 border-green-600">
+                        <Badge variant="outline" className="text-green-600 border-green-600 text-xs">
                           CV Available
                         </Badge>
                       </div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center space-x-2">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2 sm:flex-shrink-0">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => viewResume(user.profile.resume)}
-                      className="flex items-center space-x-1"
+                      className="flex items-center justify-center space-x-1 text-xs sm:text-sm"
                     >
                       <Eye className="h-3 w-3" />
                       <span>Preview</span>
@@ -271,7 +270,7 @@ const AdminCVManagement = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => downloadResume(user._id, user.fullname)}
-                      className="flex items-center space-x-1"
+                      className="flex items-center justify-center space-x-1 text-xs sm:text-sm"
                     >
                       <Download className="h-3 w-3" />
                       <span>Download</span>
@@ -286,19 +285,20 @@ const AdminCVManagement = () => {
 
     
       {showPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl w-11/12 h-5/6 max-w-4xl">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-900">CV Preview</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full h-full sm:w-11/12 sm:h-5/6 max-w-4xl flex flex-col">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border-b gap-2">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900">CV Preview</h3>
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => window.open(previewUrl, '_blank')}
-                  className="flex items-center space-x-1"
+                  className="flex items-center space-x-1 text-xs sm:text-sm"
                 >
                   <Download className="h-3 w-3" />
-                  <span>Open in New Tab</span>
+                  <span className="hidden sm:inline">Open in New Tab</span>
+                  <span className="sm:hidden">Open</span>
                 </Button>
                 <Button
                   variant="ghost"
@@ -310,12 +310,11 @@ const AdminCVManagement = () => {
                 </Button>
               </div>
             </div>
-            <div className="p-4 h-full">
+            <div className="flex-1 p-2 sm:p-4">
               <iframe
                 src={previewUrl}
                 className="w-full h-full border rounded"
                 title="CV Preview"
-                style={{ height: 'calc(100% - 2rem)' }}
               />
             </div>
           </div>

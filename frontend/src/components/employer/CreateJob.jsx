@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { JOB_API_END_POINT, CATEGORY_API_END_POINT } from '../../utils/constant';
+import { JOB_API_END_POINT, CATEGORY_API_END_POINT, USER_API_END_POINT } from '../../utils/constant';
 import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -39,17 +39,66 @@ const CreateJob = () => {
     const [requirements, setRequirements] = useState([]);
     const [newRequirement, setNewRequirement] = useState("");
     const [userCompany, setUserCompany] = useState(null);
+    const [checkingCompany, setCheckingCompany] = useState(true);
     const navigate = useNavigate();
 
     const { user } = useSelector(store => store.auth);
 
     useEffect(() => {
-        if (user && !user.profile.company) {
-            toast.info("Please set up your company profile before posting a job.");
-            navigate('/employer/company/setup');
-        } else if (user && user.profile.company) {
-            setUserCompany(user.profile.company);
-        }
+        const checkCompanySetup = async () => {
+            if (!user) {
+                toast.error("Please login to continue");
+                navigate('/login');
+                setCheckingCompany(false);
+                return;
+            }
+
+            try {
+                // Fetch fresh user data from the server
+                const response = await axios.get(`${USER_API_END_POINT}/profile`, {
+                    withCredentials: true
+                });
+
+                console.log('Fresh user data from API:', response.data); // Debug log
+
+                if (response.data.success && response.data.user) {
+                    const freshUser = response.data.user;
+                    console.log('Fresh company data:', freshUser.profile?.company); // Debug log
+                    
+                    if (!freshUser.profile?.company || !freshUser.profile.company.name) {
+                        console.log('No company found in fresh data, redirecting to setup'); // Debug log
+                        toast.info("Please set up your company profile before posting a job.");
+                        navigate('/employer/company/setup');
+                    } else {
+                        console.log('Company found in fresh data, setting userCompany'); // Debug log
+                        setUserCompany(freshUser.profile.company);
+                    }
+                } else {
+                    // Fallback to Redux data
+                    console.log('API failed, using Redux data:', user.profile?.company); // Debug log
+                    if (!user.profile?.company || !user.profile.company.name) {
+                        toast.info("Please set up your company profile before posting a job.");
+                        navigate('/employer/company/setup');
+                    } else {
+                        setUserCompany(user.profile.company);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching fresh user data:', error);
+                // Fallback to Redux data
+                console.log('Error occurred, using Redux data:', user.profile?.company); // Debug log
+                if (!user.profile?.company || !user.profile.company.name) {
+                    toast.info("Please set up your company profile before posting a job.");
+                    navigate('/employer/company/setup');
+                } else {
+                    setUserCompany(user.profile.company);
+                }
+            } finally {
+                setCheckingCompany(false);
+            }
+        };
+
+        checkCompanySetup();
     }, [user, navigate]);
 
     useEffect(() => {
@@ -113,13 +162,10 @@ const CreateJob = () => {
                 }
                 return true;
             case 2:
-                // Location and job type are optional, always return true
+             
                 return true;
             case 3:
-                // All fields are optional in this stage
-                // If values are provided, validate them
                 
-                // Set default values for empty fields
                 if (input.salaryMin === undefined || input.salaryMin === "") {
                     setInput(prev => ({ ...prev, salaryMin: "0" }));
                 }
@@ -289,6 +335,19 @@ const CreateJob = () => {
     const jobTypes = ["Full-time", "Part-time", "Contract", "Temporary", "Internship", "Remote"];
 
     const experienceLevels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"];
+
+    // Show loading while checking company setup
+    if (checkingCompany) {
+        return (
+            <div>
+                <Navbar />
+                <div className="flex items-center justify-center min-h-screen">
+                    <LoadingSpinner size={60} />
+                    <span className="ml-3 text-gray-600">Checking company setup...</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div>

@@ -9,17 +9,30 @@ import { UserCheck, UserX, Trash2, Globe, MapPin, Phone, Mail,
   Building,
   Users,
   Briefcase,
-  Eye
+  Eye,
+  Search,
+  Filter,
+  Calendar,
+  ChevronDown,
+  Download,
+  RefreshCw
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Input } from "../ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 const EmployerTable = () => {
   const [employers, setEmployers] = useState([]);
+  const [filteredEmployers, setFilteredEmployers] = useState([]);
   const [selectedEmployer, setSelectedEmployer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionDialog, setActionDialog] = useState({ open: false, action: '', title: '', description: '' });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('name');
 
  
   useEffect(() => {
@@ -27,15 +40,55 @@ const EmployerTable = () => {
       try {
         setLoading(true);
         const res = await axios.get(`${USER_API_END_POINT}/employers`, { withCredentials: true });
-        setEmployers(res.data.employers || []);
+        const employersData = res.data.employers || [];
+        setEmployers(employersData);
+        setFilteredEmployers(employersData);
       } catch (error) {
         console.error("Failed to fetch employers:", error);
+        toast.error('Failed to load employers');
       } finally {
         setLoading(false);
       }
     };
     fetchEmployers();
   }, []);
+
+  // Filter and search functionality
+  useEffect(() => {
+    let filtered = employers;
+
+    // Apply search filter
+    if (searchTerm) {
+      filtered = filtered.filter(employer => 
+        employer.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        employer.profile?.company?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(employer => employer.status === statusFilter);
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.fullname.localeCompare(b.fullname);
+        case 'email':
+          return a.email.localeCompare(b.email);
+        case 'company':
+          return (a.profile?.company?.name || '').localeCompare(b.profile?.company?.name || '');
+        case 'date':
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        default:
+          return 0;
+      }
+    });
+
+    setFilteredEmployers(filtered);
+  }, [employers, searchTerm, statusFilter, sortBy]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -164,56 +217,164 @@ const EmployerTable = () => {
     );
   }
 
+  const getInitials = (name) => {
+    return name?.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2) || 'EM';
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const refreshData = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(`${USER_API_END_POINT}/employers`, { withCredentials: true });
+      const employersData = res.data.employers || [];
+      setEmployers(employersData);
+      setFilteredEmployers(employersData);
+      toast.success('Data refreshed successfully');
+    } catch (error) {
+      toast.error('Failed to refresh data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen p-6 bg-gray-50">
+    <div className="min-h-screen p-3 sm:p-6 bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Employer Management</h1>
-          <p className="text-gray-600 mt-2">Manage all employer accounts and their company information</p>
+        {/* Header Section */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+                <Building className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-blue-600" />
+                <span className="break-words">Employer Management</span>
+              </h1>
+              <p className="text-gray-600 mt-2 text-sm sm:text-base lg:text-lg">Manage all employer accounts and their company information</p>
+            </div>
+            <Button onClick={refreshData} disabled={loading} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Employers ({employers.length})</CardTitle>
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search by name, email, or company..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 h-10 sm:h-11 text-sm sm:text-base"
+                  />
+                </div>
+              </div>
+              
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full md:w-48 h-11">
+                  <ChevronDown className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="company">Company</SelectItem>
+                  <SelectItem value="date">Date Joined</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Main Table */}
+        <Card className="shadow-lg mt-6">
+          <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Building className="w-6 h-6 text-blue-600" />
+              Employers ({filteredEmployers.length})
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto rounded-lg border">
+          <CardContent className="p-0">
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto rounded-lg border">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-100 hover:bg-gray-100">
-                    <TableHead className="font-semibold">Employer</TableHead>
-                    <TableHead className="font-semibold">Contact</TableHead>
-                    <TableHead className="font-semibold">Company</TableHead>
-                    <TableHead className="font-semibold">Status</TableHead>
-                    <TableHead className="font-semibold text-right">Actions</TableHead>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-700">Employer</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Contact Info</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Company</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Date Joined</TableHead>
+                    <TableHead className="font-semibold text-gray-700">Status</TableHead>
+                    <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {employers.length > 0 ? employers.map((user) => {
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-12">
+                        <div className="flex items-center justify-center">
+                          <RefreshCw className="w-6 h-6 animate-spin text-blue-600 mr-2" />
+                          <span className="text-gray-600">Loading employers...</span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredEmployers.length > 0 ? filteredEmployers.map((user) => {
                     const company = user.profile?.company;
                     return (
-                      <TableRow key={user._id} className="hover:bg-gray-50">
-                        <TableCell>
-                          <div className="font-medium">{user.fullname}</div>
-                          <div className="text-sm text-gray-500">ID: {user._id.substring(0, 8)}...</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Mail className="h-4 w-4 text-gray-500" />
-                              <span className="truncate max-w-[180px]">{user.email}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                              <Phone className="h-4 w-4 text-gray-500" />
-                              <span>{user.phoneNumber || "N/A"}</span>
+                      <TableRow key={user._id} className="hover:bg-blue-50 transition-colors duration-200 border-b border-gray-100">
+                        <TableCell className="py-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-12 h-12 border-2 border-gray-200">
+                              <AvatarImage src={user.profile?.profilePhoto} alt={user.fullname} />
+                              <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
+                                {getInitials(user.fullname)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-semibold text-gray-900">{user.fullname}</div>
+                              <div className="text-sm text-gray-500">ID: {user._id.substring(0, 8)}...</div>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex flex-col gap-1">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Mail className="h-4 w-4 text-gray-500" />
+                              <span className="truncate max-w-[200px] text-gray-700">{user.email}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              <Phone className="h-4 w-4 text-gray-500" />
+                              <span className="text-gray-700">{user.phoneNumber || "N/A"}</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <Building className="h-4 w-4 text-gray-500" />
-                              <span className="font-medium">{company?.name || "-"}</span>
+                              <span className="font-medium text-gray-900">{company?.name || "No Company"}</span>
                             </div>
                             {company?.location && (
                               <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -221,39 +382,125 @@ const EmployerTable = () => {
                                 <span>{company.location}</span>
                               </div>
                             )}
+                            {company?.website && (
+                              <div className="flex items-center gap-2 text-sm text-gray-500">
+                                <Globe className="h-3 w-3" />
+                                <span className="truncate max-w-[150px]">{company.website}</span>
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={`flex items-center gap-1 py-1 ${getStatusColor(user.status)}`}>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Calendar className="h-4 w-4 text-gray-500" />
+                            <span>{formatDate(user.createdAt)}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`flex items-center gap-1 py-1 px-3 ${getStatusColor(user.status)}`}>
                             {getStatusIcon(user.status)}
-                            {user.status}
+                            <span className="capitalize">{user.status}</span>
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setSelectedEmployer(user)}
-                            className="flex items-center gap-1"
-                          >
-                            <Eye className="h-4 w-4" />
-                            View
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => setSelectedEmployer(user)}
+                              className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              View Details
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
                   }) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={6} className="text-center py-12">
                         <div className="flex flex-col items-center justify-center">
-                          <Users className="h-12 w-12 text-gray-400 mb-2" />
-                          <p>No employers found</p>
+                          <Users className="h-16 w-16 text-gray-300 mb-4" />
+                          <p className="text-lg font-medium text-gray-500 mb-2">No employers found</p>
+                          <p className="text-gray-400">Try adjusting your search or filter criteria</p>
                         </div>
                       </TableCell>
                     </TableRow>
                   )}
                 </TableBody>
               </Table>
+            </div>
+
+            {/* Mobile/Tablet Card View */}
+            <div className="lg:hidden space-y-4">
+              {filteredEmployers.length > 0 ? filteredEmployers.map((user) => {
+                const company = user.company;
+                return (
+                  <Card key={user._id} className="border border-gray-200 hover:shadow-md transition-shadow">
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-12 w-12">
+                            <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold text-sm">
+                              {getInitials(user.fullname)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="font-semibold text-gray-900 text-sm">{user.fullname}</div>
+                            <div className="text-xs text-gray-500">ID: {user._id.substring(0, 8)}...</div>
+                          </div>
+                        </div>
+                        <Badge className={`text-xs ${getStatusColor(user.status)}`}>
+                          {getStatusIcon(user.status)}
+                          <span className="ml-1 capitalize">{user.status}</span>
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                          <span className="text-gray-700 truncate">{user.email}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                          <span className="text-gray-700">{user.phoneNumber || "N/A"}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Building className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                          <span className="text-gray-700">{company?.name || "No Company"}</span>
+                        </div>
+                        {company?.location && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <MapPin className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                            <span className="text-gray-600">{company.location}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                          <span className="text-gray-600">{formatDate(user.createdAt)}</span>
+                        </div>
+                      </div>
+                      
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setSelectedEmployer(user)}
+                        className="w-full bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Details
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              }) : (
+                <div className="text-center py-12">
+                  <Users className="h-16 w-16 text-gray-300 mb-4 mx-auto" />
+                  <p className="text-lg font-medium text-gray-500 mb-2">No employers found</p>
+                  <p className="text-gray-400">Try adjusting your search or filter criteria</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -397,24 +644,37 @@ const EmployerTable = () => {
 
         {/* Confirmation Dialog */}
         <Dialog open={actionDialog.open} onOpenChange={(open) => setActionDialog({ ...actionDialog, open })}>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>{actionDialog.title}</DialogTitle>
-              <DialogDescription>{actionDialog.description}</DialogDescription>
+              <DialogTitle className="flex items-center gap-2">
+                {actionDialog.action === 'delete' && <Trash2 className="w-5 h-5 text-red-600" />}
+                {actionDialog.action === 'activate' && <UserCheck className="w-5 h-5 text-green-600" />}
+                {actionDialog.action === 'deactivate' && <UserX className="w-5 h-5 text-yellow-600" />}
+                {actionDialog.title}
+              </DialogTitle>
+              <DialogDescription className="text-gray-600 mt-2">
+                {actionDialog.description}
+              </DialogDescription>
             </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setActionDialog({ open: false, action: '', title: '', description: '' })}>
+            <DialogFooter className="gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setActionDialog({ open: false, action: '', title: '', description: '' })}
+                className="flex-1"
+              >
                 Cancel
               </Button>
               <Button 
                 onClick={executeAction}
-                className={
+                className={`flex-1 ${
                   actionDialog.action === 'delete' ? 'bg-red-600 hover:bg-red-700' : 
                   actionDialog.action === 'activate' ? 'bg-green-600 hover:bg-green-700' : 
                   'bg-yellow-600 hover:bg-yellow-700'
-                }
+                }`}
               >
-                Confirm
+                {actionDialog.action === 'delete' && 'Delete'}
+                {actionDialog.action === 'activate' && 'Activate'}
+                {actionDialog.action === 'deactivate' && 'Deactivate'}
               </Button>
             </DialogFooter>
           </DialogContent>

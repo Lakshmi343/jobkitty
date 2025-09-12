@@ -54,7 +54,6 @@ const Login = () => {
         password: input.password,
       };
 
-      // Add accept code if user is blocked and code is provided
       if (isBlocked && acceptCode) {
         loginData.acceptCode = acceptCode;
       }
@@ -67,12 +66,18 @@ const Login = () => {
       });
 
       if (res.data.success) {
-        // Store user data
+     
         dispatch(setUser(res.data.user));
         authUtils.setUser(res.data.user);
         
-        // Store tokens
-        authUtils.setTokens(res.data.accessToken, res.data.refreshToken);
+      
+        if (res.data.accessToken && res.data.refreshToken) {
+         
+          authUtils.setTokens(res.data.accessToken, res.data.refreshToken);
+        } else if (res.data.token) {
+          
+          authUtils.setTokens(res.data.token, res.data.token);
+        }
 
         const pendingApplication = localStorage.getItem('pendingJobApplication');
         if (pendingApplication) {

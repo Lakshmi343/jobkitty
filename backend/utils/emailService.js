@@ -126,7 +126,7 @@ export const sendApplicationRejectionEmail = async (studentEmail, studentName, j
     }
 };
 
-// Email template for application pending
+
 export const sendApplicationPendingEmail = async (studentEmail, studentName, jobTitle, companyName) => {
     try {
         const mailOptions = {
@@ -298,7 +298,7 @@ export const sendPasswordResetEmail = async (userEmail, resetLink) => {
     }
 };
 
-// Admin password reset email
+
 export const sendAdminPasswordResetEmail = async (adminEmail, resetLink) => {
     try {
         const mailOptions = {
@@ -344,7 +344,7 @@ export const sendAdminPasswordResetEmail = async (adminEmail, resetLink) => {
     }
 };
 
-// Welcome email for new users
+
 export const sendWelcomeEmail = async (userEmail, userName, userRole) => {
     try {
         const mailOptions = {
