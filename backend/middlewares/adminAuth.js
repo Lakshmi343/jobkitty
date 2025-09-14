@@ -40,6 +40,7 @@ export const adminAuth = async (req, res, next) => {
 
     console.log('Admin authenticated:', admin.email, 'Role:', admin.role);
     req.admin = admin;
+    req.id = admin._id; // Set the admin ID for use in controllers
     next();
   } catch (error) {
     console.error('Admin auth error:', error.message);

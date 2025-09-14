@@ -280,8 +280,31 @@ export const getDashboardStats = async (req, res) => {
       }
     ]);
 
-    // Create array of last 12 months with job counts
-    const monthlyJobData = [];
+    // Monthly application statistics for the last 12 months
+    const monthlyApplicationStats = await Application.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(currentDate.getFullYear(), currentDate.getMonth() - 11, 1)
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { '_id.year': 1, '_id.month': 1 }
+      }
+    ]);
+
+    // Create array of last 12 months with job and application counts
+    const monthlyData = [];
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
     for (let i = 11; i >= 0; i--) {
@@ -289,15 +312,27 @@ export const getDashboardStats = async (req, res) => {
       const year = date.getFullYear();
       const month = date.getMonth() + 1;
       
-      const stat = monthlyJobStats.find(s => s._id.year === year && s._id.month === month);
-      monthlyJobData.push({
-        month: `${monthNames[month - 1]} ${year}`,
-        shortMonth: monthNames[month - 1],
-        value: stat ? stat.count : 0,
+      const jobStat = monthlyJobStats.find(s => s._id.year === year && s._id.month === month);
+      const appStat = monthlyApplicationStats.find(s => s._id.year === year && s._id.month === month);
+      
+      monthlyData.push({
+        month: monthNames[month - 1],
+        jobs: jobStat ? jobStat.count : 0,
+        applications: appStat ? appStat.count : 0,
+        fullMonth: `${monthNames[month - 1]} ${year}`,
         year: year,
         monthNum: month
       });
     }
+
+    // Keep the old format for backward compatibility
+    const monthlyJobData = monthlyData.map(item => ({
+      month: item.fullMonth,
+      shortMonth: item.month,
+      value: item.jobs,
+      year: item.year,
+      monthNum: item.monthNum
+    }));
 
     // Application statistics by status for pie chart
     const applicationsGraphData = [
@@ -324,6 +359,7 @@ export const getDashboardStats = async (req, res) => {
       recentApplications,
       graphData: {
         monthlyJobs: monthlyJobData,
+        monthlyData: monthlyData,
         applications: applicationsGraphData
       }
     });
@@ -792,6 +828,318 @@ export const deleteCategory = async (req, res) => {
   } catch (error) {
     console.error('Delete category error:', error);
     res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+// Admin Job Posting with Company Creation
+export const postJobAdmin = async (req, res) => {
+  try {
+    // Handle both JSON and FormData
+    let jobDetails;
+    if (req.body.jobData) {
+      // FormData with file upload
+      jobDetails = JSON.parse(req.body.jobData);
+    } else {
+      // Regular JSON
+      jobDetails = req.body;
+    }
+    
+    const { 
+      company: companyData,
+      title, 
+      description, 
+      requirements, 
+      salary, 
+      location, 
+      jobType, 
+      position, 
+      openings,
+      category         
+    } = jobDetails;
+    
+    const adminId = req.id;
+    const { admin } = req;
+    
+    // Validate required fields
+    if (!title || !description || !category || !companyData) {
+      return res.status(400).json({ 
+        message: "Job title, description, category, and company details are required", 
+        success: false 
+      });
+    }
+    
+    if (!companyData.name || !companyData.description || !companyData.location) {
+      return res.status(400).json({ 
+        message: "Company name, description, and location are required", 
+        success: false 
+      });
+    }
+    
+    // Check if category exists
+    const categoryExists = await Category.findById(category);
+    if (!categoryExists) {
+      return res.status(404).json({ 
+        message: "Category not found", 
+        success: false 
+      });
+    }
+    
+    // Handle logo upload if file is provided
+    let logoUrl = '';
+    if (req.file) {
+      try {
+        const fileUri = getDataUri(req.file);
+        const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+        logoUrl = cloudResponse.secure_url;
+      } catch (uploadError) {
+        console.error('Logo upload error:', uploadError);
+        return res.status(500).json({ 
+          message: "Failed to upload company logo", 
+          success: false 
+        });
+      }
+    }
+    
+    // Create or find company
+    let company;
+    const existingCompany = await Company.findOne({ 
+      name: { $regex: new RegExp(`^${companyData.name}$`, 'i') }
+    });
+    
+    if (existingCompany) {
+      company = existingCompany;
+      // Update logo if new one is uploaded
+      if (logoUrl) {
+        company.logo = logoUrl;
+        await company.save();
+      }
+    } else {
+      // Create new company
+      company = await Company.create({
+        name: companyData.name,
+        description: companyData.description,
+        website: companyData.website || '',
+        location: companyData.location,
+        logo: logoUrl,
+        userId: adminId, // Link to admin who created it
+        createdByAdmin: true
+      });
+    }
+    
+    // Set default values for missing fields
+    const defaultRequirements = requirements && requirements.length > 0 ? requirements : ["No specific requirements"];
+    const defaultSalary = salary || { min: 0, max: 0 };
+    const defaultLocation = location || companyData.location;
+    const defaultJobType = jobType || "Full-time";
+    const defaultPosition = position ? Number(position) : 1;
+    const defaultOpenings = openings ? Number(openings) : 1;
+    
+    // Create job with admin as creator
+    const job = await Job.create({
+      title,
+      description,
+      requirements: Array.isArray(defaultRequirements) ? defaultRequirements : defaultRequirements.split(",").map(req => req.trim()),
+      salary: {
+        min: defaultSalary.min ? Number(defaultSalary.min) : 0,
+        max: defaultSalary.max ? Number(defaultSalary.max) : 0
+      },
+      location: defaultLocation,
+      jobType: defaultJobType,
+      position: defaultPosition,
+      openings: defaultOpenings,
+      company: company._id,
+      category,   
+      created_by: adminId,
+      createdByAdmin: true,
+      status: 'approved' // Admin jobs are auto-approved
+    });
+    
+    // Log activity
+    await logActivity(adminId, 'job_created_admin', 'job', job._id, `Admin job "${job.title}" created for company "${company.name}"`);
+    
+    return res.status(201).json({
+      message: "Job created successfully by admin",
+      job,
+      company,
+      success: true
+    });
+
+  } catch (error) {
+    console.error("Admin job creation error:", error);
+    return res.status(500).json({ 
+      message: error.message || "Server error", 
+      success: false 
+    });
+  }
+};
+
+// Get single job for editing (admin only)
+export const getJobForEdit = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const adminId = req.id;
+    
+    const job = await Job.findById(jobId)
+      .populate('company', 'name description website location logo')
+      .populate('category', 'categoryName');
+    
+    if (!job) {
+      return res.status(404).json({ 
+        message: "Job not found", 
+        success: false 
+      });
+    }
+    
+    // Check if job was created by admin
+    if (!job.createdByAdmin) {
+      return res.status(403).json({ 
+        message: "You can only edit jobs created by admin", 
+        success: false 
+      });
+    }
+    
+    return res.status(200).json({
+      message: "Job retrieved successfully",
+      job,
+      success: true
+    });
+
+  } catch (error) {
+    console.error("Get job for edit error:", error);
+    return res.status(500).json({ 
+      message: error.message || "Server error", 
+      success: false 
+    });
+  }
+};
+
+// Update admin job
+export const updateJobAdmin = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const adminId = req.id;
+    
+    // Handle both JSON and FormData
+    let jobDetails;
+    if (req.body.jobData) {
+      // FormData with file upload
+      jobDetails = JSON.parse(req.body.jobData);
+    } else {
+      // Regular JSON
+      jobDetails = req.body;
+    }
+    
+    const { 
+      company: companyData,
+      title, 
+      description, 
+      requirements, 
+      salary, 
+      location, 
+      jobType, 
+      position, 
+      openings,
+      category         
+    } = jobDetails;
+    
+    // Find the job
+    const job = await Job.findById(jobId);
+    if (!job) {
+      return res.status(404).json({ 
+        message: "Job not found", 
+        success: false 
+      });
+    }
+    
+    // Check if job was created by admin
+    if (!job.createdByAdmin) {
+      return res.status(403).json({ 
+        message: "You can only edit jobs created by admin", 
+        success: false 
+      });
+    }
+    
+    // Validate required fields
+    if (!title || !description || !category || !companyData) {
+      return res.status(400).json({ 
+        message: "Job title, description, category, and company details are required", 
+        success: false 
+      });
+    }
+    
+    // Check if category exists
+    const categoryExists = await Category.findById(category);
+    if (!categoryExists) {
+      return res.status(404).json({ 
+        message: "Category not found", 
+        success: false 
+      });
+    }
+    
+    // Handle logo upload if file is provided
+    let logoUrl = '';
+    if (req.file) {
+      try {
+        const fileUri = getDataUri(req.file);
+        const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+        logoUrl = cloudResponse.secure_url;
+      } catch (uploadError) {
+        console.error('Logo upload error:', uploadError);
+        return res.status(500).json({ 
+          message: "Failed to upload company logo", 
+          success: false 
+        });
+      }
+    }
+    
+    // Update company
+    const company = await Company.findById(job.company);
+    if (company) {
+      company.name = companyData.name;
+      company.description = companyData.description || '';
+      company.website = companyData.website || '';
+      company.location = companyData.location || '';
+      
+      // Update logo if new one is uploaded
+      if (logoUrl) {
+        company.logo = logoUrl;
+      }
+      
+      await company.save();
+    }
+    
+    // Update job
+    job.title = title;
+    job.description = description;
+    job.requirements = Array.isArray(requirements) ? requirements : requirements.split(",").map(req => req.trim());
+    job.salary = {
+      min: salary.min ? Number(salary.min) : 0,
+      max: salary.max ? Number(salary.max) : 0
+    };
+    job.location = location || companyData.location;
+    job.jobType = jobType || "Full-time";
+    job.position = position ? Number(position) : 1;
+    job.openings = openings ? Number(openings) : 1;
+    job.category = category;
+    
+    await job.save();
+    
+    // Log activity
+    await logActivity(adminId, 'job_updated_admin', 'job', job._id, `Admin job "${job.title}" updated`);
+    
+    return res.status(200).json({
+      message: "Job updated successfully",
+      job,
+      company,
+      success: true
+    });
+
+  } catch (error) {
+    console.error("Admin job update error:", error);
+    return res.status(500).json({ 
+      message: error.message || "Server error", 
+      success: false 
+    });
   }
 };
 

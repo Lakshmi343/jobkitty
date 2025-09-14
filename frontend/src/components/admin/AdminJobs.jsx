@@ -12,7 +12,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { 
   Briefcase, Search, MoreHorizontal, CheckCircle, XCircle, Eye, Trash2, Clock,
   TrendingUp, Users, Building, MapPin, DollarSign, Calendar, Filter,
-  RefreshCw, Download, Edit2, AlertTriangle, Star
+  RefreshCw, Download, Edit2, AlertTriangle, Star, Plus
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../shared/LoadingSpinner';
@@ -47,7 +47,7 @@ const AdminJobs = () => {
 
   const fetchJobs = async () => {
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       const response = await axios.get(`${ADMIN_API_END_POINT}/jobs`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -91,27 +91,43 @@ const AdminJobs = () => {
 
   const handleStatusUpdate = async (jobId, newStatus) => {
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       let reason = '';
+      let violationType = '';
       
       if (newStatus === 'rejected') {
         reason = prompt('Please provide a reason for rejection:');
         if (!reason) return;
+        
+        violationType = prompt('Violation type (spam, fake, inappropriate, scam, duplicate, violation, other):') || 'other';
       }
 
-      const response = await axios.patch(
-        `${ADMIN_API_END_POINT}/jobs/${jobId}/status`,
-        { status: newStatus, reason },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      let endpoint = '';
+      let payload = {};
+      
+      if (newStatus === 'approved') {
+        endpoint = `${ADMIN_API_END_POINT}/jobs/${jobId}/approve`;
+      } else if (newStatus === 'rejected') {
+        endpoint = `${ADMIN_API_END_POINT}/jobs/${jobId}/reject`;
+        payload = { reason, violationType };
+      }
+
+      const response = await axios.patch(endpoint, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       if (response.data.success) {
         setJobs(jobs.map(job => 
-          job._id === jobId ? { ...job, status: newStatus } : job
+          job._id === jobId ? { ...job, status: newStatus, rejectionReason: reason } : job
         ));
+        setFilteredJobs(filteredJobs.map(job => 
+          job._id === jobId ? { ...job, status: newStatus, rejectionReason: reason } : job
+        ));
+        toast.success(`Job ${newStatus} successfully`);
       }
     } catch (error) {
       console.error('Error updating job status:', error);
+      toast.error(error.response?.data?.message || `Failed to ${newStatus} job`);
     }
   };
 
@@ -119,23 +135,26 @@ const AdminJobs = () => {
     if (!window.confirm('Are you sure you want to remove this job? This action cannot be undone.')) return;
 
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       const response = await axios.delete(`${ADMIN_API_END_POINT}/jobs/${jobId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
         setJobs(jobs.filter(job => job._id !== jobId));
+        setFilteredJobs(filteredJobs.filter(job => job._id !== jobId));
+        toast.success('Job removed successfully');
       }
     } catch (error) {
-      toast.error('Could not remove job. Please try again.');
+      console.error('Error deleting job:', error);
+      toast.error(error.response?.data?.message || 'Could not remove job. Please try again.');
     }
   };
 
   const fetchJobApplications = async (jobId) => {
     setLoadingApplications(true);
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       const response = await axios.get(`${ADMIN_API_END_POINT}/jobs/${jobId}/applications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -186,6 +205,10 @@ const AdminJobs = () => {
             <p className="text-gray-600 mt-2">Manage and approve job postings across the platform</p>
           </div>
           <div className="flex items-center gap-4">
+            <Button onClick={() => navigate('/admin/job-posting')} className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              Create Job
+            </Button>
             <Button onClick={fetchJobs} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
@@ -359,6 +382,17 @@ const AdminJobs = () => {
       <Eye className="h-4 w-4 mr-2" />
       View Details
     </Button>
+                                  {job.createdByAdmin && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="w-full justify-start text-blue-600 hover:text-blue-700"
+                                      onClick={() => navigate(`/admin/jobs/${job._id}/edit`)}
+                                    >
+                                      <Edit2 className="h-4 w-4 mr-2" />
+                                      Edit Job
+                                    </Button>
+                                  )}
                                   {job.status !== 'approved' && (
                                     <Button
                                       variant="ghost"
@@ -389,7 +423,7 @@ const AdminJobs = () => {
                                     onClick={() => handleDeleteJob(job._id)}
                                   >
                                     <Trash2 className="h-4 w-4 mr-2" />
-                                    Delete
+                                    Remove Job
                                   </Button>
                                 </div>
                               </PopoverContent>
@@ -428,37 +462,56 @@ const AdminJobs = () => {
                             {formatDate(job.createdAt)}
                           </div>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex items-center justify-between p-4 border-b">
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            onClick={() => handleViewJob(job)}
+                            onClick={() => navigate(`/job/${job._id}`)}
                           >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
                           </Button>
-                          {job.status !== 'approved' && (
+                          <div className="flex gap-2">
+                            {job.createdByAdmin && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-blue-600 hover:text-blue-700"
+                                onClick={() => navigate(`/admin/jobs/${job._id}/edit`)}
+                              >
+                                <Edit2 className="h-4 w-4 mr-1" />
+                                Edit
+                              </Button>
+                            )}
+                            {job.status !== 'approved' && (
+                              <Button
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700"
+                                onClick={() => handleStatusUpdate(job._id, 'approved')}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approve
+                              </Button>
+                            )}
+                            {job.status !== 'rejected' && (
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleStatusUpdate(job._id, 'rejected')}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Reject
+                              </Button>
+                            )}
                             <Button
-                              variant="outline"
                               size="sm"
-                              className="text-green-600 border-green-200 hover:bg-green-50"
-                              onClick={() => handleStatusUpdate(job._id, 'approved')}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-                          )}
-                          {job.status !== 'rejected' && (
-                            <Button
                               variant="outline"
-                              size="sm"
-                              className="text-red-600 border-red-200 hover:bg-red-50"
-                              onClick={() => handleStatusUpdate(job._id, 'rejected')}
+                              className="text-red-600 hover:text-red-700"
+                              onClick={() => handleDeleteJob(job._id)}
                             >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                          )}
+                          </div>
                         </div>
                       </CardContent>
                     </Card>

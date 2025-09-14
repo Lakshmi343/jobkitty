@@ -1,0 +1,603 @@
+import React, { useState, useEffect } from 'react';
+import { Label } from '../ui/label';
+import { Input } from '../ui/input';
+import { Button } from '../ui/button';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Textarea } from '../ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import axios from 'axios';
+import { CATEGORY_API_END_POINT } from '../../utils/constant';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
+import { Briefcase, MapPin, DollarSign, Building, FileText, ArrowLeft, Plus, CheckCircle, X, Users, Upload, Image } from 'lucide-react';
+import LoadingSpinner from '../shared/LoadingSpinner';
+
+const locations = [
+    "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
+    "Idukki", "Ernakulam", "Thrissur", "Palakkad", "Malappuram",
+    "Kozhikode", "Wayanad", "Kannur", "Kasaragod"
+];
+
+const jobTypes = ["Full-time", "Part-time", "Contract", "Internship", "Temporary"];
+
+const AdminJobPosting = () => {
+    const [currentStep, setCurrentStep] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [categories, setCategories] = useState([]);
+    const navigate = useNavigate();
+
+    // Company details state
+    const [companyData, setCompanyData] = useState({
+        name: "",
+        description: "",
+        website: "",
+        location: "",
+        logo: ""
+    });
+
+    const [logoFile, setLogoFile] = useState(null);
+    const [logoPreview, setLogoPreview] = useState(null);
+
+    // Job posting state
+    const [jobData, setJobData] = useState({
+        title: "",
+        description: "",
+        requirements: [],
+        salaryMin: "",
+        salaryMax: "",
+        location: "",
+        jobType: "",
+        position: "",
+        openings: "1",
+        category: ""
+    });
+
+    const [requirements, setRequirements] = useState([]);
+    const [newRequirement, setNewRequirement] = useState("");
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await axios.get(`${CATEGORY_API_END_POINT}/get`);
+                if (response.data.success) {
+                    setCategories(response.data.categories);
+                }
+            } catch (error) {
+                toast.error("Failed to fetch categories");
+            }
+        };
+        fetchCategories();
+    }, []);
+
+    const handleCompanyChange = (e) => {
+        setCompanyData({ ...companyData, [e.target.name]: e.target.value });
+    };
+
+    const handleLogoUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                toast.error("Please select an image smaller than 5MB");
+                return;
+            }
+            if (!file.type.startsWith('image/')) {
+                toast.error("Please select a valid image file");
+                return;
+            }
+            setLogoFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoPreview(reader.result);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const removeLogo = () => {
+        setLogoFile(null);
+        setLogoPreview(null);
+        setCompanyData({ ...companyData, logo: "" });
+    };
+
+    const handleJobChange = (e) => {
+        setJobData({ ...jobData, [e.target.name]: e.target.value });
+    };
+
+    const selectChangeHandler = (name, value) => {
+        setJobData({ ...jobData, [name]: value });
+    };
+
+    const addRequirement = () => {
+        if (newRequirement.trim() && !requirements.includes(newRequirement.trim())) {
+            setRequirements([...requirements, newRequirement.trim()]);
+            setNewRequirement("");
+        }
+    };
+
+    const removeRequirement = (index) => {
+        setRequirements(requirements.filter((_, i) => i !== index));
+    };
+
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addRequirement();
+        }
+    };
+
+    const validateCompanyStep = () => {
+        return companyData.name && companyData.description && companyData.location;
+    };
+
+    const validateJobStep = () => {
+        return jobData.title && jobData.description && jobData.category && 
+               requirements.length > 0 && jobData.location && jobData.jobType &&
+               jobData.salaryMin && jobData.salaryMax && jobData.openings;
+    };
+
+    const nextStep = () => {
+        if (currentStep === 1 && validateCompanyStep()) {
+            setCurrentStep(2);
+        } else if (currentStep === 1) {
+            toast.error("Please complete all required company information");
+        }
+    };
+
+    const prevStep = () => {
+        setCurrentStep(currentStep - 1);
+    };
+
+    const submitHandler = async (e) => {
+        e.preventDefault();
+        
+        if (!validateJobStep()) {
+            toast.error("Please complete all required job information");
+            return;
+        }
+        
+        try {
+            setLoading(true);
+            
+            // Create FormData for file upload
+            const formData = new FormData();
+            
+            // Add company details
+            const companyDetails = {
+                name: companyData.name,
+                description: companyData.description,
+                website: companyData.website,
+                location: companyData.location
+            };
+            
+            // Add logo file if uploaded
+            if (logoFile) {
+                formData.append('file', logoFile);
+            }
+            
+            // Add all other data as JSON
+            const jobDetails = {
+                company: companyDetails,
+                title: jobData.title,
+                description: jobData.description,
+                requirements: requirements.length > 0 ? requirements : ["No specific requirements"],
+                salary: {
+                    min: Number(jobData.salaryMin),
+                    max: Number(jobData.salaryMax)
+                },
+                location: jobData.location,
+                jobType: jobData.jobType,
+                position: jobData.position,
+                openings: Number(jobData.openings),
+                category: jobData.category
+            };
+            
+            formData.append('jobData', JSON.stringify(jobDetails));
+            
+            // Get admin token
+            const adminToken = localStorage.getItem('adminToken') || localStorage.getItem('token');
+            
+            const response = await axios.post('/api/v1/admin/post-job', formData, {
+                headers: {
+                    'Authorization': `Bearer ${adminToken}`
+                }
+            });
+            
+            if (response.data.success) {
+                toast.success('Job posted successfully!');
+                navigate('/admin/jobs');
+            }
+        } catch (error) {
+            console.error('Error posting job:', error);
+            let errorMessage = 'Unable to create job posting. Please try again.';
+            
+            if (error.response?.status === 400) {
+                errorMessage = 'Please check all required fields and try again.';
+            } else if (error.response?.status === 401) {
+                errorMessage = 'You need to log in again to continue.';
+            } else if (error.response?.status === 403) {
+                errorMessage = 'You do not have permission to create jobs.';
+            } else if (error.response?.data?.message) {
+                errorMessage = error.response.data.message;
+            }
+            
+            toast.error(errorMessage);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const progressPercentage = (currentStep / 2) * 100;
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+            <div className="max-w-4xl mx-auto px-4 py-8">
+                {/* Header */}
+                <div className="mb-8">
+                    <div className="flex items-center gap-4 mb-6">
+                        <button
+                            onClick={() => navigate('/admin/dashboard')}
+                            className="p-2 hover:bg-white rounded-lg transition-colors duration-200"
+                        >
+                            <ArrowLeft className="w-5 h-5 text-gray-600" />
+                        </button>
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                                <Plus className="w-8 h-8 text-blue-600" />
+                                Admin Job Posting
+                            </h1>
+                            <p className="text-gray-600 mt-1">
+                                Create company profile and post job listing
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-lg font-semibold text-gray-900">Step {currentStep} of 2</h2>
+                            <span className="text-sm text-gray-600">{Math.round(progressPercentage)}% Complete</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${progressPercentage}%` }}
+                            ></div>
+                        </div>
+                        <div className="flex justify-between mt-2 text-xs text-gray-500">
+                            <span>Company Details</span>
+                            <span>Job Details</span>
+                        </div>
+                    </div>
+                </div>
+
+                <form onSubmit={submitHandler}>
+                    {/* Step 1: Company Details */}
+                    {currentStep === 1 && (
+                        <div className='bg-white p-8 rounded-lg shadow-md border'>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Building className="h-6 w-6 text-blue-600" />
+                                    Company Details
+                                </CardTitle>
+                                <CardDescription>Provide company information for the job posting.</CardDescription>
+                            </CardHeader>
+                            <CardContent className='mt-4 space-y-6'>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <Label>Company Name *</Label>
+                                        <Input 
+                                            name="name" 
+                                            value={companyData.name} 
+                                            onChange={handleCompanyChange} 
+                                            placeholder="e.g., Tech Solutions Inc." 
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>Website</Label>
+                                        <Input 
+                                            name="website" 
+                                            value={companyData.website} 
+                                            onChange={handleCompanyChange} 
+                                            placeholder="e.g., https://company.com" 
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label>Company Description *</Label>
+                                    <Textarea 
+                                        name="description" 
+                                        value={companyData.description} 
+                                        onChange={handleCompanyChange} 
+                                        placeholder="Describe the company and its mission" 
+                                        required
+                                    />
+                                </div>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <Label>Company Location *</Label>
+                                        <Select
+                                            name="location"
+                                            value={companyData.location}
+                                            onValueChange={(value) => setCompanyData({...companyData, location: value})}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select company location" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    {locations.map(loc => (
+                                                        <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label>Company Logo</Label>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <Input 
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleLogoUpload}
+                                                    className="hidden"
+                                                    id="logo-upload"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => document.getElementById('logo-upload').click()}
+                                                    className="flex items-center gap-2"
+                                                >
+                                                    <Upload className="h-4 w-4" />
+                                                    Choose Logo
+                                                </Button>
+                                                {logoPreview && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={removeLogo}
+                                                        className="text-red-600 hover:text-red-700"
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            {logoPreview && (
+                                                <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                                                    <Image className="h-4 w-4 text-gray-500" />
+                                                    <img 
+                                                        src={logoPreview} 
+                                                        alt="Logo preview" 
+                                                        className="h-12 w-12 object-cover rounded"
+                                                    />
+                                                    <span className="text-sm text-gray-600">Logo selected</span>
+                                                </div>
+                                            )}
+                                            <p className="text-xs text-gray-500">Max size: 5MB. Supported: JPG, PNG, GIF</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </div>
+                    )}
+
+                    {/* Step 2: Job Details */}
+                    {currentStep === 2 && (
+                        <div className='bg-white p-8 rounded-lg shadow-md border'>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Briefcase className="h-6 w-6 text-blue-600" />
+                                    Job Details
+                                </CardTitle>
+                                <CardDescription>Provide the job posting details.</CardDescription>
+                            </CardHeader>
+                            <CardContent className='mt-4 space-y-6'>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <Label>Job Title *</Label>
+                                        <Input 
+                                            name="title" 
+                                            value={jobData.title} 
+                                            onChange={handleJobChange} 
+                                            placeholder="e.g., Software Engineer" 
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>Category *</Label>
+                                        <Select
+                                            name="category"
+                                            value={jobData.category}
+                                            onValueChange={(value) => selectChangeHandler("category", value)}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select a category" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    {categories.map(cat => (
+                                                        <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div>
+                                    <Label>Job Description *</Label>
+                                    <Textarea 
+                                        name="description" 
+                                        value={jobData.description} 
+                                        onChange={handleJobChange} 
+                                        placeholder="Describe the role and responsibilities" 
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <Label>Requirements * (Point-based format)</Label>
+                                    <div className="flex gap-2 mb-2">
+                                        <Input 
+                                            value={newRequirement}
+                                            onChange={(e) => setNewRequirement(e.target.value)}
+                                            placeholder="Add a requirement (e.g., Bachelor's degree in Computer Science)"
+                                            onKeyPress={handleKeyPress}
+                                        />
+                                        <Button 
+                                            type="button" 
+                                            onClick={addRequirement}
+                                            variant="outline"
+                                        >
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    <div className="space-y-2 mt-2">
+                                        {requirements.map((req, index) => (
+                                            <div key={index} className="bg-gray-50 border border-gray-200 px-4 py-2 rounded-lg flex items-start gap-2">
+                                                <span className="text-blue-600 font-semibold mt-1">•</span>
+                                                <span className="flex-1">{req}</span>
+                                                <button 
+                                                    type="button" 
+                                                    onClick={() => removeRequirement(index)}
+                                                    className="text-gray-400 hover:text-red-500 transition-colors"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    {requirements.length === 0 && (
+                                        <p className="text-sm text-gray-500 mt-2">Add job requirements as bullet points.</p>
+                                    )}
+                                </div>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <Label>Location *</Label>
+                                        <Select
+                                            name="location"
+                                            value={jobData.location}
+                                            onValueChange={(value) => selectChangeHandler("location", value)}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select job location" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    {locations.map(loc => (
+                                                        <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label>Job Type *</Label>
+                                        <Select
+                                            name="jobType"
+                                            value={jobData.jobType}
+                                            onValueChange={(value) => selectChangeHandler("jobType", value)}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select job type" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    {jobTypes.map(type => (
+                                                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    <div>
+                                        <Label>Salary Min (LPA) *</Label>
+                                        <Input
+                                            name="salaryMin"
+                                            type="number"
+                                            value={jobData.salaryMin}
+                                            onChange={handleJobChange}
+                                            placeholder="e.g., 4"
+                                            required
+                                            min="0"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>Salary Max (LPA) *</Label>
+                                        <Input
+                                            name="salaryMax"
+                                            type="number"
+                                            value={jobData.salaryMax}
+                                            onChange={handleJobChange}
+                                            placeholder="e.g., 8"
+                                            required
+                                            min="0"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>No. of Openings *</Label>
+                                        <Input
+                                            name="openings"
+                                            type="number"
+                                            value={jobData.openings}
+                                            onChange={handleJobChange}
+                                            placeholder="e.g., 2"
+                                            required
+                                            min="1"
+                                        />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </div>
+                    )}
+
+                    {/* Navigation Buttons */}
+                    <div className='mt-8 flex justify-between items-center'>
+                        <Button 
+                            type="button" 
+                            variant="outline" 
+                            onClick={prevStep} 
+                            disabled={currentStep === 1}
+                        >
+                            <ArrowLeft className='mr-2 h-4 w-4' /> Previous
+                        </Button>
+                        <div className="text-sm text-gray-500">Step {currentStep} of 2</div>
+                        {currentStep < 2 ? (
+                            <Button type="button" onClick={nextStep}>
+                                Next
+                            </Button>
+                        ) : (
+                            <Button 
+                                onClick={submitHandler} 
+                                disabled={loading || requirements.length === 0} 
+                                className="bg-green-600 hover:bg-green-700"
+                            >
+                                {loading ? (
+                                    <div className="flex items-center justify-center">
+                                        <LoadingSpinner size={20} color="#ffffff" />
+                                        <span className="ml-2">Posting...</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <CheckCircle className='mr-2 h-4 w-4' />
+                                        Post Job
+                                    </>
+                                )}
+                            </Button>
+                        )}
+                    </div>
+                    {currentStep === 2 && requirements.length === 0 && (
+                        <p className="text-amber-600 text-sm mt-2 text-center">
+                            ⚠️ Please add at least one requirement to post the job
+                        </p>
+                    )}
+                </form>
+            </div>
+        </div>
+    );
+};
+
+export default AdminJobPosting;

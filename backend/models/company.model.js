@@ -18,6 +18,7 @@ const companySchema = new mongoose.Schema({
   logo: { type: String },
   userId: { type: mongoose.Schema.Types.ObjectId, ref:'User', required: true },
   status: { type: String, enum: ['active','inactive','pending'], default: 'active' },
+  createdByAdmin: { type: Boolean, default: false },
 
   // ✅ Add these fields
   foundedYear: { type: Number },

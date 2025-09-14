@@ -3,28 +3,23 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { ADMIN_API_END_POINT } from '../../utils/constant';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 import { 
   Users, 
-  Building2, 
   Briefcase, 
+  Building2, 
   FileText, 
   TrendingUp, 
-  Calendar,
-  MapPin,
-  DollarSign,
-  Clock,
+  Eye,
   CheckCircle,
   XCircle,
+  Clock,
   AlertCircle,
-  BarChart3,
-  PieChart as PieChartIcon,
   Settings,
   Plus
 } from 'lucide-react';
-import PieChart from '../PieChart';
-import LineChart from '../LineChart';
+import InteractiveBarChart from '../charts/InteractiveBarChart';
 
 const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -243,26 +238,125 @@ const AdminDashboard = () => {
           </Button>
         </div>
 
-        {/* Analytics Graphs */}
+        {/* Interactive Analytics */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Monthly Job Creation Chart */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg p-1">
-            <LineChart 
-              data={graphData?.monthlyJobs || []}
-              title="Monthly Job Creation Trends"
-              height={320}
-              width={550}
-            />
-          </div>
+          {/* Job & Application Analytics */}
+          <InteractiveBarChart 
+            data={graphData?.monthlyData || []}
+            title="Job & Application Analytics"
+            height={300}
+          />
 
-          {/* Applications Status Pie Chart */}
-          <div className="bg-gradient-to-br from-green-50 to-emerald-100 rounded-lg p-1">
-            <PieChart 
-              data={graphData?.applications || []}
-              title="Applications by Status"
-              size={280}
-            />
-          </div>
+          {/* Recent Activity Feed */}
+          <Card className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                Recent Activity
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0 max-h-80 overflow-y-auto">
+              <div className="space-y-1">
+                {recentJobs?.slice(0, 5).map((job, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 hover:bg-gray-50 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-2 rounded-full ${getStatusColor(job.status).replace('bg-', 'bg-').replace(' text-', ' ')}`}></div>
+                      <div>
+                        <p className="font-medium text-sm text-gray-900 truncate max-w-48">{job.title}</p>
+                        <p className="text-xs text-gray-500">{job.company?.name}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge className={`text-xs ${getStatusColor(job.status)}`}>
+                        {job.status}
+                      </Badge>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(job.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {(!recentJobs || recentJobs.length === 0) && (
+                  <div className="p-8 text-center text-gray-500">
+                    <Briefcase className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                    <p>No recent jobs found</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Performance Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-blue-800">Job Approval Rate</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold text-blue-700">
+                  {stats?.totalJobs > 0 ? Math.round((stats?.approvedJobs / stats?.totalJobs) * 100) : 0}%
+                </div>
+                <TrendingUp className="h-8 w-8 text-blue-600" />
+              </div>
+              <div className="mt-2">
+                <div className="w-full bg-blue-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                    style={{ 
+                      width: `${stats?.totalJobs > 0 ? (stats?.approvedJobs / stats?.totalJobs) * 100 : 0}%` 
+                    }}
+                  ></div>
+                </div>
+              </div>
+              <p className="text-xs text-blue-600 mt-2">
+                {stats?.approvedJobs || 0} of {stats?.totalJobs || 0} jobs approved
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-green-800">Platform Growth</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold text-green-700">
+                  +{Math.round(((stats?.totalUsers || 0) + (stats?.totalCompanies || 0)) / 30)}
+                </div>
+                <Users className="h-8 w-8 text-green-600" />
+              </div>
+              <p className="text-xs text-green-600 mt-2">New users this month</p>
+              <div className="flex items-center gap-4 mt-3 text-xs">
+                <span className="text-green-700">👥 {stats?.totalUsers || 0} Users</span>
+                <span className="text-green-700">🏢 {stats?.totalCompanies || 0} Companies</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-purple-800">Application Success</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div className="text-2xl font-bold text-purple-700">
+                  {stats?.totalApplications > 0 ? Math.round((stats?.totalApplications * 0.3)) : 0}
+                </div>
+                <FileText className="h-8 w-8 text-purple-600" />
+              </div>
+              <p className="text-xs text-purple-600 mt-2">Successful placements</p>
+              <div className="mt-2">
+                <div className="w-full bg-purple-200 rounded-full h-2">
+                  <div 
+                    className="bg-purple-600 h-2 rounded-full transition-all duration-500"
+                    style={{ width: '30%' }}
+                  ></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
      

@@ -48,6 +48,8 @@ import JobseekerTable from './components/admin/JobseekerTable.jsx'
 import EmployerTable from './components/admin/EmployerTable.jsx'
 import AdminManagement from './components/admin/AdminManagement'
 import SuperAdminUserManagement from './components/admin/SuperAdminUserManagement'
+import AdminJobPosting from './components/admin/AdminJobPosting'
+import AdminJobEdit from './components/admin/AdminJobEdit'
 import AdminForgotPassword from './components/admin/AdminForgotPassword'
 import AdminResetPassword from './components/admin/AdminResetPassword'
 
@@ -147,9 +149,9 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/jobs/:id/edit",
     element: (
-      <AdminProtectedRoute>
+      <AdminProtectedRoute allowedRoles={['super_admin', 'admin']}>
         <AdminLayout>
-          <AdminEditJob />
+          <AdminJobEdit />
         </AdminLayout>
       </AdminProtectedRoute>
     )
@@ -220,6 +222,16 @@ const appRouter = createBrowserRouter([
       <AdminProtectedRoute allowedRoles={['super_admin']}>
         <AdminLayout>
           <SuperAdminUserManagement />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/job-posting",
+    element: (
+      <AdminProtectedRoute allowedRoles={['super_admin', 'admin']}>
+        <AdminLayout>
+          <AdminJobPosting />
         </AdminLayout>
       </AdminProtectedRoute>
     )
