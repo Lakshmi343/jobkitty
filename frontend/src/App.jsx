@@ -1,98 +1,230 @@
 
 
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import { useEffect } from 'react'
-import { useDispatch } from 'react-redux'
-import { setUser } from './redux/authSlice'
-import './utils/axiosInterceptor'
-import { authUtils } from './utils/authUtils'
-import Navbar from './components/shared/Navbar'
-import Login from './components/auth/Login'
-import Signup from './components/auth/Signup'
-import Home from './components/Home'
-import Jobs from './components/Jobs'
-import Browse from './components/Browse'
-import Profile from './components/Profile'
-import JobDescription from './components/JobDescription'
-import Companies from './components/admin/Companies'
-import CompanyCreate from './components/admin/CompanyCreate'
-import CompanySetup from './components/admin/CompanySetup'
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { setUser } from './redux/authSlice';
+import './utils/axiosInterceptor';
+import { authUtils } from './utils/authUtils';
+
+// Shared Layout
+import Layout from './components/shared/Layout';
+
+// Pages
+import Login from './components/auth/Login';
+import Signup from './components/auth/Signup';
+import Home from './components/Home';
+import Jobs from './components/Jobs';
+import Browse from './components/Browse';
+import Profile from './components/Profile';
+import JobDescription from './components/JobDescription';
+import Contact from './components/Contact';
+import BlogPage from './components/BlogPage';
+import ForgotPassword from './components/auth/ForgotPassword';
+import ResetPassword from './components/auth/ResetPassword';
+import BlockedAccount from './components/BlockedAccount';
+
+// Admin
+import Companies from './components/admin/Companies';
+import CompanySetup from './components/admin/CompanySetup';
 import AdminJobs from "./components/admin/AdminJobs";
-import AdminEditJob from './components/admin/AdminEditJob'
-import PostJob from './components/admin/PostJob'
-import EditJob from './components/admin/EditJob'
-import EmployerApplicants from './components/employer/EmployerApplicants'
-import ProtectedRoute from './components/admin/ProtectedRoute'
-import AppliedJobs from './components/jobseeker/AppliedJobs'
-import Contact from './components/Contact'
-import BlogPage from './components/BlogPage'
-import ForgotPassword from './components/auth/ForgotPassword'
-import ResetPassword from './components/auth/ResetPassword'
-import EmployerCompanySetup from './components/admin/EmployerCompanySetup'
-import AdminLogin from './components/admin/AdminLogin'
-import AdminDashboard from './components/admin/AdminDashboard'
-import AdminLayout from './components/admin/AdminLayout'
-import AdminProtectedRoute from './components/admin/AdminProtectedRoute'
-import AdminUsers from './components/admin/AdminUsers'
-import AdminCategories from './components/admin/AdminCategories'
-import AdminAnalytics from './components/admin/AdminAnalytics'
-import AdminApplications from './components/admin/AdminApplications'
-import AdminCVManagement from './components/admin/AdminCVManagement'
-import EmployerJobs from './components/employer/EmployerJobs'
-import BlockedAccount from './components/BlockedAccount'
-import UserManagementDashboard from './components/admin/UserManagementDashboard'
-import JobseekerManagement from './components/admin/JobseekerManagement'
-import EmployerManagement from './components/admin/EmployerManagement'
-import EmployerProfile from './components/employer/EmployerProfile'
-import JobseekerTable from './components/admin/JobseekerTable.jsx'
-import EmployerTable from './components/admin/EmployerTable.jsx'
-import AdminManagement from './components/admin/AdminManagement'
-import SuperAdminUserManagement from './components/admin/SuperAdminUserManagement'
-import AdminJobPosting from './components/admin/AdminJobPosting'
-import AdminJobEdit from './components/admin/AdminJobEdit'
-import AdminForgotPassword from './components/admin/AdminForgotPassword'
-import AdminResetPassword from './components/admin/AdminResetPassword'
+import AdminEditJob from './components/admin/AdminEditJob';
+import AdminLogin from './components/admin/AdminLogin';
+import AdminDashboard from './components/admin/AdminDashboard';
+import AdminLayout from './components/admin/AdminLayout';
+import AdminProtectedRoute from './components/admin/AdminProtectedRoute';
+import AdminUsers from './components/admin/AdminUsers';
+import AdminCategories from './components/admin/AdminCategories';
+import AdminAnalytics from './components/admin/AdminAnalytics';
+import AdminApplications from './components/admin/AdminApplications';
+import AdminCVManagement from './components/admin/AdminCVManagement';
+import JobseekerTable from './components/admin/JobseekerTable';
+import EmployerTable from './components/admin/EmployerTable';
+import AdminManagement from './components/admin/AdminManagement';
+import SuperAdminUserManagement from './components/admin/SuperAdminUserManagement';
+import AdminJobPosting from './components/admin/AdminJobPosting';
+import AdminJobEdit from './components/admin/AdminJobEdit';
+import AdminForgotPassword from './components/admin/AdminForgotPassword';
+import AdminResetPassword from './components/admin/AdminResetPassword';
+
+// Employer & Jobseeker
+import EmployerJobs from './components/employer/EmployerJobs';
+import EmployerApplicants from './components/employer/EmployerApplicants';
+import EmployerProfile from './components/employer/EmployerProfile';
+import EmployerCompanySetup from './components/admin/EmployerCompanySetup';
+import PostJob from './components/admin/PostJob';
+import EditJob from './components/admin/EditJob';
+import AppliedJobs from './components/jobseeker/AppliedJobs';
+import ProtectedRoute from './components/admin/ProtectedRoute';
+import JobseekerManagement from './components/admin/JobseekerManagement';
+import EmployerManagement from './components/admin/EmployerManagement';
 
 const appRouter = createBrowserRouter([
+  // ✅ User-facing routes with Layout
   {
     path: '/',
-    element: <Home />
+    element: (
+      <Layout>
+        <Home />
+      </Layout>
+    )
   },
   {
     path: '/login',
-    element: <Login/>
+    element: (
+      <Layout>
+        <Login />
+      </Layout>
+    )
   },
   {
     path: '/signup',
-    element: <Signup />
+    element: (
+      <Layout>
+        <Signup />
+      </Layout>
+    )
   },
-  
   {
     path: '/contact',
-    element: <Contact />
+    element: (
+      <Layout>
+        <Contact />
+      </Layout>
+    )
   },
   {
     path: '/blocked-account',
-    element: <BlockedAccount />
+    element: (
+      <Layout>
+        <BlockedAccount />
+      </Layout>
+    )
   },
   {
     path: "/jobs",
-    element: <Jobs />
+    element: (
+      <Layout>
+        <Jobs />
+      </Layout>
+    )
   },
   {
     path: "/job/:id",
-    element: <JobDescription />
+    element: (
+      <Layout>
+        <JobDescription />
+      </Layout>
+    )
   },
   {
     path: "/browse",
-    element: <Browse />
+    element: (
+      <Layout>
+        <Browse />
+      </Layout>
+    )
   },
   {
     path: "/profile",
-    element: <ProtectedRoute allowedRoles={['Jobseeker']}><Profile /></ProtectedRoute>
+    element: (
+      <Layout>
+        <ProtectedRoute allowedRoles={['Jobseeker']}>
+          <Profile />
+        </ProtectedRoute>
+      </Layout>
+    )
+  },
+  {
+    path: "/jobseeker/applied-jobs",
+    element: (
+      <Layout>
+        <ProtectedRoute allowedRoles={['Jobseeker']}>
+          <AppliedJobs />
+        </ProtectedRoute>
+      </Layout>
+    )
+  },
+  {
+    path: '/forgot-password',
+    element: (
+      <Layout>
+        <ForgotPassword />
+      </Layout>
+    )
+  },
+  {
+    path: '/reset-password/:token',
+    element: (
+      <Layout>
+        <ResetPassword />
+      </Layout>
+    )
   },
 
-  
+  // ✅ Employer Routes (still with Layout, so they see Navbar/Footer)
+  {
+    path: "/employer/profile/:id",
+    element: (
+      <Layout>
+        <ProtectedRoute allowedRoles={['Employer']}>
+          <EmployerProfile />
+        </ProtectedRoute>
+      </Layout>
+    )
+  },
+  {
+    path: "/employer/jobs",
+    element: (
+      <Layout>
+        <ProtectedRoute allowedRoles={['Employer']}>
+          <EmployerJobs />
+        </ProtectedRoute>
+      </Layout>
+    )
+  },
+  {
+    path: "/employer/jobs/create",
+    element: (
+      <Layout>
+        <ProtectedRoute allowedRoles={['Employer']}>
+          <PostJob />
+        </ProtectedRoute>
+      </Layout>
+    )
+  },
+  {
+    path: "/employer/jobs/:id/edit",
+    element: (
+      <Layout>
+        <ProtectedRoute allowedRoles={['Employer']}>
+          <EditJob />
+        </ProtectedRoute>
+      </Layout>
+    )
+  },
+  {
+    path: "/employer/jobs/:id/applicants",
+    element: (
+      <Layout>
+        <ProtectedRoute allowedRoles={['Employer']}>
+          <EmployerApplicants />
+        </ProtectedRoute>
+      </Layout>
+    )
+  },
+  {
+    path: "/employer/company/setup",
+    element: (
+      <Layout>
+        <ProtectedRoute allowedRoles={['Employer']}>
+          <EmployerCompanySetup />
+        </ProtectedRoute>
+      </Layout>
+    )
+  },
+
+  // ✅ Admin routes (NO Navbar/Footer)
   {
     path: "/admin/login",
     element: <AdminLogin />
@@ -116,26 +248,25 @@ const appRouter = createBrowserRouter([
     )
   },
   {
-  path: "/admin/jobseekers",
-  element: (
-    <AdminProtectedRoute >
-      <AdminLayout>
-       <JobseekerTable/>
-      </AdminLayout>
-    </AdminProtectedRoute>
-  )
-},
-{
-  path: "/admin/employers",
-  element: (
-    <AdminProtectedRoute >
-      <AdminLayout>
-<EmployerTable/>
-      </AdminLayout>
-    </AdminProtectedRoute>
-  )
-},
-
+    path: "/admin/jobseekers",
+    element: (
+      <AdminProtectedRoute>
+        <AdminLayout>
+          <JobseekerTable />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/employers",
+    element: (
+      <AdminProtectedRoute>
+        <AdminLayout>
+          <EmployerTable />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
   {
     path: "/admin/jobs",
     element: (
@@ -259,76 +390,27 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/admin-management",
     element: (
-      <AdminProtectedRoute >
+      <AdminProtectedRoute>
         <AdminLayout>
           <AdminManagement />
         </AdminLayout>
       </AdminProtectedRoute>
     )
-  },
-
-
-  {
-    path: "/employer/profile/:id",
-    element: <ProtectedRoute allowedRoles={['Employer']}><EmployerProfile/></ProtectedRoute>
-  },
-  {
-    path: "/employer/jobs",
-    element: <ProtectedRoute allowedRoles={['Employer']}><EmployerJobs/></ProtectedRoute> 
-  },
-  {
-    path: "/employer/jobs/create",
-    element: <ProtectedRoute allowedRoles={['Employer']}><PostJob/></ProtectedRoute> 
-  },
-  {
-    path: "/employer/jobs/:id/edit",
-    element: <ProtectedRoute allowedRoles={['Employer']}><EditJob/></ProtectedRoute> 
-  },
-  
-  {
-    path: "/employer/jobs/:id/applicants",
-    element: <ProtectedRoute allowedRoles={['Employer']}><EmployerApplicants/></ProtectedRoute> 
-  },
-
- 
-  {
-    path: "/jobseeker/applied-jobs",
-    element: <ProtectedRoute allowedRoles={['Jobseeker']}><AppliedJobs /></ProtectedRoute> 
-  },
-
-
-  {
-    path: '/forgot-password',
-    element: <ForgotPassword />
-  },
-  {
-    path: '/reset-password/:token',
-    element: <ResetPassword />
-  },
-  {
-    path: "/employer/company/setup",
-    element: <ProtectedRoute allowedRoles={['Employer']}><EmployerCompanySetup/></ProtectedRoute> 
-  },
-])
+  }
+]);
 
 function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-  
     const storedUser = authUtils.getUser();
     if (storedUser && authUtils.isAuthenticated()) {
       dispatch(setUser(storedUser));
     }
   }, [dispatch]);
-  
-  return (
-    <div>
-      <RouterProvider router={appRouter} />
-    </div>
-  )
+
+  return <RouterProvider router={appRouter} />;
 }
 
-export default App
-
+export default App;
 

@@ -66,7 +66,8 @@ const Contact = () => {
 
   return (
     <>
-      <Navbar />
+   
+      <div >
 
       {/* Popup Modal */}
       <AnimatePresence>
@@ -202,7 +203,8 @@ const Contact = () => {
         </div>
       </div>
 
-      <Footer />
+     
+      </div>
     </>
   );
 };

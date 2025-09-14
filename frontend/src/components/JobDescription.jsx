@@ -123,7 +123,7 @@ const JobDescription = () => {
     if (!singleJob) {
         return (
             <>
-                <Navbar />
+               
                 <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
                     <LoadingSpinner size={60} />
                 </div>
@@ -133,7 +133,7 @@ const JobDescription = () => {
 
     return (
         <>
-            <Navbar />
+           
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
                 <div className="max-w-6xl mx-auto px-4 py-8">
                     {/* Back Button */}

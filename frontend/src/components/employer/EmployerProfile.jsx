@@ -123,7 +123,7 @@ const EmployerProfile = () => {
 
   if (fetching) return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
+     
       <div className="flex-1 flex items-center justify-center">
         <div className="flex flex-col items-center">
           <Loader2 className="h-12 w-12 animate-spin text-blue-600 mb-4" />
@@ -162,7 +162,7 @@ const EmployerProfile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar />
+    
       <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 space-y-6">
         
         {/* Header Section */}

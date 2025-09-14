@@ -91,7 +91,7 @@ const EmployerCompanySetup = () => {
     return (
         <div>
             <Navbar />
-            <div className='max-w-2xl mx-auto my-10 p-8 bg-white rounded-lg shadow-md'>
+            <div className='max-w-2xl mx-auto my-10 p-8 bg-white rounded-lg shadow-md pt-24'>
                 <h1 className='text-2xl font-bold mb-6'>
                     {user?.profile?.company ? 'Update Your Company Profile' : 'Setup Your Company'}
                 </h1>

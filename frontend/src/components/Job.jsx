@@ -140,7 +140,7 @@ const Job = ({ job }) => {
       </div>
 
       {/* Company Info */}
-      <div className="flex items-start gap-3 mb-4">
+      <div className="flex items-start gap-3 mb-4 ">
         <div className="flex-shrink-0">
           <Avatar className="w-14 h-14 border-2 border-gray-200">
             <AvatarImage src={job?.company?.logo} alt={job?.company?.name} />

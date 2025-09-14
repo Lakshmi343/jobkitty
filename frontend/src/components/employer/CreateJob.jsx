@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { JOB_API_END_POINT, CATEGORY_API_END_POINT, USER_API_END_POINT } from '../../utils/constant';
-import { Card, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -345,13 +344,129 @@ const CreateJob = () => {
                     <LoadingSpinner size={60} />
                     <span className="ml-3 text-gray-600">Checking company setup...</span>
                 </div>
-            </div>
-        );
+    }
+};
+
+const submitHandler = async (e) => {
+    e.preventDefault();
+    console.log(`Submitting form at step ${currentStep} with input:`, input, "requirements:", requirements); // Debug log
+
+    // For steps 1-3, validate and move to next step
+    if (currentStep < 4) {
+        // Always validate the current step before proceeding
+        if (validateStep(currentStep)) {
+            nextStep();
+        }
+        return;
     }
 
+    // For final step (4), validate all steps before submission
+    // Only title, description and category are absolutely required
+    if (!input.title || !input.description || !input.category) {
+        toast.error("Job title, description, and category are required");
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+        // Set default values for all fields before submission
+        const updatedInput = {
+            ...input,
+            location: input.location || "Remote",
+            jobType: input.jobType || "Full-time",
+            salaryMin: input.salaryMin || "0",
+            salaryMax: input.salaryMax || "0",
+            openings: input.openings || "1",
+            experienceLevel: input.experienceLevel || "Entry Level",
+            experienceMin: input.experienceMin || "0",
+            experienceMax: input.experienceMax || "5"
+        };
+        
+        // Ensure all values are properly formatted
+        let salaryMin = parseInt(updatedInput.salaryMin);
+        let salaryMax = parseInt(updatedInput.salaryMax);
+        
+        // If min > max, swap the values
+        if (salaryMin > salaryMax) {
+            const temp = salaryMin;
+            salaryMin = salaryMax;
+            salaryMax = temp;
+        }
+        
+        const expMin = parseInt(updatedInput.experienceMin);
+        const expMax = parseInt(updatedInput.experienceMax);
+        const openingsCount = parseInt(updatedInput.openings);
+        
+        // Create the job data object with all required fields and defaults
+        const jobData = {
+            title: updatedInput.title.trim(),
+            description: updatedInput.description.trim(),
+            requirements: requirements.length > 0 ? requirements : ["No specific requirements"],
+            salary: {
+                min: salaryMin,
+                max: salaryMax
+            },
+            experience: {
+                min: expMin,
+                max: expMax
+            },
+            experienceLevel: updatedInput.experienceLevel,
+            location: updatedInput.location,
+            jobType: updatedInput.jobType,
+            position: parseInt(updatedInput.position) || 1,
+            openings: openingsCount,
+            category: updatedInput.category,
+            status: 'pending' // Adding status field
+        };
+
+        console.log("Sending job data to backend:", jobData);
+
+        const response = await axios.post(`${JOB_API_END_POINT}/post`, jobData, {
+            withCredentials: true
+        });
+
+        if (response.data.success) {
+            toast.success("Job posted successfully!");
+            navigate('/employer/jobs');
+        }
+    } catch (error) {
+        console.error("Error posting job:", error);
+        toast.error(error.response?.data?.message || "Failed to post job");
+    } finally {
+        setLoading(false);
+    }
+};
+
+const progressPercentage = ((currentStep - 1) / 3) * 100;
+
+const locations = [
+    "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
+    "Idukki", "Ernakulam", "Thrissur", "Palakkad", "Malappuram",
+    "Kozhikode", "Wayanad", "Kannur", "Kasaragod"
+];
+
+const jobTypes = ["Full-time", "Part-time", "Contract", "Temporary", "Internship", "Remote"];
+
+const experienceLevels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"];
+
+// Show loading while checking company setup
+if (checkingCompany) {
     return (
         <div>
             <Navbar />
+            <div className="flex items-center justify-center min-h-screen">
+                <LoadingSpinner size={60} />
+                <span className="ml-3 text-gray-600">Checking company setup...</span>
+            </div>
+        </div>
+    );
+}
+
+return (
+    <div>
+        <Navbar />
+        <div className="pt-16">
             <div className="max-w-4xl mx-auto my-10 px-4">
                 <div className="flex items-center justify-between mb-6">
                     <div>

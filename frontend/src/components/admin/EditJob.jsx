@@ -414,7 +414,7 @@ const EditJob = () => {
     if (fetching) {
         return (
             <div>
-                <Navbar />
+                
                 <div className='flex items-center justify-center w-screen my-10'>
                     <div className='text-center'>
                         <Loader2 className='mx-auto h-10 w-10 animate-spin mb-3' />
