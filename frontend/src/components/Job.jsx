@@ -199,7 +199,7 @@ const Job = ({ job }) => {
           </span>
         </div>
         <Button
-          onClick={() => navigate(`/job/${job?._id}`)}
+          onClick={() => navigate(`/job/${job?._id}?section=header`)}
           className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition"
         >
           View Details

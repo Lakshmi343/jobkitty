@@ -9,26 +9,25 @@ const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const admin = JSON.parse(localStorage.getItem('admin') || '{}');
+  const admin = JSON.parse(localStorage.getItem('adminData') || '{}');
   const isSuperAdmin = admin.role === 'superadmin';
 
   const baseNavigation = [
-  { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
- 
-  { name: 'Jobseeker Management', href: '/admin/jobseeker-management', icon: Users },
-  { name: 'Employer Management', href: '/admin/employer-management', icon: Building2 },
+    { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+    { name: 'Jobseeker Management', href: '/admin/jobseeker-management', icon: Users },
+    { name: 'Employer Management', href: '/admin/employer-management', icon: Building2 },
+    { name: 'Companies', href: '/admin/companies', icon: Building2 },
+    { name: 'Jobs', href: '/admin/jobs', icon: Briefcase },
+    { name: 'Applications', href: '/admin/applications', icon: FileText },
+    { name: 'CV Management', href: '/admin/cv-management', icon: FolderOpen },
+    { name: 'Categories', href: '/admin/categories', icon: Settings },
+  ];
 
-  { name: 'Companies', href: '/admin/companies', icon: Building2 },
-  { name: 'Jobs', href: '/admin/jobs', icon: Briefcase },
-  { name: 'Applications', href: '/admin/applications', icon: FileText },
-  { name: 'CV Management', href: '/admin/cv-management', icon: FolderOpen },
-  { name: 'Categories', href: '/admin/categories', icon: Settings },
+  const superAdminNavigation = [
+    { name: 'User Management', href: '/admin/user-management', icon: Shield },
+  ];
 
-];
-
-
-
-  const navigation = isSuperAdmin ? [...baseNavigation,] : baseNavigation;
+  const navigation = isSuperAdmin ? [...baseNavigation, ...superAdminNavigation] : baseNavigation;
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
@@ -80,7 +79,7 @@ const AdminLayout = ({ children }) => {
             <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
-            {baseNavigation.map((item) => {
+            {navigation.map((item) => {
               const Icon = item.icon;
               return (
                 <Button
@@ -94,8 +93,6 @@ const AdminLayout = ({ children }) => {
                 </Button>
               );
             })}
-            
-           
           </nav>
         </div>
       </div>

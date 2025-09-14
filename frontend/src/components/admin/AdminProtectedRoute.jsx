@@ -8,26 +8,41 @@ const AdminProtectedRoute = ({ children, allowedRoles = [] }) => {
   useEffect(() => {
     const checkAuth = () => {
       try {
-        // Check for admin token and data
-        const adminToken = localStorage.getItem('adminToken');
+        // Check for admin token and data (check both new and legacy formats)
+        const adminToken = localStorage.getItem('adminAccessToken') || localStorage.getItem('adminToken');
         const adminData = localStorage.getItem('adminData');
+        
+        console.log('AdminProtectedRoute - Auth check:', {
+          adminAccessToken: localStorage.getItem('adminAccessToken'),
+          adminToken: localStorage.getItem('adminToken'),
+          adminData: adminData ? 'Present' : 'Missing',
+          finalToken: adminToken
+        });
         
         if (adminToken && adminToken !== 'null' && adminToken !== 'undefined' && adminData) {
           const admin = JSON.parse(adminData);
+          console.log('AdminProtectedRoute - Admin data:', admin);
           
           // Check if role is allowed (if allowedRoles is specified)
           if (allowedRoles.length > 0 && !allowedRoles.includes(admin.role)) {
+            console.log('AdminProtectedRoute - Role not allowed:', { userRole: admin.role, allowedRoles });
             setIsAuthenticated(false);
             setIsLoading(false);
             return;
           }
           
+          console.log('AdminProtectedRoute - Authentication successful');
           setIsAuthenticated(true);
         } else {
+          console.log('AdminProtectedRoute - Authentication failed:', {
+            hasToken: !!adminToken,
+            hasData: !!adminData,
+            tokenValue: adminToken
+          });
           setIsAuthenticated(false);
         }
       } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('AdminProtectedRoute - Auth check failed:', error);
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);

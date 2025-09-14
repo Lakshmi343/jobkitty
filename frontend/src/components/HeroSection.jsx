@@ -88,8 +88,8 @@ const HeroSection = () => {
                             </div>
                         </div>
                         {/* Popular Searches */}
-                        <div className='flex flex-wrap justify-center gap-4 mt-6 text-sm text-gray-300 animate-fade-in animation-delay-600 px-4'>
-                            <span className='text-white/80 font-medium'>Popular:</span>
+                        <div className='flex flex-wrap justify-center items-center gap-4 mt-6 text-sm text-gray-300 animate-fade-in animation-delay-600 px-4'>
+                            <span className='font-medium'>Popular:</span>
                             {['Software Developer', 'Project Manager', 'Data Analyst', 'UI/UX Designer'].map((term, index) => (
                                 <button 
                                     key={index}
@@ -103,6 +103,7 @@ const HeroSection = () => {
                                 </button>
                             ))}
                         </div>
+
                     </div>
                 </div>
             </div>

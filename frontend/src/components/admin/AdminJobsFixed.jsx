@@ -155,6 +155,10 @@ const AdminJobs = () => {
     fetchJobApplications(job._id);
   };
 
+  const handleViewJobDetails = (jobId) => {
+    navigate(`/job/${jobId}?section=header`);
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -357,6 +361,15 @@ const AdminJobs = () => {
                                     onClick={() => handleViewJob(job)}
                                   >
                                     <Eye className="h-4 w-4 mr-2" />
+                                    View Modal
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start text-blue-600 hover:text-blue-700"
+                                    onClick={() => handleViewJobDetails(job._id)}
+                                  >
+                                    <ExternalLink className="h-4 w-4 mr-2" />
                                     View Details
                                   </Button>
                                   {job.status !== 'approved' && (

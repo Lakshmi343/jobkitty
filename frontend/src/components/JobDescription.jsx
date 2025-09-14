@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
 import { setSingleJob } from '@/redux/jobSlice';
@@ -22,6 +22,10 @@ const JobDescription = () => {
     const jobId = params.id;
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const requirementsRef = useRef(null);
+    const jobDescriptionRef = useRef(null);
+    const headerRef = useRef(null);
 
     const applyJobHandler = async () => {
         // Check if user is logged in
@@ -91,6 +95,31 @@ const JobDescription = () => {
         }
     }, [user, singleJob, jobId, isApplied]);
 
+    // Handle scrolling to specific section
+    useEffect(() => {
+        if (singleJob && searchParams.get('section')) {
+            const section = searchParams.get('section');
+            let targetRef = null;
+            
+            if (section === 'requirements' && requirementsRef.current) {
+                targetRef = requirementsRef.current;
+            } else if (section === 'job-description' && jobDescriptionRef.current) {
+                targetRef = jobDescriptionRef.current;
+            } else if (section === 'header' && headerRef.current) {
+                targetRef = headerRef.current;
+            }
+            
+            if (targetRef) {
+                setTimeout(() => {
+                    targetRef.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'start' 
+                    });
+                }, 500); // Small delay to ensure content is rendered
+            }
+        }
+    }, [singleJob, searchParams]);
+
     if (!singleJob) {
         return (
             <>
@@ -121,7 +150,7 @@ const JobDescription = () => {
                     {/* Main Job Card */}
                     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
                         {/* Header Section */}
-                        <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8">
+                        <div ref={headerRef} className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8">
                             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-4">
@@ -195,7 +224,7 @@ const JobDescription = () => {
                                 {/* Main Content */}
                                 <div className="lg:col-span-2 space-y-8">
                                     {/* Job Description */}
-                                    <div className="bg-gray-50 rounded-xl p-6">
+                                    <div ref={jobDescriptionRef} className="bg-gray-50 rounded-xl p-6">
                                         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                                             <FileText className="w-5 h-5 text-blue-600" />
                                             Job Description
@@ -207,7 +236,7 @@ const JobDescription = () => {
 
                                     {/* Requirements */}
                                     {singleJob?.requirements && singleJob.requirements.length > 0 && (
-                                        <div className="bg-gray-50 rounded-xl p-6">
+                                        <div ref={requirementsRef} className="bg-gray-50 rounded-xl p-6">
                                             <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                                                 <CheckCircle className="w-5 h-5 text-green-600" />
                                                 Requirements

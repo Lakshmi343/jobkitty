@@ -350,15 +350,15 @@ const AdminJobs = () => {
                               </PopoverTrigger>
                               <PopoverContent className="w-48" align="end">
                                 <div className="space-y-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full justify-start"
-                                    onClick={() => handleViewJob(job)}
-                                  >
-                                    <Eye className="h-4 w-4 mr-2" />
-                                    View Details
-                                  </Button>
+                                <Button
+      variant="ghost"
+      size="sm"
+      className="w-full justify-start"
+      onClick={() => navigate(`/job/${job._id}`)}
+    >
+      <Eye className="h-4 w-4 mr-2" />
+      View Details
+    </Button>
                                   {job.status !== 'approved' && (
                                     <Button
                                       variant="ghost"
@@ -381,14 +381,7 @@ const AdminJobs = () => {
                                       Reject
                                     </Button>
                                   )}
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="w-full justify-start text-blue-600 hover:text-blue-700"
-                                  >
-                                    <Edit2 className="h-4 w-4 mr-2" />
-                                    Edit
-                                  </Button>
+                               
                                   <Button
                                     variant="ghost"
                                     size="sm"

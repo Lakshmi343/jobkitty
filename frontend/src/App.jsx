@@ -1,3 +1,5 @@
+
+
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useDispatch } from 'react-redux'
@@ -45,7 +47,7 @@ import EmployerProfile from './components/employer/EmployerProfile'
 import JobseekerTable from './components/admin/JobseekerTable.jsx'
 import EmployerTable from './components/admin/EmployerTable.jsx'
 import AdminManagement from './components/admin/AdminManagement'
-import AdminRegister from './components/admin/AdminRegister'
+import SuperAdminUserManagement from './components/admin/SuperAdminUserManagement'
 import AdminForgotPassword from './components/admin/AdminForgotPassword'
 import AdminResetPassword from './components/admin/AdminResetPassword'
 
@@ -92,10 +94,6 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/login",
     element: <AdminLogin />
-  },
-  {
-    path: "/admin/register",
-    element: <AdminRegister />
   },
   {
     path: "/admin/forgot-password",
@@ -219,9 +217,9 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/user-management",
     element: (
-      <AdminProtectedRoute >
+      <AdminProtectedRoute allowedRoles={['superadmin']}>
         <AdminLayout>
-          <UserManagementDashboard />
+          <SuperAdminUserManagement />
         </AdminLayout>
       </AdminProtectedRoute>
     )

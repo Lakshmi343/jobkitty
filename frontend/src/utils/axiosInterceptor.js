@@ -15,7 +15,7 @@ class AxiosInterceptor {
         if (config.url?.includes('/api/v1/')) {
           
           if (config.url.includes('/admin/')) {
-            const adminToken = tokenManager.getAccessToken() || localStorage.getItem('adminToken');
+            const adminToken = tokenManager.getAccessToken() || localStorage.getItem('adminAccessToken');
             if (adminToken && adminToken !== 'null' && adminToken !== 'undefined') {
               config.headers.Authorization = `Bearer ${adminToken}`;
             }
