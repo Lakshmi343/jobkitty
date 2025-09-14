@@ -217,7 +217,7 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/user-management",
     element: (
-      <AdminProtectedRoute allowedRoles={['superadmin']}>
+      <AdminProtectedRoute allowedRoles={['super_admin']}>
         <AdminLayout>
           <SuperAdminUserManagement />
         </AdminLayout>

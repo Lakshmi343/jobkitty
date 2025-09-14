@@ -334,16 +334,52 @@ export const getDashboardStats = async (req, res) => {
 };
 
 
-// User Management
+// User Management - Get all users including admins
 export const getAllUsers = async (req, res) => {
   try {
     const { role } = req.query;
-    const filter = {};
-    if (role && ['Jobseeker', 'Employer', 'admin'].includes(role)) {
-      filter.role = role;
+    
+    // Get regular users (jobseekers, employers)
+    const userFilter = {};
+    if (role && ['Jobseeker', 'Employer'].includes(role)) {
+      userFilter.role = role;
     }
-    const users = await User.find(filter).select('-password').sort({ createdAt: -1 });
-    res.status(200).json({ success: true, users });
+    const regularUsers = await User.find(userFilter).select('-password').sort({ createdAt: -1 });
+    
+    // Get admin users
+    const adminFilter = {};
+    if (role && ['admin', 'super_admin', 'moderator', 'support'].includes(role)) {
+      adminFilter.role = role;
+    }
+    const adminUsers = await Admin.find(adminFilter).select('-password').sort({ createdAt: -1 });
+    
+    // Combine both arrays
+    let allUsers = [];
+    
+    // Add regular users only if no admin role filter is specified
+    if (!role || ['Jobseeker', 'Employer'].includes(role)) {
+      allUsers = [...allUsers, ...regularUsers];
+    }
+    
+    // Add admin users (always include if no filter, or if admin role filter)
+    if (!role || ['admin', 'super_admin', 'moderator', 'support'].includes(role)) {
+      // Transform admin users to match User schema format
+      const transformedAdmins = adminUsers.map(admin => ({
+        _id: admin._id,
+        fullname: admin.name,
+        email: admin.email,
+        role: admin.role,
+        status: admin.status || 'active',
+        createdAt: admin.createdAt,
+        updatedAt: admin.updatedAt
+      }));
+      allUsers = [...allUsers, ...transformedAdmins];
+    }
+    
+    // Sort by creation date
+    allUsers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    res.status(200).json({ success: true, users: allUsers });
   } catch (error) {
     console.error('Get users error:', error);
     res.status(500).json({ message: 'Server error', success: false });

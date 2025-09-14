@@ -10,7 +10,7 @@ const AdminLayout = ({ children }) => {
   const location = useLocation();
 
   const admin = JSON.parse(localStorage.getItem('adminData') || '{}');
-  const isSuperAdmin = admin.role === 'superadmin';
+  const isSuperAdmin = admin.role === 'super_admin';
 
   const baseNavigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },

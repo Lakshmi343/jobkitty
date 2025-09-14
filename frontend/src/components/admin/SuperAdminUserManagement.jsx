@@ -9,7 +9,7 @@ import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { 
-  Users, UserPlus, Shield, Eye, Trash2, AlertTriangle, 
+  Users, UserPlus, Shield, Eye, EyeOff, Trash2, AlertTriangle, 
   Search, Filter, RefreshCw, Settings, UserCheck, UserX
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -23,8 +23,9 @@ const SuperAdminUserManagement = () => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Create user form state
+  // Create admin user form state
   const [newUser, setNewUser] = useState({
     name: '',
     email: '',
@@ -32,14 +33,23 @@ const SuperAdminUserManagement = () => {
     role: 'admin'
   });
 
-  // Statistics
+  // Filter only admin users
+  const adminUsers = users.filter(user => 
+    user.role === 'admin' || 
+    user.role === 'super_admin' || 
+    user.role === 'moderator' || 
+    user.role === 'support'
+  );
+
+  // Statistics for admin users only
   const stats = {
-    total: users.length,
-    admins: users.filter(user => user.role === 'admin').length,
-    jobseekers: users.filter(user => user.role === 'Jobseeker').length,
-    employers: users.filter(user => user.role === 'Employer').length,
-    active: users.filter(user => user.status === 'active').length,
-    blocked: users.filter(user => user.status === 'blocked').length
+    total: adminUsers.length,
+    superAdmins: adminUsers.filter(user => user.role === 'super_admin').length,
+    admins: adminUsers.filter(user => user.role === 'admin').length,
+    moderators: adminUsers.filter(user => user.role === 'moderator').length,
+    support: adminUsers.filter(user => user.role === 'support').length,
+    active: adminUsers.filter(user => user.status === 'active').length,
+    blocked: adminUsers.filter(user => user.status === 'blocked').length
   };
 
   useEffect(() => {
@@ -48,27 +58,37 @@ const SuperAdminUserManagement = () => {
 
   useEffect(() => {
     filterUsers();
-  }, [users, searchTerm, roleFilter]);
+  }, [adminUsers, searchTerm, roleFilter]);
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('adminAccessToken') || localStorage.getItem('adminToken');
+      console.log('Fetching users with token:', token ? 'Present' : 'Missing');
+      
       const response = await axios.get(`${ADMIN_API_END_POINT}/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      
+      console.log('Users response:', response.data);
       if (response.data.success) {
         setUsers(response.data.users);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to fetch users');
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        localStorage.clear();
+        window.location.href = '/admin/login';
+      } else {
+        toast.error('Failed to fetch users');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const filterUsers = () => {
-    let filtered = users;
+    let filtered = adminUsers;
 
     if (searchTerm) {
       filtered = filtered.filter(user =>
@@ -89,20 +109,33 @@ const SuperAdminUserManagement = () => {
     setCreating(true);
 
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('adminAccessToken') || localStorage.getItem('adminToken');
+      console.log('Creating user with token:', token ? 'Present' : 'Missing');
+      console.log('User data:', newUser);
+      
       const response = await axios.post(`${ADMIN_API_END_POINT}/create-admin`, newUser, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
+      console.log('Create user response:', response.data);
       if (response.data.success) {
-        toast.success('User created successfully!');
+        toast.success('Admin user created successfully!');
         setShowCreateModal(false);
         setNewUser({ name: '', email: '', password: '', role: 'admin' });
         fetchUsers(); // Refresh the list
       }
     } catch (error) {
       console.error('Error creating user:', error);
-      toast.error(error.response?.data?.message || 'Failed to create user');
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        localStorage.clear();
+        window.location.href = '/admin/login';
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to create admin user');
+      }
     } finally {
       setCreating(false);
     }
@@ -110,7 +143,7 @@ const SuperAdminUserManagement = () => {
 
   const handleUpdateUserStatus = async (userId, newStatus) => {
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('adminAccessToken') || localStorage.getItem('adminToken');
       const response = await axios.patch(
         `${ADMIN_API_END_POINT}/users/${userId}/status`,
         { status: newStatus },
@@ -125,34 +158,47 @@ const SuperAdminUserManagement = () => {
       }
     } catch (error) {
       console.error('Error updating user status:', error);
-      toast.error('Failed to update user status');
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        localStorage.clear();
+        window.location.href = '/admin/login';
+      } else {
+        toast.error('Failed to update user status');
+      }
     }
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this user?')) return;
+    if (!window.confirm('Are you sure you want to delete this admin user?')) return;
 
     try {
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('adminAccessToken') || localStorage.getItem('adminToken');
       const response = await axios.delete(`${ADMIN_API_END_POINT}/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
         setUsers(users.filter(user => user._id !== userId));
-        toast.success('User deleted successfully');
+        toast.success('Admin user deleted successfully');
       }
     } catch (error) {
       console.error('Error deleting user:', error);
-      toast.error('Failed to delete user');
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        localStorage.clear();
+        window.location.href = '/admin/login';
+      } else {
+        toast.error('Failed to delete user');
+      }
     }
   };
 
   const getRoleColor = (role) => {
     switch (role) {
+      case 'super_admin': return 'bg-red-100 text-red-800 border-red-200';
       case 'admin': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'Employer': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Jobseeker': return 'bg-green-100 text-green-800 border-green-200';
+      case 'moderator': return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'support': return 'bg-blue-100 text-blue-800 border-blue-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
@@ -183,7 +229,7 @@ const SuperAdminUserManagement = () => {
               <Shield className="h-8 w-8 text-purple-600" />
               Super Admin - User Management
             </h1>
-            <p className="text-gray-600 mt-2">Manage all users and create new admin accounts</p>
+            <p className="text-gray-600 mt-2">Manage admin users and create new admin accounts</p>
           </div>
           <div className="flex items-center gap-4">
             <Button onClick={fetchUsers} variant="outline" size="sm">
@@ -192,20 +238,30 @@ const SuperAdminUserManagement = () => {
             </Button>
             <Button onClick={() => setShowCreateModal(true)} className="bg-purple-600 hover:bg-purple-700">
               <UserPlus className="h-4 w-4 mr-2" />
-              Create User
+              Create Admin User
             </Button>
           </div>
         </div>
 
-        {/* Statistics Cards */}
+        {/* Admin Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           <Card className="border-l-4 border-l-blue-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Total Users</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Total Admins</CardTitle>
               <Users className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-red-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-600">Super Admins</CardTitle>
+              <Shield className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">{stats.superAdmins}</div>
             </CardContent>
           </Card>
 
@@ -219,23 +275,13 @@ const SuperAdminUserManagement = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-green-500">
+          <Card className="border-l-4 border-l-orange-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Jobseekers</CardTitle>
-              <UserCheck className="h-4 w-4 text-green-500" />
+              <CardTitle className="text-sm font-medium text-gray-600">Moderators</CardTitle>
+              <UserCheck className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{stats.jobseekers}</div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-blue-500">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Employers</CardTitle>
-              <Users className="h-4 w-4 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900">{stats.employers}</div>
+              <div className="text-2xl font-bold text-gray-900">{stats.moderators}</div>
             </CardContent>
           </Card>
 
@@ -264,9 +310,9 @@ const SuperAdminUserManagement = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-xl font-semibold">All Users</CardTitle>
+              <CardTitle className="text-xl font-semibold">Admin Users</CardTitle>
               <Badge variant="secondary" className="text-sm">
-                {filteredUsers.length} of {users.length} users
+                {filteredUsers.length} of {adminUsers.length} admin users
               </Badge>
             </div>
             <div className="flex flex-col gap-3 md:flex-row md:gap-4 mt-4">
@@ -285,10 +331,11 @@ const SuperAdminUserManagement = () => {
                   onChange={(e) => setRoleFilter(e.target.value)}
                   className="border border-gray-300 rounded-md px-3 py-2 h-10 min-w-[120px]"
                 >
-                  <option value="all">All Roles</option>
+                  <option value="all">All Admin Roles</option>
+                  <option value="super_admin">Super Admin</option>
                   <option value="admin">Admin</option>
-                  <option value="Employer">Employer</option>
-                  <option value="Jobseeker">Jobseeker</option>
+                  <option value="moderator">Moderator</option>
+                  <option value="support">Support</option>
                 </select>
               </div>
             </div>
@@ -297,7 +344,7 @@ const SuperAdminUserManagement = () => {
             {filteredUsers.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-lg font-medium text-gray-900 mb-2">No users found</p>
+                <p className="text-lg font-medium text-gray-900 mb-2">No admin users found</p>
                 <p className="text-gray-500">Try adjusting your search or filters</p>
               </div>
             ) : (
@@ -305,7 +352,7 @@ const SuperAdminUserManagement = () => {
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-gray-50 hover:bg-gray-50">
-                      <TableHead className="text-left p-3 font-medium">User Details</TableHead>
+                      <TableHead className="text-left p-3 font-medium">Admin Details</TableHead>
                       <TableHead className="text-left p-3 font-medium">Role</TableHead>
                       <TableHead className="text-left p-3 font-medium">Status</TableHead>
                       <TableHead className="text-left p-3 font-medium">Joined Date</TableHead>
@@ -388,7 +435,7 @@ const SuperAdminUserManagement = () => {
             <DialogHeader>
               <DialogTitle className="text-xl font-bold flex items-center gap-2">
                 <UserPlus className="h-5 w-5 text-purple-600" />
-                Create New User
+                Create New Admin User
               </DialogTitle>
             </DialogHeader>
             
@@ -419,14 +466,30 @@ const SuperAdminUserManagement = () => {
               
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={newUser.password}
-                  onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                  placeholder="Enter password"
-                  required
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={newUser.password}
+                    onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                    placeholder="Enter password"
+                    className="pr-10"
+                    required
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4 text-gray-400" />
+                    ) : (
+                      <Eye className="h-4 w-4 text-gray-400" />
+                    )}
+                  </Button>
+                </div>
               </div>
               
               <div className="space-y-2">
@@ -439,8 +502,8 @@ const SuperAdminUserManagement = () => {
                   required
                 >
                   <option value="admin">Admin</option>
-                  <option value="Employer">Employer</option>
-                  <option value="Jobseeker">Jobseeker</option>
+                  <option value="moderator">Moderator</option>
+                  <option value="support">Support</option>
                 </select>
               </div>
               
@@ -457,7 +520,7 @@ const SuperAdminUserManagement = () => {
                   className="bg-purple-600 hover:bg-purple-700"
                   disabled={creating}
                 >
-                  {creating ? 'Creating...' : 'Create User'}
+                  {creating ? 'Creating...' : 'Create Admin User'}
                 </Button>
               </DialogFooter>
             </form>
