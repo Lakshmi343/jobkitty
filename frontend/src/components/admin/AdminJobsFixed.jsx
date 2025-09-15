@@ -12,7 +12,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { 
   Briefcase, Search, MoreHorizontal, CheckCircle, XCircle, Eye, Trash2, Clock,
   TrendingUp, Users, Building, MapPin, DollarSign, Calendar, Filter,
-  RefreshCw, Download, Edit2, AlertTriangle, Star
+  RefreshCw, Download, Edit2, AlertTriangle, Star, ExternalLink, Mail, Phone,
+  FileText, User, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../shared/LoadingSpinner';
@@ -28,6 +29,11 @@ const AdminJobs = () => {
   const [showJobModal, setShowJobModal] = useState(false);
   const [applications, setApplications] = useState([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
+  const [selectedApplicant, setSelectedApplicant] = useState(null);
+  const [showApplicantModal, setShowApplicantModal] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [expandedApplications, setExpandedApplications] = useState(new Set());
+  const [jobApplicationCounts, setJobApplicationCounts] = useState({});
 
   // Statistics
   const stats = {
@@ -54,11 +60,43 @@ const AdminJobs = () => {
       if (response.data.success) {
         setJobs(response.data.jobs);
         setFilteredJobs(response.data.jobs);
+        // Fetch application counts for each job
+        fetchApplicationCounts(response.data.jobs);
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchApplicationCounts = async (jobsList) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const counts = {};
+      
+      // Fetch application count for each job
+      await Promise.all(
+        jobsList.map(async (job) => {
+          try {
+            const response = await axios.get(`${ADMIN_API_END_POINT}/jobs/${job._id}/applications`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.data.success) {
+              counts[job._id] = response.data.applications.length;
+            } else {
+              counts[job._id] = 0;
+            }
+          } catch (error) {
+            console.error(`Error fetching applications for job ${job._id}:`, error);
+            counts[job._id] = 0;
+          }
+        })
+      );
+      
+      setJobApplicationCounts(counts);
+    } catch (error) {
+      console.error('Error fetching application counts:', error);
     }
   };
 
@@ -155,8 +193,150 @@ const AdminJobs = () => {
     fetchJobApplications(job._id);
   };
 
+  const handleViewApplications = (job) => {
+    setSelectedJob(job);
+    setShowJobModal(true);
+    fetchJobApplications(job._id);
+  };
+
   const handleViewJobDetails = (jobId) => {
     navigate(`/job/${jobId}?section=header`);
+  };
+
+  const handleViewApplicant = (applicant) => {
+    setSelectedApplicant(applicant);
+    setShowApplicantModal(true);
+  };
+
+  const toggleApplicationExpansion = (applicationId) => {
+    const newExpanded = new Set(expandedApplications);
+    if (newExpanded.has(applicationId)) {
+      newExpanded.delete(applicationId);
+    } else {
+      newExpanded.add(applicationId);
+    }
+    setExpandedApplications(newExpanded);
+  };
+
+  const getInitials = (name) => {
+    return name?.split(' ').map(word => word[0]).join('').toUpperCase().slice(0, 2) || 'U';
+  };
+
+  const downloadFile = async (url, filename) => {
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Download failed');
+      
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename || 'resume.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Download error:', error);
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.download = filename || 'resume.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    }
+  };
+
+  const generatePreviewUrl = (url) => {
+    if (!url) return null;
+    
+    try {
+      if (url.includes('cloudinary.com')) {
+        if (url.includes('/raw/upload/')) {
+          return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+        }
+        return url;
+      }
+      return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+    } catch (error) {
+      console.error('Error generating preview URL:', error);
+      return null;
+    }
+  };
+
+  const handlePreview = (url, filename) => {
+    if (!url) return;
+    
+    const previewUrl = generatePreviewUrl(url);
+    if (previewUrl) {
+      setPreviewUrl(previewUrl);
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
+  const getApplicationStats = () => {
+    if (!applications || applications.length === 0) {
+      return { total: 0, pending: 0, accepted: 0, rejected: 0 };
+    }
+    
+    const stats = {
+      total: applications.length,
+      pending: 0,
+      accepted: 0,
+      rejected: 0
+    };
+
+    applications.forEach(app => {
+      const status = (app.status || 'pending').toLowerCase();
+      if (status === 'pending') {
+        stats.pending++;
+      } else if (status === 'accepted') {
+        stats.accepted++;
+      } else if (status === 'rejected') {
+        stats.rejected++;
+      } else {
+        stats.pending++;
+      }
+    });
+
+    return stats;
+  };
+
+  const getStatusBadge = (status) => {
+    const statusLower = (status || 'pending').toLowerCase();
+    
+    const statusConfig = {
+      'pending': { 
+        variant: 'secondary', 
+        icon: Clock, 
+        color: 'bg-yellow-100 text-yellow-800',
+        displayText: 'Pending'
+      },
+      'accepted': { 
+        variant: 'default', 
+        icon: CheckCircle, 
+        color: 'bg-green-100 text-green-800',
+        displayText: 'Accepted'
+      },
+      'rejected': { 
+        variant: 'destructive', 
+        icon: XCircle, 
+        color: 'bg-red-100 text-red-800',
+        displayText: 'Rejected'
+      }
+    };
+
+    const config = statusConfig[statusLower] || statusConfig['pending'];
+    const IconComponent = config.icon;
+
+    return (
+      <Badge className={`${config.color} flex items-center gap-1 text-xs`}>
+        <IconComponent className="w-3 h-3" />
+        {config.displayText}
+      </Badge>
+    );
   };
 
   const formatDate = (dateString) => {
@@ -302,6 +482,7 @@ const AdminJobs = () => {
                         <TableHead className="text-left p-3 font-medium">Job Details</TableHead>
                         <TableHead className="text-left p-3 font-medium">Company</TableHead>
                         <TableHead className="text-left p-3 font-medium">Location & Salary</TableHead>
+                        <TableHead className="text-left p-3 font-medium">Applicants</TableHead>
                         <TableHead className="text-left p-3 font-medium">Status</TableHead>
                         <TableHead className="text-left p-3 font-medium">Posted Date</TableHead>
                         <TableHead className="text-left p-3 font-medium">Actions</TableHead>
@@ -333,6 +514,22 @@ const AdminJobs = () => {
                                 {formatSalary(job.salary)}
                               </div>
                             </div>
+                          </TableCell>
+                          <TableCell className="p-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-2 hover:bg-blue-50 hover:border-blue-300"
+                              onClick={() => handleViewApplications(job)}
+                            >
+                              <Users className="h-4 w-4 text-blue-600" />
+                              <span className="font-medium text-blue-600">
+                                {jobApplicationCounts[job._id] || 0}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {(jobApplicationCounts[job._id] || 0) === 1 ? 'applicant' : 'applicants'}
+                              </span>
+                            </Button>
                           </TableCell>
                           <TableCell className="p-3">
                             <Badge className={getStatusColor(job.status)}>
@@ -448,6 +645,19 @@ const AdminJobs = () => {
                             <Calendar className="h-4 w-4" />
                             {formatDate(job.createdAt)}
                           </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-1 hover:bg-blue-50"
+                              onClick={() => handleViewApplications(job)}
+                            >
+                              <Users className="h-3 w-3 text-blue-600" />
+                              <span className="text-blue-600 font-medium">
+                                {jobApplicationCounts[job._id] || 0} applicants
+                              </span>
+                            </Button>
+                          </div>
                         </div>
                         <div className="flex gap-2">
                           <Button
@@ -552,7 +762,16 @@ const AdminJobs = () => {
 
                 {/* Applications */}
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-4">Applications ({applications.length})</h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-gray-900">Applications ({applications.length})</h3>
+                    {applications.length > 0 && (
+                      <div className="flex gap-2 text-xs">
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded">Pending: {getApplicationStats().pending}</span>
+                        <span className="px-2 py-1 bg-green-100 text-green-800 rounded">Accepted: {getApplicationStats().accepted}</span>
+                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded">Rejected: {getApplicationStats().rejected}</span>
+                      </div>
+                    )}
+                  </div>
                   {loadingApplications ? (
                     <div className="flex justify-center py-8">
                       <LoadingSpinner />
@@ -563,30 +782,115 @@ const AdminJobs = () => {
                       No applications yet
                     </div>
                   ) : (
-                    <div className="space-y-3 max-h-60 overflow-y-auto">
+                    <div className="space-y-3 max-h-80 overflow-y-auto">
                       {applications.map((application) => (
-                        <div key={application._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-10 w-10">
-                              <AvatarImage src={application.applicant?.profilePhoto} />
-                              <AvatarFallback>
-                                {application.applicant?.fullname?.charAt(0) || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-medium text-sm">{application.applicant?.fullname || 'Unknown'}</div>
-                              <div className="text-xs text-gray-500">{application.applicant?.email}</div>
-                              <div className="text-xs text-gray-500">{application.applicant?.phoneNumber}</div>
+                        <div key={application._id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1">
+                              <Avatar className="h-12 w-12 cursor-pointer" onClick={() => handleViewApplicant(application)}>
+                                <AvatarImage src={application.applicant?.profile?.profilePhoto || application.applicant?.profilePhoto} />
+                                <AvatarFallback className="bg-blue-100 text-blue-600 font-semibold">
+                                  {getInitials(application.applicant?.fullname)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <h4 className="font-medium text-gray-900 cursor-pointer hover:text-blue-600" onClick={() => handleViewApplicant(application)}>
+                                    {application.applicant?.fullname || 'Unknown'}
+                                  </h4>
+                                  {getStatusBadge(application.status)}
+                                </div>
+                                <div className="flex items-center gap-4 text-sm text-gray-600">
+                                  <div className="flex items-center gap-1">
+                                    <Mail className="w-3 h-3" />
+                                    <span className="truncate">{application.applicant?.email}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Phone className="w-3 h-3" />
+                                    <span>{application.applicant?.phoneNumber}</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Calendar className="w-3 h-3" />
+                                    <span>Applied {formatDate(application.createdAt)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {application.applicant?.profile?.resume && (
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handlePreview(application.applicant.profile.resume, application.applicant?.profile?.resumeOriginalName)}
+                                    className="text-xs"
+                                  >
+                                    <Eye className="w-3 h-3 mr-1" />
+                                    Preview
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => downloadFile(application.applicant.profile.resume, application.applicant?.profile?.resumeOriginalName || 'resume.pdf')}
+                                    className="text-blue-600 hover:text-blue-800 text-xs"
+                                  >
+                                    <Download className="w-3 h-3 mr-1" />
+                                    Download
+                                  </Button>
+                                </div>
+                              )}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleViewApplicant(application)}
+                                className="text-xs"
+                              >
+                                <User className="w-3 h-3 mr-1" />
+                                View Profile
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => toggleApplicationExpansion(application._id)}
+                              >
+                                {expandedApplications.has(application._id) ? (
+                                  <ChevronUp className="w-4 h-4" />
+                                ) : (
+                                  <ChevronDown className="w-4 h-4" />
+                                )}
+                              </Button>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <div className="text-xs text-gray-500">
-                              Applied {formatDate(application.createdAt)}
+                          
+                          {expandedApplications.has(application._id) && (
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <h5 className="font-medium text-gray-900 mb-2">Contact Information</h5>
+                                  <div className="space-y-1 text-gray-600">
+                                    <div><span className="font-medium">Email:</span> {application.applicant?.email || 'N/A'}</div>
+                                    <div><span className="font-medium">Phone:</span> {application.applicant?.phoneNumber || 'N/A'}</div>
+                                  </div>
+                                </div>
+                                <div>
+                                  <h5 className="font-medium text-gray-900 mb-2">Application Details</h5>
+                                  <div className="space-y-1 text-gray-600">
+                                    <div><span className="font-medium">Status:</span> {application.status || 'Pending'}</div>
+                                    <div><span className="font-medium">Applied:</span> {formatDate(application.createdAt)}</div>
+                                    {application.rejectionReason && (
+                                      <div><span className="font-medium">Rejection Reason:</span> {application.rejectionReason}</div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              {application.applicant?.profile?.bio && (
+                                <div className="mt-4">
+                                  <h5 className="font-medium text-gray-900 mb-2">Bio</h5>
+                                  <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded">{application.applicant.profile.bio}</p>
+                                </div>
+                              )}
                             </div>
-                            <Badge variant="outline" className="mt-1">
-                              {application.status || 'pending'}
-                            </Badge>
-                          </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -600,6 +904,160 @@ const AdminJobs = () => {
                 Close
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Applicant Profile Modal */}
+        <Dialog open={showApplicantModal} onOpenChange={setShowApplicantModal}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                <User className="w-5 h-5" />
+                Applicant Profile - {selectedApplicant?.applicant?.fullname || 'Unknown'}
+              </DialogTitle>
+            </DialogHeader>
+            
+            {selectedApplicant && (
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div className="flex items-start gap-6">
+                  <Avatar className="h-20 w-20 border-4 border-gray-200">
+                    <AvatarImage 
+                      src={selectedApplicant.applicant?.profile?.profilePhoto || selectedApplicant.applicant?.profilePhoto} 
+                      alt={selectedApplicant.applicant?.fullname} 
+                    />
+                    <AvatarFallback className="bg-blue-100 text-blue-600 font-bold text-xl">
+                      {getInitials(selectedApplicant.applicant?.fullname)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                      {selectedApplicant.applicant?.fullname || 'Unknown'}
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Mail className="w-4 h-4" />
+                        <span>{selectedApplicant.applicant?.email || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Phone className="w-4 h-4" />
+                        <span>{selectedApplicant.applicant?.phoneNumber || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Calendar className="w-4 h-4" />
+                        <span>Applied {formatDate(selectedApplicant.createdAt)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(selectedApplicant.status)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Profile Information</h4>
+                      <div className="space-y-2 text-sm">
+                        {selectedApplicant.applicant?.profile?.bio && (
+                          <div>
+                            <span className="font-medium text-gray-700">Bio:</span>
+                            <p className="text-gray-600 mt-1 bg-gray-50 p-3 rounded">{selectedApplicant.applicant.profile.bio}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Application Status</h4>
+                      <div className="space-y-2 text-sm">
+                        <div><span className="font-medium">Status:</span> {selectedApplicant.status || 'Pending'}</div>
+                        <div><span className="font-medium">Applied Date:</span> {formatDate(selectedApplicant.createdAt)}</div>
+                        {selectedApplicant.rejectionReason && (
+                          <div>
+                            <span className="font-medium">Rejection Reason:</span>
+                            <p className="text-red-600 mt-1">{selectedApplicant.rejectionReason}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resume Section */}
+                {selectedApplicant.applicant?.profile?.resume && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-4">Resume</h4>
+                    <div className="flex gap-3 mb-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => handlePreview(selectedApplicant.applicant.profile.resume, selectedApplicant.applicant?.profile?.resumeOriginalName)}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        Preview Resume
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => downloadFile(selectedApplicant.applicant.profile.resume, selectedApplicant.applicant?.profile?.resumeOriginalName || 'resume.pdf')}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Resume
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open(selectedApplicant.applicant.profile.resume, '_blank')}
+                      >
+                        <ExternalLink className="w-4 h-4 mr-2" />
+                        Open in New Tab
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowApplicantModal(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Resume Preview Modal */}
+        <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
+          <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0">
+            <DialogHeader className="p-4 pb-2 border-b">
+              <DialogTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Resume Preview
+              </DialogTitle>
+              <div className="flex gap-2 mt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setPreviewUrl(null)}
+                >
+                  Close Preview
+                </Button>
+              </div>
+            </DialogHeader>
+            <div className="w-full h-[calc(90vh-120px)] bg-gray-50 relative">
+              {previewUrl && (
+                <iframe 
+                  src={previewUrl} 
+                  title="Resume Preview" 
+                  width="100%" 
+                  height="100%" 
+                  className="border-0 rounded-md"
+                  sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+                  loading="lazy"
+                />
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>

@@ -1,16 +1,11 @@
 
-
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { setUser } from './redux/authSlice';
 import './utils/axiosInterceptor';
 import { authUtils } from './utils/authUtils';
-
-// Shared Layout
 import Layout from './components/shared/Layout';
-
-// Pages
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import Home from './components/Home';
@@ -23,8 +18,6 @@ import BlogPage from './components/BlogPage';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
 import BlockedAccount from './components/BlockedAccount';
-
-// Admin
 import Companies from './components/admin/Companies';
 import CompanySetup from './components/admin/CompanySetup';
 import AdminJobs from "./components/admin/AdminJobs";
@@ -162,7 +155,7 @@ const appRouter = createBrowserRouter([
     )
   },
 
-  // ✅ Employer Routes (still with Layout, so they see Navbar/Footer)
+
   {
     path: "/employer/profile/:id",
     element: (
