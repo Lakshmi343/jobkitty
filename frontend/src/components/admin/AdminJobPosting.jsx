@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Textarea } from '../ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import axios from 'axios';
-import { CATEGORY_API_END_POINT } from '../../utils/constant';
+import { CATEGORY_API_END_POINT, ADMIN_API_END_POINT } from '../../utils/constant';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Briefcase, MapPin, DollarSign, Building, FileText, ArrowLeft, Plus, CheckCircle, X, Users, Upload, Image } from 'lucide-react';
@@ -196,10 +196,11 @@ const AdminJobPosting = () => {
             // Get admin token
             const adminToken = localStorage.getItem('adminToken') || localStorage.getItem('token');
             
-            const response = await axios.post('/api/v1/admin/post-job', formData, {
+            const response = await axios.post(`${ADMIN_API_END_POINT}/post-job`, formData, {
                 headers: {
                     'Authorization': `Bearer ${adminToken}`
-                }
+                },
+                withCredentials: true
             });
             
             if (response.data.success) {
