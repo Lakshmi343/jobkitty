@@ -43,7 +43,11 @@ export const postJob = async (req, res) => {
         const defaultRequirements = ["No specific requirements"];
         const defaultSalary = { min: 0, max: 0 };
         const defaultExperience = { min: 0, max: 5 };
-        const defaultLocation = "Remote";
+        const defaultLocation = {
+            state: "Tamil Nadu",
+            district: "Chennai",
+            legacy: "Remote"
+        };
         const defaultJobType = "Full-time";
         const defaultExperienceLevel = "Entry Level";
         const defaultPosition = 1;
@@ -70,7 +74,11 @@ export const postJob = async (req, res) => {
                 min: experience && experience.min !== undefined ? Number(experience.min) : 0,
                 max: experience && experience.max !== undefined ? Number(experience.max) : 5
             },
-            location: location || defaultLocation,
+            location: location ? {
+                state: location.state || defaultLocation.state,
+                district: location.district || defaultLocation.district,
+                legacy: location.legacy || `${location.district || defaultLocation.district}, ${location.state || defaultLocation.state}`
+            } : defaultLocation,
             jobType: jobType || defaultJobType,
             experienceLevel: experienceLevel || defaultExperienceLevel,
             position: position ? Number(position) : defaultPosition,
@@ -125,9 +133,15 @@ export const getAllJobs = async (req, res) => {
             });
         }
 
-        // Location filter (case-insensitive)
+        // Location filter (case-insensitive) - search in both state, district, and legacy fields
         if (location) {
-            conditions.push({ location: { $regex: location, $options: "i" } });
+            conditions.push({
+                $or: [
+                    { "location.state": { $regex: location, $options: "i" } },
+                    { "location.district": { $regex: location, $options: "i" } },
+                    { "location.legacy": { $regex: location, $options: "i" } }
+                ]
+            });
         }
 
         // Job type filter (case-insensitive)

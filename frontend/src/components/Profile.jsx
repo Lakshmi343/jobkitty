@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "./shared/Navbar";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
@@ -11,6 +11,8 @@ import UpdateProfileDialog from "./UpdateProfileDialog";
 import AppliedJobTable from "./AppliedJobTable";
 import IframePdfViewer from "./IframePdfViewer";
 import useGetAppliedJobs from "../hooks/useGetAppliedJobs";
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { AlertCircle } from 'lucide-react';
 
 import axios from "axios";
 
@@ -20,11 +22,36 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const { user } = useSelector((store) => store.auth);
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   
   
   useGetAppliedJobs();
 
+  const isProfileComplete = useMemo(() => {
+    const hasPhone = Boolean(user?.phoneNumber);
+    const hasResume = Boolean(user?.profile?.resume);
+    return hasPhone && hasResume;
+  }, [user]);
+
  
+  useEffect(() => {
+    // Open edit dialog if requested via query param
+    if (searchParams.get('edit') === '1') {
+      setOpen(true);
+    }
+
+    // If returning from profile update to continue application
+    const pending = localStorage.getItem('pendingJobApplication');
+    if (pending) {
+      const data = JSON.parse(pending);
+      if (isProfileComplete && data.returnUrl) {
+        // Navigate back to job page; JobDescription will show confirm dialog
+        navigate(data.returnUrl, { replace: true });
+      }
+    }
+  }, [searchParams, isProfileComplete, navigate]);
+
   useEffect(() => {
     if (user?.role === "Jobseeker") {
     
@@ -67,12 +94,35 @@ const Profile = () => {
         <div className="min-h-screen bg-gray-50">
           <div className="max-w-6xl mx-auto p-3 sm:p-6">
     
+            {/* Pending application banner */}
+            {(() => {
+              const pending = typeof window !== 'undefined' ? localStorage.getItem('pendingJobApplication') : null;
+              if (pending && !isProfileComplete) {
+                const data = JSON.parse(pending);
+                return (
+                  <div className="mb-4 p-3 sm:p-4 border border-amber-300 bg-amber-50 rounded-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 text-amber-800 text-sm">
+                      <AlertCircle className="w-4 h-4" />
+                      <span>Finish your profile to continue applying to "{data.jobTitle}"</span>
+                    </div>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <Button variant="outline" onClick={() => setOpen(true)} size="sm">Update Profile</Button>
+                      {isProfileComplete && data.returnUrl && (
+                        <Button size="sm" onClick={() => navigate(data.returnUrl)}>Continue Applying</Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             <Card className="shadow-md border border-gray-200 mb-4 sm:mb-6">
               <CardHeader className="bg-white p-4 sm:p-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-6">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 w-full sm:w-auto">
                     <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-2 border-gray-300 mx-auto sm:mx-0">
-                      <AvatarImage src={user?.profile?.profilePhoto} alt="Profile Photo" />
+                      <AvatarImage src={user?.profile?.profilePhoto} alt="Profile Photo" style={{objectFit:"contain"}} />
                     </Avatar>
                     <div className="text-center sm:text-left w-full sm:w-auto">
                       <CardTitle className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">{user?.fullname}</CardTitle>

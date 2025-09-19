@@ -4,7 +4,11 @@ const companySchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
   description: { type: String },
   website: { type: String },
+  // Legacy single-string location
   location: { type: String },
+  // New multi-district support
+  state: { type: String },
+  districts: [{ type: String }],
   companyType: { 
     type: String,
     enum: [

@@ -1,21 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { toast } from 'sonner';
 import axios from 'axios';
 import { ADMIN_API_END_POINT } from '../../utils/constant';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
-import { Input } from '../ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
-import { 
-  Briefcase, Search, MoreHorizontal, CheckCircle, XCircle, Eye, Trash2, Clock,
-  TrendingUp, Users, Building, MapPin, DollarSign, Calendar, Filter,
-  RefreshCw, Download, Edit2, AlertTriangle, Star, Plus
-} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Badge } from '../ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
+import { 
+  Edit, Eye, Trash2, Search, MapPin, DollarSign, Users, Calendar, Briefcase, 
+  CheckCircle, XCircle, Clock, AlertCircle, MoreHorizontal, TrendingUp, 
+  Building, Filter, RefreshCw, Download, Edit2, AlertTriangle, Star, Plus
+} from 'lucide-react';
+import AdminLayout from './AdminLayout';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import { formatLocationForDisplay, getLocationSearchString } from '../../utils/locationUtils';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "../ui/table";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "../ui/popover";
+
 
 const AdminJobs = () => {
   const navigate = useNavigate();
@@ -47,7 +63,12 @@ const AdminJobs = () => {
 
   const fetchJobs = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        console.error('No admin token found');
+        toast.error('Authentication required. Please login again.');
+        return;
+      }
       const response = await axios.get(`${ADMIN_API_END_POINT}/jobs`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -57,6 +78,13 @@ const AdminJobs = () => {
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        localStorage.removeItem('adminToken');
+        navigate('/admin/login');
+      } else {
+        toast.error('Failed to fetch jobs. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -69,7 +97,7 @@ const AdminJobs = () => {
       filtered = filtered.filter(job =>
         job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         job.company?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.location?.toLowerCase().includes(searchTerm.toLowerCase())
+        getLocationSearchString(job.location).includes(searchTerm.toLowerCase())
       );
     }
 
@@ -91,7 +119,7 @@ const AdminJobs = () => {
 
   const handleStatusUpdate = async (jobId, newStatus) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
       let reason = '';
       let violationType = '';
       
@@ -135,7 +163,7 @@ const AdminJobs = () => {
     if (!window.confirm('Are you sure you want to remove this job? This action cannot be undone.')) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
       const response = await axios.delete(`${ADMIN_API_END_POINT}/jobs/${jobId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -154,7 +182,7 @@ const AdminJobs = () => {
   const fetchJobApplications = async (jobId) => {
     setLoadingApplications(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken');
       const response = await axios.get(`${ADMIN_API_END_POINT}/jobs/${jobId}/applications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -323,6 +351,7 @@ const AdminJobs = () => {
                         <TableHead className="text-left p-3 font-medium">Location & Salary</TableHead>
                         <TableHead className="text-left p-3 font-medium">Status</TableHead>
                         <TableHead className="text-left p-3 font-medium">Posted Date</TableHead>
+                        <TableHead className="text-left p-3 font-medium">Applicants</TableHead>
                         <TableHead className="text-left p-3 font-medium">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -345,7 +374,7 @@ const AdminJobs = () => {
                             <div className="space-y-1">
                               <div className="flex items-center gap-1 text-sm text-gray-600">
                                 <MapPin className="h-3 w-3" />
-                                {job.location || 'Remote'}
+                                {formatLocationForDisplay(job.location)}
                               </div>
                               <div className="flex items-center gap-1 text-sm text-gray-600">
                                 <DollarSign className="h-3 w-3" />
@@ -365,6 +394,17 @@ const AdminJobs = () => {
                             </div>
                           </TableCell>
                           <TableCell className="p-3">
+                            <div className="flex items-center gap-2 text-sm text-gray-700">
+                              <Users className="h-4 w-4 text-gray-500" />
+                              <Badge variant="secondary" className="text-xs">
+                                {Array.isArray(job?.applications) ? job.applications.length : (job?.applicationsCount || 0)}
+                              </Badge>
+                              <Button variant="ghost" size="sm" className="h-8 px-2 text-blue-600" onClick={() => navigate(`/admin/applications?jobId=${job._id}`)}>
+                                View
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell className="p-3">
                             <Popover>
                               <PopoverTrigger asChild>
                                 <Button variant="ghost" size="sm">
@@ -373,32 +413,39 @@ const AdminJobs = () => {
                               </PopoverTrigger>
                               <PopoverContent className="w-48" align="end">
                                 <div className="space-y-1">
-                                <Button
-      variant="ghost"
-      size="sm"
-      className="w-full justify-start"
-      onClick={() => navigate(`/job/${job._id}`)}
-    >
-      <Eye className="h-4 w-4 mr-2" />
-      View Details
-    </Button>
-                                  {job.createdByAdmin && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="w-full justify-start text-blue-600 hover:text-blue-700"
-                                      onClick={() => navigate(`/admin/jobs/${job._id}/edit`)}
-                                    >
-                                      <Edit2 className="h-4 w-4 mr-2" />
-                                      Edit Job
-                                    </Button>
-                                  )}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => navigate(`/job/${job._id}`)}
+                                  >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start"
+                                    onClick={() => navigate(`/admin/applications?jobId=${job._id}`)}
+                                  >
+                                    <Users className="h-4 w-4 mr-2" />
+                                    View Applicants
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="w-full justify-start text-blue-600 hover:text-blue-700"
+                                    onClick={() => navigate(`/admin/jobs/${job._id}/edit`)}
+                                  >
+                                    <Edit2 className="h-4 w-4 mr-2" />
+                                    Edit Job
+                                  </Button>
                                   {job.status !== 'approved' && (
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       className="w-full justify-start text-green-600 hover:text-green-700"
-                                      onClick={() => handleStatusUpdate(job._id, 'approved')}
+                                      onClick={() => handleStatusUpdate(job._id, 'approved', 'adminToken')}
                                     >
                                       <CheckCircle className="h-4 w-4 mr-2" />
                                       Approve
@@ -409,18 +456,18 @@ const AdminJobs = () => {
                                       variant="ghost"
                                       size="sm"
                                       className="w-full justify-start text-red-600 hover:text-red-700"
-                                      onClick={() => handleStatusUpdate(job._id, 'rejected')}
+                                      onClick={() => handleStatusUpdate(job._id, 'rejected', 'adminToken')}
                                     >
                                       <XCircle className="h-4 w-4 mr-2" />
                                       Reject
                                     </Button>
                                   )}
-                               
+                                  
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     className="w-full justify-start text-red-600 hover:text-red-700"
-                                    onClick={() => handleDeleteJob(job._id)}
+                                    onClick={() => handleDeleteJob(job._id, 'adminToken')}
                                   >
                                     <Trash2 className="h-4 w-4 mr-2" />
                                     Remove Job
@@ -451,7 +498,7 @@ const AdminJobs = () => {
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <MapPin className="h-4 w-4" />
-                            {job.location || 'Remote'}
+                            {formatLocationForDisplay(job.location)}
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <DollarSign className="h-4 w-4" />

@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react'
+
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Edit2, Eye, MoreHorizontal, Calendar, Building, MapPin, Users, Clock } from 'lucide-react'
+import { formatLocationForDisplay } from '../../utils/locationUtils'
+
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
@@ -18,9 +21,11 @@ const AdminJobsTable = () => {
             if (!searchJobByText) {
                 return true;
             }
-            return job?.title?.toLowerCase().includes(searchJobByText.toLowerCase()) || 
-                   job?.company?.name?.toLowerCase().includes(searchJobByText.toLowerCase()) ||
-                   job?.location?.toLowerCase().includes(searchJobByText.toLowerCase());
+            const q = searchJobByText.toLowerCase();
+            const title = job?.title?.toLowerCase() || '';
+            const company = job?.company?.name?.toLowerCase() || '';
+            const locationStr = (typeof job?.location === 'object' ? formatLocationForDisplay(job?.location) : job?.location || '').toLowerCase();
+            return title.includes(q) || company.includes(q) || locationStr.includes(q);
         });
         setFilterJobs(filteredJobs);
     }, [allAdminJobs, searchJobByText]);
@@ -68,6 +73,7 @@ const AdminJobsTable = () => {
                         <TableHead className="font-semibold text-gray-900">Company & Position</TableHead>
                         <TableHead className="font-semibold text-gray-900">Location</TableHead>
                         <TableHead className="font-semibold text-gray-900">Posted Date</TableHead>
+                        <TableHead className="font-semibold text-gray-900">Applicants</TableHead>
                         <TableHead className="font-semibold text-gray-900">Status</TableHead>
                         <TableHead className="font-semibold text-gray-900 text-right">Actions</TableHead>
                     </TableRow>
@@ -97,13 +103,29 @@ const AdminJobsTable = () => {
                             <TableCell>
                                 <div className="flex items-center gap-1 text-gray-600">
                                     <MapPin className="w-4 h-4" />
-                                    <span className="text-sm">{job?.location || 'Remote'}</span>
+                                    <span className="text-sm">{typeof job?.location === 'object' ? formatLocationForDisplay(job?.location) : (job?.location || 'Remote')}</span>
                                 </div>
                             </TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-1 text-gray-600">
                                     <Calendar className="w-4 h-4" />
                                     <span className="text-sm">{formatDate(job?.createdAt)}</span>
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex items-center gap-2 text-gray-600">
+                                    <Users className="w-4 h-4" />
+                                    <Badge variant="secondary" className="text-xs">
+                                        {Array.isArray(job?.applications) ? job.applications.length : (job?.applicationsCount || 0)}
+                                    </Badge>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 px-2 text-blue-600"
+                                        onClick={() => navigate(`/admin/applications?jobId=${job._id}`)}
+                                    >
+                                        View
+                                    </Button>
                                 </div>
                             </TableCell>
                             <TableCell>
@@ -122,7 +144,7 @@ const AdminJobsTable = () => {
                                                 variant="ghost"
                                                 size="sm"
                                                 className="w-full justify-start gap-2 h-9"
-                                                onClick={() => navigate(`/employer/jobs/${job._id}/edit`)}
+                                                onClick={() => navigate(`/admin/jobs/${job._id}/edit`)}
                                             >
                                                 <Edit2 className="w-4 h-4" />
                                                 Edit Job
@@ -131,7 +153,7 @@ const AdminJobsTable = () => {
                                                 variant="ghost"
                                                 size="sm"
                                                 className="w-full justify-start gap-2 h-9"
-                                                onClick={() => navigate(`/employer/jobs/${job._id}/applicants`)}
+                                                onClick={() => navigate(`/admin/applications?jobId=${job._id}`)}
                                             >
                                                 <Eye className="w-4 h-4" />
                                                 View Applicants

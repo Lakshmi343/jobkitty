@@ -10,11 +10,20 @@ const jobSlice = createSlice({
         allAppliedJobs:[],
         searchedQuery:"",
         filters:{
-            location:"",
+            // Hydrate preferred location from localStorage if available
+            location: (() => {
+                try {
+                    return localStorage.getItem('preferredLocation') || "";
+                } catch (e) {
+                    return "";
+                }
+            })(),
             jobType:"",
             salaryRange:"",
             experienceRange:"",
-            categoryId:""
+            categoryId:"",
+            companyType:"",
+            datePosted:"" // e.g., '24h', '7d', '14d', '30d'
         }
     },
     reducers:{

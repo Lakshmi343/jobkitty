@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { toast } from 'sonner';
 import { ADMIN_API_END_POINT } from '../../utils/constant';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -60,14 +61,39 @@ const AdminUsers = () => {
     if (!window.confirm('Are you sure you want to remove this user? This action cannot be undone.')) return;
     try {
       const token = localStorage.getItem('adminToken');
-      const res = await axios.delete(`${ADMIN_API_END_POINT}/users/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
+      // Determine if this is an admin account from our cached list
+      const target = users.find(u => u._id === userId);
+      const isAdminAccount = target ? !['Jobseeker','Employer'].includes(target.role) : false;
+      const url = isAdminAccount
+        ? `${ADMIN_API_END_POINT}/admins/${userId}`
+        : `${ADMIN_API_END_POINT}/users/${userId}`;
+      const res = await axios.delete(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {}
       });
       if (res.data.success) {
         setUsers(prev => prev.filter(u => u._id !== userId));
+        toast.success(isAdminAccount ? 'Admin deleted successfully' : 'User deleted successfully');
       }
     } catch (err) {
+      // If we tried deleting as user and got 404, retry as admin
+      const triedUsersEndpoint = err?.config?.url?.includes('/users/');
+      if (triedUsersEndpoint && err?.response?.status === 404) {
+        try {
+          const token = localStorage.getItem('adminToken');
+          const retryRes = await axios.delete(`${ADMIN_API_END_POINT}/admins/${userId}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {}
+          });
+          if (retryRes.data.success) {
+            setUsers(prev => prev.filter(u => u._id !== userId));
+            toast.success('Admin deleted successfully');
+            return;
+          }
+        } catch (retryErr) {
+          console.error(retryErr);
+        }
+      }
       console.error(err);
+      toast.error(err?.response?.data?.message || 'Failed to delete. Please try again.');
     }
   };
 

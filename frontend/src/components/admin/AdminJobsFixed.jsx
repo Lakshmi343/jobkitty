@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { toast } from 'sonner';
 import axios from 'axios';
-import { ADMIN_API_END_POINT } from '../../utils/constant';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { JOB_API_END_POINT } from '../../utils/constant';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
+import { Badge } from '../ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Edit, Eye, Trash2, Search, MapPin, DollarSign, Users, Calendar, Briefcase, CheckCircle, XCircle, Clock, AlertCircle, ExternalLink } from 'lucide-react';
+import AdminLayout from './AdminLayout';
+import LoadingSpinner from '../shared/LoadingSpinner';
+import { useNavigate } from 'react-router-dom';
+import { formatLocationForDisplay, getLocationSearchString } from '../../utils/locationUtils';
 import { 
   Briefcase, Search, MoreHorizontal, CheckCircle, XCircle, Eye, Trash2, Clock,
   TrendingUp, Users, Building, MapPin, DollarSign, Calendar, Filter,
@@ -54,6 +57,11 @@ const AdminJobs = () => {
   const fetchJobs = async () => {
     try {
       const token = localStorage.getItem('adminToken');
+      if (!token) {
+        console.error('No admin token found');
+        toast.error('Authentication required. Please login again.');
+        return;
+      }
       const response = await axios.get(`${ADMIN_API_END_POINT}/jobs`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -65,6 +73,13 @@ const AdminJobs = () => {
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        localStorage.removeItem('adminToken');
+        navigate('/admin/login');
+      } else {
+        toast.error('Failed to fetch jobs. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -107,7 +122,7 @@ const AdminJobs = () => {
       filtered = filtered.filter(job =>
         job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         job.company?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.location?.toLowerCase().includes(searchTerm.toLowerCase())
+        getLocationSearchString(job.location).includes(searchTerm.toLowerCase())
       );
     }
 
@@ -507,7 +522,7 @@ const AdminJobs = () => {
                             <div className="space-y-1">
                               <div className="flex items-center gap-1 text-sm text-gray-600">
                                 <MapPin className="h-3 w-3" />
-                                {job.location || 'Remote'}
+                                {formatLocationForDisplay(job.location)}
                               </div>
                               <div className="flex items-center gap-1 text-sm text-gray-600">
                                 <DollarSign className="h-3 w-3" />
@@ -635,7 +650,7 @@ const AdminJobs = () => {
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <MapPin className="h-4 w-4" />
-                            {job.location || 'Remote'}
+                            {formatLocationForDisplay(job.location)}
                           </div>
                           <div className="flex items-center gap-2 text-sm text-gray-600">
                             <DollarSign className="h-4 w-4" />

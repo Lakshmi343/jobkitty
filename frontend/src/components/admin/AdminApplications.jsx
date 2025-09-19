@@ -1,11 +1,15 @@
 
 
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_END_POINT } from '../../utils/constant';
+import { getLocationSearchString } from '../../utils/locationUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { 
   FileText, 
   Users, 
@@ -28,7 +32,9 @@ import {
   ChevronRight,
   Mail,
   Phone,
-  User
+  User,
+  MoreHorizontal,
+  ArrowLeft
 } from 'lucide-react';
 
 const KERALA_DISTRICTS = [
@@ -47,6 +53,8 @@ const AdminApplications = () => {
     jobTitle: '',
     applicantEmail: ''
   });
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [keralaOnly, setKeralaOnly] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -54,10 +62,13 @@ const AdminApplications = () => {
     totalApplications: 0
   });
 
+  // Read jobId from query params and keep it in sync
+  const jobIdFromQuery = searchParams.get('jobId');
+
   useEffect(() => {
     fetchApplications();
     fetchStats();
-  }, [filters, pagination.currentPage]);
+  }, [filters, pagination.currentPage, jobIdFromQuery]);
 
   const fetchApplications = async () => {
     try {
@@ -65,7 +76,8 @@ const AdminApplications = () => {
       const params = new URLSearchParams({
         page: pagination.currentPage,
         limit: 9, // Changed to 9 to fit 3x3 grid
-        ...filters
+        ...filters,
+        ...(jobIdFromQuery ? { jobId: jobIdFromQuery } : {})
       });
 
       const response = await axios.get(`${ADMIN_API_END_POINT}/applications?${params}`, {
@@ -186,7 +198,10 @@ const AdminApplications = () => {
 
   const displayedApplications = useMemo(() => {
     if (!keralaOnly) return applications;
-    return applications.filter((app) => app.job?.location && KERALA_DISTRICTS.includes(app.job.location));
+    return applications.filter((app) => {
+      const locationString = getLocationSearchString(app.job?.location);
+      return KERALA_DISTRICTS.some(district => locationString.includes(district.toLowerCase()));
+    });
   }, [applications, keralaOnly]);
 
   if (loading) {
@@ -208,6 +223,10 @@ const AdminApplications = () => {
               <p className="text-gray-600 mt-2">Manage and review all job applications across the platform.</p>
             </div>
             <div className="flex items-center gap-4">
+              <Button variant="outline" onClick={() => navigate(-1)}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
               <Button onClick={() => { fetchApplications(); fetchStats(); }} variant="outline">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Refresh
@@ -218,6 +237,12 @@ const AdminApplications = () => {
               </Button>
             </div>
           </div>
+          {jobIdFromQuery && (
+            <div className="mt-3 flex items-center justify-between bg-blue-50 border border-blue-200 rounded p-2 text-sm text-blue-800">
+              <div>Filtered by Job ID: <span className="font-mono">{jobIdFromQuery}</span></div>
+              <Button size="sm" variant="ghost" onClick={() => navigate('/admin/applications')}>Clear filter</Button>
+            </div>
+          )}
         </div>
 
         {/* Stats Cards */}
@@ -318,7 +343,7 @@ const AdminApplications = () => {
           </CardContent>
         </Card>
 
-        {/* Applications Grid */}
+        {/* Applications Table */}
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Applications ({keralaOnly ? displayedApplications.length : pagination.totalApplications})</h2>
@@ -356,92 +381,109 @@ const AdminApplications = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {displayedApplications.map((application) => (
-                <Card 
-                  key={application._id} 
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedApplication?._id === application._id ? 'ring-2 ring-blue-500' : ''
-                  }`}
-                  onClick={() => setSelectedApplication(application)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg line-clamp-1">{application.job?.title}</CardTitle>
-                      <Badge className={getStatusColor(application.status)}>
-                        <span className="flex items-center gap-1">
-                          {getStatusIcon(application.status)}
-                          {application.status}
-                        </span>
-                      </Badge>
-                    </div>
-                    <div className="flex items-center text-sm text-gray-500 mt-1">
-                      <Building2 className="h-4 w-4 mr-1" />
-                      <span className="line-clamp-1">{application.job?.company?.name}</span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="flex items-center text-sm">
-                        <User className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="font-medium">{application.applicant?.fullname}</span>
-                      </div>
-                      <div className="flex items-center text-sm">
-                        <Mail className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="truncate">{application.applicant?.email}</span>
-                      </div>
-                      <div className="flex items-center text-sm">
-                        <MapPin className="h-4 w-4 mr-2 text-gray-500" />
-                        <span>{application.job?.location}</span>
-                      </div>
-                      <div className="flex items-center text-sm">
-                        <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                        <span>Applied: {formatDate(application.createdAt)}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex justify-between mt-4 pt-3 border-t">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedApplication(application);
-                        }}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                      <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="h-9 w-9 p-0 text-green-600 hover:text-green-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateApplicationStatus(application._id, 'accepted');
-                          }}
-                          title="Accept Application"
-                        >
-                          <CheckCircle className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="h-9 w-9 p-0 text-red-600 hover:text-red-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            updateApplicationStatus(application._id, 'rejected');
-                          }}
-                          title="Reject Application"
-                        >
-                          <XCircle className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            <div className="overflow-x-auto bg-white rounded border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Applicant</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Job</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Applied On</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayedApplications.map((application) => (
+                    <TableRow key={application._id} className="hover:bg-gray-50">
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{application.applicant?.fullname || 'N/A'}</span>
+                          <span className="text-xs text-gray-500">ID: {application.applicant?._id?.slice(0,8)}...</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="text-gray-700 flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-gray-500" />
+                            <span className="truncate max-w-[220px]">{application.applicant?.email || '—'}</span>
+                          </div>
+                          <div className="text-gray-700 flex items-center gap-2 mt-1">
+                            <Phone className="h-4 w-4 text-gray-500" />
+                            <span>{application.applicant?.phoneNumber || '—'}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          <div className="text-gray-900 font-medium line-clamp-1">{application.job?.title}</div>
+                          <div className="text-gray-600 flex items-center gap-1">
+                            <Building2 className="h-3.5 w-3.5" />
+                            <span className="line-clamp-1">{application.job?.company?.name}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={`${getStatusColor(application.status)} border`}>{application.status}</Badge>
+                      </TableCell>
+                      <TableCell>{formatDate(application.createdAt)}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button size="sm" variant="outline" onClick={() => setSelectedApplication(application)}>
+                            <Eye className="h-4 w-4 mr-1" /> View
+                          </Button>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-44 p-2" align="end">
+                              <div className="space-y-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-full justify-start text-green-600"
+                                  onClick={() => updateApplicationStatus(application._id, 'accepted')}
+                                  disabled={application.status==='accepted'}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" /> Accept
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-full justify-start text-yellow-600"
+                                  onClick={() => updateApplicationStatus(application._id, 'pending')}
+                                  disabled={application.status==='pending'}
+                                >
+                                  <Clock className="h-4 w-4 mr-2" /> Mark Pending
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-full justify-start text-red-600"
+                                  onClick={() => updateApplicationStatus(application._id, 'rejected')}
+                                  disabled={application.status==='rejected'}
+                                >
+                                  <XCircle className="h-4 w-4 mr-2" /> Reject
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="w-full justify-start text-red-600"
+                                  onClick={() => deleteApplication(application._id)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" /> Delete
+                                </Button>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           )}
         </div>
@@ -451,7 +493,17 @@ const AdminApplications = () => {
           <div className="fixed inset-y-0 right-0 w-full lg:w-1/3 bg-white shadow-lg z-10 overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold">Application Details</h2>
+                <div className="flex items-center gap-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setSelectedApplication(null)}
+                  >
+                    <ArrowLeft className="h-4 w-4 mr-2" />
+                    Back
+                  </Button>
+                  <h2 className="text-2xl font-bold">Application Details</h2>
+                </div>
                 <Button 
                   variant="ghost" 
                   size="sm"

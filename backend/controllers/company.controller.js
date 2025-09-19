@@ -121,13 +121,28 @@ export const updateCompany = async (req, res) => {
             description, 
             website, 
             location, 
-            companyType, 
             experience: experience ? Number(experience) : undefined,
             contactEmail,
             contactPhone,
             foundedYear: foundedYear ? Number(foundedYear) : undefined,
             numberOfEmployees: numberOfEmployees ? Number(numberOfEmployees) : undefined
         };
+
+        // Validate and set companyType only when non-empty and valid per enum
+        if (companyType !== undefined) {
+            const trimmedType = String(companyType).trim();
+            if (trimmedType) {
+                const allowedCompanyTypes = Company.schema.path('companyType')?.enumValues || [];
+                if (!allowedCompanyTypes.includes(trimmedType)) {
+                    return res.status(400).json({
+                        message: `Invalid companyType. Allowed values are: ${allowedCompanyTypes.join(', ')}`,
+                        success: false
+                    });
+                }
+                updateData.companyType = trimmedType;
+            }
+            // If empty string, omit updating companyType to keep existing value
+        }
 
         if (file) {
             try {

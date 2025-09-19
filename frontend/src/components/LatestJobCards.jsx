@@ -1,12 +1,11 @@
-import React from 'react'
-import { Badge } from './ui/badge'
-import { Button } from './ui/button'
-import { useNavigate } from 'react-router-dom'
-import { ExternalLink } from 'lucide-react'
+ import React from 'react'
+ import { Badge } from './ui/badge'
+ import { Button } from './ui/button'
+ import { useNavigate } from 'react-router-dom'
+ import { ExternalLink } from 'lucide-react'
 
-const LatestJobCards = ({job}) => {
+ const LatestJobCards = ({job}) => {
     const navigate = useNavigate();
-    
     const handleViewDetails = (e) => {
         e.stopPropagation();
         navigate(`/job/${job._id}?section=header`);
@@ -23,7 +22,8 @@ const LatestJobCards = ({job}) => {
                 <p className='text-xs md:text-sm text-gray-600 line-clamp-3'>{job?.description}</p>
             </div>
             <div className='flex flex-wrap items-center gap-1 md:gap-2 mt-3 md:mt-4'>
-                <Badge className={'text-blue-700 font-bold text-xs md:text-sm'} variant="ghost">{job?.position} Positions</Badge>
+                <Badge className={'text-blue-700 font-bold text-xs md:text-sm'} variant="ghost">{job?.
+openings} Positions</Badge>
                 <Badge className={'text-[#F83002] font-bold text-xs md:text-sm'} variant="ghost">{job?.jobType}</Badge>
                 <Badge className={'text-[#7209b7] font-bold text-xs md:text-sm'} variant="ghost">{typeof job?.salary === 'object' ? `${job?.salary?.min}-${job?.salary?.max} LPA` : `${job?.salary} LPA`}</Badge>
             </div>

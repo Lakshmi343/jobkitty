@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { JOB_API_END_POINT } from '../../utils/constant';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
@@ -9,8 +10,10 @@ import { Button } from '../ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog'
 import { Edit2, MoreHorizontal, ShieldCheck, ShieldAlert, Trash2, Building, Calendar, Briefcase, MapPin, Globe, Users } from 'lucide-react'
 import LoadingSpinner from '../shared/LoadingSpinner'
+import { formatLocationForDisplay } from '../../utils/locationUtils'
 
 const CompaniesTable = ({ companies = [], loading = false, onEdit, onUpdateStatus, onDelete }) => {
+	const navigate = useNavigate();
 	const [selectedCompany, setSelectedCompany] = useState(null)
 	const [companyJobs, setCompanyJobs] = useState([])
 	const [jobsLoading, setJobsLoading] = useState(false)
@@ -137,6 +140,15 @@ const CompaniesTable = ({ companies = [], loading = false, onEdit, onUpdateStatu
 														variant="ghost"
 														size="sm"
 														className="w-full justify-start gap-2 h-9"
+														onClick={() => navigate(`/admin/job-posting?companyId=${company._id}`)}
+													>
+														<Briefcase className="w-4 h-4" />
+														Post Job
+													</Button>
+													<Button
+														variant="ghost"
+														size="sm"
+														className="w-full justify-start gap-2 h-9"
 														onClick={() => onEdit?.(company._id)}
 													>
 														<Edit2 className="w-4 h-4" />
@@ -207,12 +219,15 @@ const CompaniesTable = ({ companies = [], loading = false, onEdit, onUpdateStatu
 								</div>
 								<Badge className={status.className}>{status.label}</Badge>
 							</div>
-							<div className="flex items-center gap-2 mt-3">
+							<div className="flex items-center gap-2 mt-3 flex-wrap">
 								<Button size="sm" variant="secondary" onClick={() => handleViewCompany(company)}>
 									View Details
 								</Button>
 								<Button size="sm" variant="outline" onClick={() => onEdit?.(company._id)}>
 									Edit
+								</Button>
+								<Button size="sm" variant="outline" onClick={() => navigate(`/admin/job-posting?companyId=${company._id}`)}>
+									Post Job
 								</Button>
 								{status.label !== 'Active' && (
 									<Button size="sm" variant="outline" onClick={() => onUpdateStatus?.(company._id, 'approved')}>
@@ -343,7 +358,7 @@ const CompaniesTable = ({ companies = [], loading = false, onEdit, onUpdateStatu
 														<h5 className="font-semibold text-gray-900">{String(job.title || 'Untitled Job')}</h5>
 														<p className="text-sm text-gray-600 mt-1">{String(job.description || 'No description').slice(0, 100)}...</p>
 														<div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
-															<span>📍 {String(job.location || 'N/A')}</span>
+															<span>📍 {formatLocationForDisplay(job.location) || 'N/A'}</span>
 															<span>💰 {String(job.salary || 'N/A')} LPA</span>
 															<span>📅 {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'N/A'}</span>
 														</div>

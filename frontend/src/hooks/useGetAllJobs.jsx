@@ -15,7 +15,9 @@ const useGetAllJobs = () => {
                     dispatch(setAllJobs(res.data.jobs));
                 }
             } catch (error) {
-                console.log(error);
+                console.error('Error fetching jobs:', error);
+                // Don't show error toast for job fetching as it's used in background
+                // The component will handle empty state gracefully
             }
         }
         fetchAllJobs();

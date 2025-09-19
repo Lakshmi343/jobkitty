@@ -14,7 +14,7 @@ import cloudinary from '../utils/cloudinary.js';
 import axios from 'axios';
 import { sendAdminPasswordResetEmail } from '../utils/emailService.js';
 
-// Helper function to log admin activity
+
 const logActivity = async (adminId, action, target, targetId, details) => {
   try {
     await Admin.findByIdAndUpdate(adminId, {
@@ -33,7 +33,7 @@ const logActivity = async (adminId, action, target, targetId, details) => {
   }
 };
 
-// Get all jobseekers
+
 export const getAllJobseekers = async (req, res) => {
   try {
     const jobseekers = await User.find({ role: 'jobseeker' })
@@ -47,7 +47,7 @@ export const getAllJobseekers = async (req, res) => {
   }
 };
 
-// Get all employers
+
 export const getAllEmployers = async (req, res) => {
   try {
     const employers = await User.find({ role: 'employer' })
@@ -461,32 +461,29 @@ export const deleteUser = async (req, res) => {
       return res.status(404).json({ message: 'User not found', success: false });
     }
 
-    // If user is an employer, cascade delete their company and job posts
+   
     if (user.role === 'employer') {
-      // Find and delete company registered by this employer
+     
       const company = await Company.findOne({ userId: userId });
       if (company) {
-        // Delete all jobs posted by this company
+       
         await Job.deleteMany({ company: company._id });
+                await Application.deleteMany({ job: { $in: await Job.find({ company: company._id }).select('_id') } });
         
-        // Delete all applications for jobs from this company
-        await Application.deleteMany({ job: { $in: await Job.find({ company: company._id }).select('_id') } });
-        
-        // Delete the company
+       
         await Company.findByIdAndDelete(company._id);
       }
       
-      // Delete any jobs directly created by this user
+     
       await Job.deleteMany({ created_by: userId });
     }
     
-    // Delete all applications made by this user (if jobseeker)
+ 
     await Application.deleteMany({ applicant: userId });
     
-    // Finally delete the user
     await User.findByIdAndDelete(userId);
     
-    // Log activity
+
     await logActivity(admin._id, 'user_deleted', 'user', userId, `${user.role} ${user.fullname} deleted with cascade`);
 
     res.status(200).json({ 
@@ -523,7 +520,7 @@ export const getUserResume = async (req, res) => {
   }
 };
 
-// Job Management
+
 export const getAllJobs = async (req, res) => {
   try {
     const jobs = await Job.find().populate('company').sort({ createdAt: -1 });
@@ -545,7 +542,6 @@ export const approveJob = async (req, res) => {
       return res.status(404).json({ message: 'Job not found', success: false });
     }
 
-    // Log activity
     await logActivity(admin._id, 'job_approved', 'job', jobId, `Job "${job.title}" approved`);
 
     res.status(200).json({ message: 'Job approved successfully', success: true, job });
@@ -571,7 +567,7 @@ export const rejectJob = async (req, res) => {
       return res.status(404).json({ message: 'Job not found', success: false });
     }
 
-    // Log activity
+
     await logActivity(admin._id, 'job_rejected', 'job', jobId, `Job "${job.title}" rejected: ${reason}`);
 
     res.status(200).json({ message: 'Job rejected successfully', success: true, job });
@@ -597,7 +593,6 @@ export const deleteJob = async (req, res) => {
   }
 };
 
-// Admin: Get single job by ID
 export const getJobByIdAdmin = async (req, res) => {
   try {
     const { jobId } = req.params;
@@ -612,7 +607,7 @@ export const getJobByIdAdmin = async (req, res) => {
   }
 };
 
-// Admin: Update job details
+
 export const updateJobDetailsAdmin = async (req, res) => {
   try {
     const { jobId } = req.params;
@@ -644,7 +639,41 @@ export const updateJobDetailsAdmin = async (req, res) => {
     }
     if (salary !== undefined) updateData.salary = Number(salary);
     if (experienceLevel !== undefined) updateData.experienceLevel = Number(experienceLevel);
-    if (location !== undefined) updateData.location = location;
+    if (location !== undefined) {
+      const normalizeLocation = (loc, fallback) => {
+        const defaultState = 'Tamil Nadu';
+        const defaultDistrict = 'Chennai';
+        const keralaDistricts = [
+          'Thiruvananthapuram','Kollam','Pathanamthitta','Alappuzha','Kottayam','Idukki','Ernakulam','Thrissur','Palakkad','Malappuram','Kozhikode','Wayanad','Kannur','Kasaragod'
+        ];
+        const build = (state, district, legacyVal) => ({
+          state: state || defaultState,
+          district: district || defaultDistrict,
+          legacy: legacyVal || `${district || defaultDistrict}, ${state || defaultState}`
+        });
+        if (!loc) {
+          if (typeof fallback === 'string' && fallback.trim()) return build(undefined, undefined, fallback.trim());
+          if (fallback && typeof fallback === 'object') return build(fallback.state, fallback.district, fallback.legacy);
+          return build();
+        }
+        if (typeof loc === 'object') return build(loc.state, loc.district, loc.legacy);
+        if (typeof loc === 'string') {
+          const trimmed = loc.trim();
+          if (!trimmed) return build();
+          if (trimmed.includes(',')) {
+            const parts = trimmed.split(',').map(s => s.trim()).filter(Boolean);
+            const district = parts[0] || defaultDistrict;
+            const state = parts[1] || (keralaDistricts.includes(district) ? 'Kerala' : defaultState);
+            return build(state, district, trimmed);
+          }
+          const district = trimmed;
+          const state = keralaDistricts.includes(district) ? 'Kerala' : defaultState;
+          return build(state, district, `${district}, ${state}`);
+        }
+        return build();
+      };
+      updateData.location = normalizeLocation(location, existingJob.location);
+    }
     if (jobType !== undefined) updateData.jobType = jobType;
     if (position !== undefined) updateData.position = Number(position);
     if (openings !== undefined) updateData.openings = Number(openings);
@@ -658,7 +687,7 @@ export const updateJobDetailsAdmin = async (req, res) => {
   }
 };
 
-// Company Management
+
 export const getAllCompanies = async (req, res) => {
   try {
     const companies = await Company.find().sort({ createdAt: -1 });
@@ -666,6 +695,108 @@ export const getAllCompanies = async (req, res) => {
   } catch (error) {
     console.error('Get companies error:', error);
     res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+// Admin - Create a company
+export const createCompanyAdmin = async (req, res) => {
+  try {
+    const adminId = req.id;
+    const { name, description, website, location, state, districts, companyType, numberOfEmployees, contactEmail, contactPhone, foundedYear } = req.body;
+
+    // For admin, keep it minimal: only name is required
+    if (!name) {
+      return res.status(400).json({ message: 'Name is required', success: false });
+    }
+
+    const existing = await Company.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+    if (existing) {
+      return res.status(409).json({ message: 'Company with this name already exists', success: false });
+    }
+
+    // Optional logo upload
+    let logoUrl = '';
+    if (req.file) {
+      try {
+        const fileUri = getDataUri(req.file);
+        const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
+        logoUrl = cloudResponse.secure_url;
+      } catch (err) {
+        console.error('Admin create company - logo upload error:', err);
+        return res.status(500).json({ message: 'Failed to upload logo', success: false });
+      }
+    }
+
+    // Normalize optional fields safely
+    // Location in schema is String; if object provided, derive a readable string
+    const normalizedLocation = (() => {
+      if (!location) return undefined;
+      if (typeof location === 'string') return location;
+      try {
+        // If location came as JSON string from multipart form, try parse
+        if (typeof location === 'object') {
+          const state = location.state || '';
+          const district = location.district || '';
+          const legacy = location.legacy || '';
+          return legacy || [district, state].filter(Boolean).join(', ');
+        }
+        const parsed = JSON.parse(location);
+        const state = parsed.state || '';
+        const district = parsed.district || '';
+        const legacy = parsed.legacy || '';
+        return legacy || [district, state].filter(Boolean).join(', ');
+      } catch {
+        return String(location);
+      }
+    })();
+
+    // Parse state and districts allowing JSON strings from FormData
+    const parsedState = state && typeof state === 'string' ? state : (typeof state === 'object' ? state.state : undefined);
+    let parsedDistricts;
+    if (Array.isArray(districts)) {
+      parsedDistricts = districts.filter(Boolean);
+    } else if (typeof districts === 'string') {
+      try {
+        const d = JSON.parse(districts);
+        parsedDistricts = Array.isArray(d) ? d.filter(Boolean) : undefined;
+      } catch {
+        // Comma-separated fallback
+        parsedDistricts = districts.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+
+    // Only set a valid enum companyType
+    let sanitizedCompanyType = undefined;
+    if (companyType) {
+      const allowedTypes = Company.schema.path('companyType')?.enumValues || [];
+      if (allowedTypes.includes(companyType)) {
+        sanitizedCompanyType = companyType;
+      }
+      // else ignore invalid value
+    }
+
+    const company = await Company.create({
+      name,
+      description: description || '',
+      website: website || '',
+      location: normalizedLocation, // optional legacy string
+      state: parsedState,
+      districts: parsedDistricts,
+      companyType: sanitizedCompanyType,
+      numberOfEmployees: numberOfEmployees ? Number(numberOfEmployees) : undefined,
+      contactEmail,
+      contactPhone,
+      foundedYear: foundedYear ? Number(foundedYear) : undefined,
+      logo: logoUrl,
+      userId: adminId,
+      createdByAdmin: true,
+      status: 'active'
+    });
+
+    return res.status(201).json({ success: true, message: 'Company created successfully', company });
+  } catch (error) {
+    console.error('Admin create company error:', error);
+    return res.status(500).json({ message: 'Server error', success: false });
   }
 };
 
@@ -727,9 +858,24 @@ export const updateCompanyDetailsAdmin = async (req, res) => {
       description,
       website,
       location,
-      companyType,
       experience: experience ? Number(experience) : existingCompany.experience
     };
+
+  
+    if (companyType !== undefined) {
+      const trimmedType = String(companyType).trim();
+      if (trimmedType) {
+        const allowedCompanyTypes = Company.schema.path('companyType')?.enumValues || [];
+        if (!allowedCompanyTypes.includes(trimmedType)) {
+          return res.status(400).json({
+            message: `Invalid companyType. Allowed values are: ${allowedCompanyTypes.join(', ')}`,
+            success: false
+          });
+        }
+        updateData.companyType = trimmedType;
+      }
+      
+    }
 
     if (file) {
       try {
@@ -764,7 +910,7 @@ export const deleteCompany = async (req, res) => {
   }
 };
 
-// Category Management
+
 export const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find().sort({ createdAt: -1 });
@@ -831,13 +977,12 @@ export const deleteCategory = async (req, res) => {
   }
 };
 
-// Admin Job Posting with Company Creation
 export const postJobAdmin = async (req, res) => {
   try {
-    // Handle both JSON and FormData
+
     let jobDetails;
     if (req.body.jobData) {
-      // FormData with file upload
+    
       jobDetails = JSON.parse(req.body.jobData);
     } else {
       // Regular JSON
@@ -846,11 +991,13 @@ export const postJobAdmin = async (req, res) => {
     
     const { 
       company: companyData,
+      companyId,
       title, 
       description, 
       requirements, 
       salary, 
       location, 
+      locationMulti,
       jobType, 
       position, 
       openings,
@@ -860,17 +1007,17 @@ export const postJobAdmin = async (req, res) => {
     const adminId = req.id;
     const { admin } = req;
     
-    // Validate required fields
-    if (!title || !description || !category || !companyData) {
+    // Validate required fields (support either companyId OR companyData)
+    if (!title || !description || !category) {
       return res.status(400).json({ 
-        message: "Job title, description, category, and company details are required", 
+        message: "Job title, description and category are required", 
         success: false 
       });
     }
     
-    if (!companyData.name || !companyData.description || !companyData.location) {
+    if (!companyId && !companyData) {
       return res.status(400).json({ 
-        message: "Company name, description, and location are required", 
+        message: "Either companyId or company details are required", 
         success: false 
       });
     }
@@ -900,39 +1047,74 @@ export const postJobAdmin = async (req, res) => {
       }
     }
     
-    // Create or find company
+    // Resolve company based on companyId or companyData
     let company;
-    const existingCompany = await Company.findOne({ 
-      name: { $regex: new RegExp(`^${companyData.name}$`, 'i') }
-    });
-    
-    if (existingCompany) {
-      company = existingCompany;
-      // Update logo if new one is uploaded
+    if (companyId) {
+      company = await Company.findById(companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found', success: false });
+      }
+      // Optionally update logo if a new one is uploaded as part of this request
       if (logoUrl) {
         company.logo = logoUrl;
         await company.save();
       }
     } else {
-      // Create new company
-      company = await Company.create({
-        name: companyData.name,
-        description: companyData.description,
-        website: companyData.website || '',
-        location: companyData.location,
-        logo: logoUrl,
-        userId: adminId, // Link to admin who created it
-        createdByAdmin: true
+      // Backward compatibility: create or find by companyData
+      if (!companyData.name || !companyData.description || !companyData.location) {
+        return res.status(400).json({ 
+          message: "Company name, description, and location are required", 
+          success: false 
+        });
+      }
+      const existingCompany = await Company.findOne({ 
+        name: { $regex: new RegExp(`^${companyData.name}$`, 'i') }
       });
+      if (existingCompany) {
+        company = existingCompany;
+        if (logoUrl) {
+          company.logo = logoUrl;
+          await company.save();
+        }
+      } else {
+        company = await Company.create({
+          name: companyData.name,
+          description: companyData.description,
+          website: companyData.website || '',
+          location: companyData.location,
+          logo: logoUrl,
+          userId: adminId,
+          createdByAdmin: true
+        });
+      }
     }
     
     // Set default values for missing fields
     const defaultRequirements = requirements && requirements.length > 0 ? requirements : ["No specific requirements"];
     const defaultSalary = salary || { min: 0, max: 0 };
-    const defaultLocation = location || companyData.location;
+    const defaultLocation = location ? {
+        state: location.state || "Tamil Nadu",
+        district: location.district || "Chennai",
+        legacy: location.legacy || `${location.district || "Chennai"}, ${location.state || "Tamil Nadu"}`
+    } : {
+        state: "Tamil Nadu",
+        district: "Chennai", 
+        legacy: (company?.location || (companyData && companyData.location)) || "Chennai, Tamil Nadu"
+    };
     const defaultJobType = jobType || "Full-time";
     const defaultPosition = position ? Number(position) : 1;
     const defaultOpenings = openings ? Number(openings) : 1;
+    // Normalize optional locationMulti (prefer payload; else fallback to company state/districts)
+    let normalizedLocationMulti = undefined;
+    if (locationMulti && typeof locationMulti === 'object') {
+      const lmState = locationMulti.state || company?.state;
+      const lmDistricts = Array.isArray(locationMulti.districts) ? locationMulti.districts.filter(Boolean) : company?.districts;
+      if (lmState && Array.isArray(lmDistricts) && lmDistricts.length) {
+        normalizedLocationMulti = { state: lmState, districts: lmDistricts };
+      }
+    } else if (company && company.state && Array.isArray(company.districts) && company.districts.length) {
+      normalizedLocationMulti = { state: company.state, districts: company.districts };
+    }
     
     // Create job with admin as creator
     const job = await Job.create({
@@ -944,6 +1126,7 @@ export const postJobAdmin = async (req, res) => {
         max: defaultSalary.max ? Number(defaultSalary.max) : 0
       },
       location: defaultLocation,
+      locationMulti: normalizedLocationMulti,
       jobType: defaultJobType,
       position: defaultPosition,
       openings: defaultOpenings,
@@ -951,10 +1134,10 @@ export const postJobAdmin = async (req, res) => {
       category,   
       created_by: adminId,
       createdByAdmin: true,
-      status: 'approved' // Admin jobs are auto-approved
+      status: 'approved' 
     });
     
-    // Log activity
+
     await logActivity(adminId, 'job_created_admin', 'job', job._id, `Admin job "${job.title}" created for company "${company.name}"`);
     
     return res.status(201).json({
@@ -973,7 +1156,7 @@ export const postJobAdmin = async (req, res) => {
   }
 };
 
-// Get single job for editing (admin only)
+
 export const getJobForEdit = async (req, res) => {
   try {
     const { jobId } = req.params;
@@ -990,14 +1173,8 @@ export const getJobForEdit = async (req, res) => {
       });
     }
     
-    // Check if job was created by admin
-    if (!job.createdByAdmin) {
-      return res.status(403).json({ 
-        message: "You can only edit jobs created by admin", 
-        success: false 
-      });
-    }
-    
+
+
     return res.status(200).json({
       message: "Job retrieved successfully",
       job,
@@ -1051,15 +1228,7 @@ export const updateJobAdmin = async (req, res) => {
       });
     }
     
-    // Check if job was created by admin
-    if (!job.createdByAdmin) {
-      return res.status(403).json({ 
-        message: "You can only edit jobs created by admin", 
-        success: false 
-      });
-    }
-    
-    // Validate required fields
+
     if (!title || !description || !category || !companyData) {
       return res.status(400).json({ 
         message: "Job title, description, category, and company details are required", 
@@ -1104,7 +1273,12 @@ export const updateJobAdmin = async (req, res) => {
       if (logoUrl) {
         company.logo = logoUrl;
       }
-      
+      // Sanitize companyType: skip/clear invalid or empty values so enum validation won't fail
+      const allowedCompanyTypes = Company.schema.path('companyType')?.enumValues || [];
+      if (company.companyType === '' || (company.companyType && !allowedCompanyTypes.includes(company.companyType))) {
+        company.companyType = undefined;
+      }
+
       await company.save();
     }
     
@@ -1116,7 +1290,50 @@ export const updateJobAdmin = async (req, res) => {
       min: salary.min ? Number(salary.min) : 0,
       max: salary.max ? Number(salary.max) : 0
     };
-    job.location = location || companyData.location;
+    // Normalize location to match Job schema { state, district, legacy }
+    const normalizeLocation = (loc, fallback) => {
+      const defaultState = 'Tamil Nadu';
+      const defaultDistrict = 'Chennai';
+      const keralaDistricts = [
+        'Thiruvananthapuram','Kollam','Pathanamthitta','Alappuzha','Kottayam','Idukki','Ernakulam','Thrissur','Palakkad','Malappuram','Kozhikode','Wayanad','Kannur','Kasaragod'
+      ];
+
+      const build = (state, district, legacyVal) => ({
+        state: state || defaultState,
+        district: district || defaultDistrict,
+        legacy: legacyVal || `${district || defaultDistrict}, ${state || defaultState}`
+      });
+
+      if (!loc) {
+        if (typeof fallback === 'string' && fallback.trim()) return build(undefined, undefined, fallback.trim());
+        if (fallback && typeof fallback === 'object') return build(fallback.state, fallback.district, fallback.legacy);
+        return build();
+      }
+
+      if (typeof loc === 'object') {
+        return build(loc.state, loc.district, loc.legacy);
+      }
+
+      if (typeof loc === 'string') {
+        const trimmed = loc.trim();
+        if (!trimmed) return build();
+        // If "District, State"
+        if (trimmed.includes(',')) {
+          const parts = trimmed.split(',').map(s => s.trim()).filter(Boolean);
+          const district = parts[0] || defaultDistrict;
+          const state = parts[1] || (keralaDistricts.includes(district) ? 'Kerala' : defaultState);
+          return build(state, district, trimmed);
+        }
+        // Single token: try to infer state based on known districts
+        const district = trimmed;
+        const state = keralaDistricts.includes(district) ? 'Kerala' : defaultState;
+        return build(state, district, `${district}, ${state}`);
+      }
+
+      return build();
+    };
+
+    job.location = normalizeLocation(location, companyData.location);
     job.jobType = jobType || "Full-time";
     job.position = position ? Number(position) : 1;
     job.openings = openings ? Number(openings) : 1;
@@ -1319,7 +1536,7 @@ export const resolveReport = async (req, res) => {
   }
 };
 
-// Enhanced User Monitoring
+
 export const getUserActivity = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -1619,7 +1836,9 @@ export const deleteAdmin = async (req, res) => {
     const { admin: currentAdmin } = req;
 
     // Check if current admin has permission to delete other admins
-    if (!currentAdmin.permissions?.includes('admin_management') && currentAdmin.role !== 'super_admin') {
+    const perms = currentAdmin?.permissions || [];
+    const canManage = currentAdmin.role === 'super_admin' || perms.includes('all') || perms.includes('manage_users');
+    if (!canManage) {
       return res.status(403).json({ message: 'Insufficient permissions', success: false });
     }
 
@@ -1636,6 +1855,14 @@ export const deleteAdmin = async (req, res) => {
     // Prevent deletion of super admin by non-super admin
     if (adminToDelete.role === 'super_admin' && currentAdmin.role !== 'super_admin') {
       return res.status(403).json({ message: 'Cannot delete super admin', success: false });
+    }
+
+    // Do not allow deleting the last remaining super_admin
+    if (adminToDelete.role === 'super_admin') {
+      const superAdminCount = await Admin.countDocuments({ role: 'super_admin' });
+      if (superAdminCount <= 1) {
+        return res.status(400).json({ message: 'Cannot delete the last remaining super admin', success: false });
+      }
     }
 
     await Admin.findByIdAndDelete(adminId);
@@ -1659,8 +1886,10 @@ export const toggleAdminStatus = async (req, res) => {
     const { isActive } = req.body;
     const { admin: currentAdmin } = req;
 
-    // Check permissions
-    if (!currentAdmin.permissions?.includes('admin_management') && currentAdmin.role !== 'super_admin') {
+    // Check permissions (same policy as deleteAdmin)
+    const perms = currentAdmin?.permissions || [];
+    const canManage = currentAdmin.role === 'super_admin' || perms.includes('all') || perms.includes('manage_users');
+    if (!canManage) {
       return res.status(403).json({ message: 'Insufficient permissions', success: false });
     }
 

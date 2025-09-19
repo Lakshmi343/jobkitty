@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { setSearchedQuery, setJobFilters } from '@/redux/jobSlice'
 import { MapPin, Building, DollarSign } from 'lucide-react'
 import axios from 'axios'
@@ -11,6 +11,7 @@ const SALARY = ["0-40k","42-1lakh","1lakh to 5lakh","5lakh+"]
 const EXPERIENCE = ["0-1 years","1-3 years","3-5 years","5+ years"]
 
 const FilterCard = () => {
+    const { filters } = useSelector((store) => store.job)
     const [location, setLocation] = useState('')
     const [role, setRole] = useState('')
     const [salary, setSalary] = useState('')
@@ -32,6 +33,13 @@ const FilterCard = () => {
         fetchCategories()
     },[])
 
+    // Hydrate local state from Redux (which itself hydrates from localStorage)
+    useEffect(() => {
+        if (!location && filters?.location) {
+            setLocation(filters.location)
+        }
+    }, [filters?.location])
+
     const query = useMemo(() => {
         // Only include role in search query, other filters are handled separately
         return role || ''
@@ -41,6 +49,19 @@ const FilterCard = () => {
         dispatch(setSearchedQuery(query))
         dispatch(setJobFilters({ location, jobType, salaryRange: salary, experienceRange: experience, categoryId }))
     }, [query, location, jobType, salary, experience, categoryId, dispatch]);
+
+    // Persist preferred location so it works across pages/sessions
+    useEffect(() => {
+        try {
+            if (location) {
+                localStorage.setItem('preferredLocation', location)
+            } else {
+                localStorage.removeItem('preferredLocation')
+            }
+        } catch (e) {
+            // ignore storage errors (e.g., private mode)
+        }
+    }, [location])
 
     const clearAll = ()=>{
         setLocation(''); setRole(''); setSalary(''); setJobType(''); setExperience(''); setCategoryId('')

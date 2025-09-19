@@ -23,6 +23,7 @@ import {
     updateCompanyDetailsAdmin,
     updateCompanyStatus,
     deleteCompany,
+    createCompanyAdmin,
     getAllCategories,
     createCategory,
     updateCategory,
@@ -91,6 +92,7 @@ router.put('/jobs/:jobId/edit', adminAuth, singleUpload, updateJobAdmin);
 
 
 router.get('/companies', adminAuth, getAllCompanies);
+router.post('/companies', adminAuth, singleUpload, createCompanyAdmin);
 router.get('/companies/:companyId', adminAuth, getCompanyByIdAdmin);
 router.patch('/companies/:companyId/status', adminAuth, updateCompanyStatus);
 router.put('/companies/:companyId', adminAuth, singleUpload, updateCompanyDetailsAdmin);

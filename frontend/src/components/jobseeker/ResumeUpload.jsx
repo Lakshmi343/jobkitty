@@ -6,18 +6,20 @@ import { Label } from '../ui/label';
 import { toast } from 'sonner';
 import { FileText, Upload, Loader2 } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { setUser } from '@/redux/authSlice';
 
-const ResumeUpload = () => {
+const ResumeUpload = ({ onSuccess }) => {
     const [file, setFile] = useState(null);
     const [loading, setLoading] = useState(false);
     const { user } = useSelector(store => store.auth);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
         if (selectedFile) {
-            // Check file type
+        
             const fileType = selectedFile.type;
             if (fileType !== 'application/pdf' && 
                 fileType !== 'application/msword' && 
@@ -26,7 +28,7 @@ const ResumeUpload = () => {
                 return;
             }
             
-            // Check file size (5MB max)
+           
             if (selectedFile.size > 5 * 1024 * 1024) {
                 toast.error('File size should be less than 5MB');
                 return;
@@ -49,6 +51,13 @@ const ResumeUpload = () => {
             return;
         }
         
+        // Ensure authenticated
+        if (!user) {
+            toast.info('Please login to upload your resume');
+            navigate('/login');
+            return;
+        }
+
         setLoading(true);
         
         const formData = new FormData();
@@ -66,10 +75,18 @@ const ResumeUpload = () => {
                 toast.success('Resume uploaded successfully');
                 setFile(null);
                 await refreshUser();
+                if (typeof onSuccess === 'function') {
+                    onSuccess();
+                }
             }
         } catch (error) {
             console.error('Resume upload error:', error);
-            toast.error(error.response?.data?.message || 'Failed to upload resume');
+            if (error.response?.status === 401) {
+                toast.error('Your session expired. Please login again.');
+                navigate('/login');
+            } else {
+                toast.error(error.response?.data?.message || 'Failed to upload resume');
+            }
         } finally {
             setLoading(false);
         }

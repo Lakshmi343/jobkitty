@@ -48,7 +48,7 @@ const Navbar = () => {
                   className="flex items-center"
                   onClick={() => window.scrollTo(0, 0)}
                 >
-                    <img src={logo} alt="logo" style={{ width: "150px" }} />
+                    <img src={logo} alt="logo" style={{ width: "150px",objectFit:"contain" }} />
                 </Link>
 
                 {/* Mobile Menu Button */}

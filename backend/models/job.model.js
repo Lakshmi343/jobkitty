@@ -32,9 +32,27 @@ const jobSchema = new mongoose.Schema({
         default: 1
     },
     location: {
-        type: String,
-        required: true,
-        default: "Remote"
+        state: {
+            type: String,
+            required: true,
+            enum: ['Tamil Nadu', 'Kerala', 'Telangana', 'Andhra Pradesh', 'Karnataka'],
+            default: "Tamil Nadu"
+        },
+        district: {
+            type: String,
+            required: true,
+            default: "Chennai"
+        },
+        // Keep legacy location field for backward compatibility
+        legacy: {
+            type: String,
+            default: "Remote"
+        }
+    },
+    // Optional multi-district support (backward compatible)
+    locationMulti: {
+        state: { type: String },
+        districts: [{ type: String }]
     },
 
     jobType: {

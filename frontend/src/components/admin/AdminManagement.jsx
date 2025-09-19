@@ -464,16 +464,7 @@ const AdminManagement = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleToggleStatus(admin._id, admin.isActive)}
-                        className={admin.isActive ? 'text-red-600 hover:text-red-700' : 'text-green-600 hover:text-green-700'}
-                      >
-                        {admin.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                        {admin.isActive ? 'Deactivate' : 'Activate'}
-                      </Button>
+                    <div className="flex items-center space-x-2 flex-wrap">
                       <Button
                         size="sm"
                         variant="outline"

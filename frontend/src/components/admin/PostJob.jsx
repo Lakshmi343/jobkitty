@@ -13,6 +13,7 @@ import { JOB_API_END_POINT, CATEGORY_API_END_POINT, USER_API_END_POINT } from '.
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Briefcase, MapPin,  DollarSign, Clock, Users,  Building,  FileText,ArrowLeft,Plus,CheckCircle, AlertCircle, X} from 'lucide-react';
+import LocationSelector from '../ui/LocationSelector';
 import LoadingSpinner from '../shared/LoadingSpinner';
 
 const locations = [
@@ -276,7 +277,13 @@ const PostJob = () => {
                                 </div>
                                 <div>
                                     <Label>Job Description</Label>
-                                    <Textarea name="description" value={input.description} onChange={changeEventHandler} placeholder="Describe the role and responsibilities" />
+                                    <Textarea 
+                                      name="description" 
+                                      value={input.description} 
+                                      onChange={changeEventHandler} 
+                                      placeholder="Describe the role and responsibilities"
+                                      className="min-h-[320px] resize-y"
+                                    />
                                 </div>
                                 <div>
                                     <Label>Requirements* (Point-based format)</Label>
@@ -330,23 +337,14 @@ const PostJob = () => {
         <CardContent className='mt-4 space-y-6'>
             <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                    <Label>Location</Label>
-                    <Select
-                        name="location"
-                        value={input.location}
-                        onValueChange={(value) => selectChangeHandler("location", value)}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select a location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectGroup>
-                                {locations.map(loc => (
-                                    <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                                ))}
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
+                    <LocationSelector
+                      label="Location"
+                      value={input.location}
+                      onChange={(value) => selectChangeHandler("location", value)}
+                      required={true}
+                      placeholder="Select location"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Supported states: Tamil Nadu, Kerala, Telangana, Andhra Pradesh, Karnataka</p>
                 </div>
                 <div>
                     <Label>Job Type</Label>

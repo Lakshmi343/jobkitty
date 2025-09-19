@@ -1,20 +1,19 @@
-
-
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { toast } from 'sonner';
 import axios from 'axios';
 import { JOB_API_END_POINT } from '../../utils/constant';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
-import { Briefcase, Search, MoreHorizontal, CheckCircle, XCircle, Eye, Trash2, Clock, Edit, Users, Plus, Filter, ChevronDown, BarChart3, DollarSign, MapPin, Calendar } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../ui/dropdown-menu';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { Badge } from '../ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Edit, Eye, Trash2, Search, Plus, MapPin, DollarSign, Users, Calendar, Briefcase, ExternalLink, CheckCircle, XCircle, Clock, Filter, ChevronDown, BarChart3, MoreHorizontal } from 'lucide-react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '../ui/dropdown-menu';
 import Navbar from '../shared/Navbar';
-import { useSelector } from 'react-redux';
 import Footer from '../shared/Footer';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import { formatLocationForDisplay, getLocationSearchString } from '../../utils/locationUtils';
 
 const EmployerJobs = () => {
   const { user } = useSelector(store => store.auth);
@@ -36,7 +35,7 @@ const EmployerJobs = () => {
   useEffect(() => {
     let filtered = jobs.filter(job =>
       job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getLocationSearchString(job.location).includes(searchTerm.toLowerCase()) ||
       job.requirements?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -76,6 +75,8 @@ const EmployerJobs = () => {
       if (response.data.success) {
         setJobs(response.data.jobs);
         setFilteredJobs(response.data.jobs);
+      } else {
+        toast.error('Failed to fetch jobs');
       }
     } catch (error) {
       console.error('Error fetching employer jobs:', error);
@@ -399,7 +400,7 @@ const EmployerJobs = () => {
                               <div className="space-y-1">
                                 <div className="flex items-center text-sm text-gray-600">
                                   <MapPin className="h-4 w-4 mr-1" />
-                                  {job.location}
+                                  {formatLocationForDisplay(job.location)}
                                 </div>
                                 <div className="flex items-center text-sm text-gray-600">
                                   <DollarSign className="h-4 w-4 mr-1" />
@@ -497,7 +498,7 @@ const EmployerJobs = () => {
                               <div className="space-y-3">
                                 <div className="flex items-center text-sm text-gray-600">
                                   <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-                                  <span className="truncate">{job.location}</span>
+                                  <span className="truncate">{formatLocationForDisplay(job.location)}</span>
                                 </div>
                                 <div className="flex items-center text-sm text-gray-600">
                                   <DollarSign className="h-4 w-4 mr-2 flex-shrink-0" />

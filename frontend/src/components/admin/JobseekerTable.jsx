@@ -41,7 +41,7 @@ const JobseekerTable = () => {
     fetchJobseekers();
   }, []);
 
-  // Filter and search functionality
+
   useEffect(() => {
     let filtered = jobseekers;
 
@@ -107,10 +107,14 @@ const JobseekerTable = () => {
 
   const handleStatusUpdate = async (id, status) => {
     try {
+      const token = localStorage.getItem('adminToken');
       const response = await axios.patch(
         `${ADMIN_API_END_POINT}/users/${id}/status`,
         { status },
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }
       );
       
       if (response.data.success) {
@@ -131,9 +135,13 @@ const JobseekerTable = () => {
 
   const handleDeleteUser = async (id) => {
     try {
+      const token = localStorage.getItem('adminToken');
       const response = await axios.delete(
         `${ADMIN_API_END_POINT}/users/${id}`, 
-        { withCredentials: true }
+        { 
+          withCredentials: true,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        }
       );
       
       if (response.data.success) {
@@ -226,7 +234,6 @@ const JobseekerTable = () => {
   return (
     <div className="min-h-screen p-3 sm:p-6 bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="max-w-7xl mx-auto">
-        {/* Header Section */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
@@ -286,7 +293,7 @@ const JobseekerTable = () => {
           </CardContent>
         </Card>
 
-        {/* Main Table */}
+      
         <Card className="shadow-lg">
           <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
             <CardTitle className="text-xl flex items-center gap-2">
@@ -295,7 +302,7 @@ const JobseekerTable = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            {/* Desktop Table View */}
+        
             <div className="hidden lg:block overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -336,9 +343,9 @@ const JobseekerTable = () => {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm">
+                          <div className="flex items-center gap-2 text-sm max-w-[280px] md:max-w-[360px] truncate">
                             <Mail className="h-4 w-4 text-gray-500" />
-                            <span className="truncate max-w-[200px] text-gray-700">{user.email}</span>
+                            <span className="truncate text-gray-700">{user.email}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm">
                             <Phone className="h-4 w-4 text-gray-500" />
@@ -399,7 +406,37 @@ const JobseekerTable = () => {
                             className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
                           >
                             <Eye className="h-4 w-4 mr-1" />
-                            View Details
+                            View
+                          </Button>
+                          {user.status !== 'blocked' ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={() => confirmAction('block', user)}
+                            >
+                              <UserX className="h-4 w-4 mr-1" />
+                              Block
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-green-600 border-green-200 hover:bg-green-50"
+                              onClick={() => confirmAction('activate', user)}
+                            >
+                              <UserCheck className="h-4 w-4 mr-1" />
+                              Activate
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                            onClick={() => confirmAction('delete', user)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Delete
                           </Button>
                         </div>
                       </TableCell>
@@ -495,7 +532,7 @@ const JobseekerTable = () => {
                         className="flex-1 bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
                       >
                         <Eye className="h-4 w-4 mr-2" />
-                        View Details
+                        View
                       </Button>
                       {user.profile?.resume && (
                         <Button 
@@ -508,6 +545,36 @@ const JobseekerTable = () => {
                           Resume
                         </Button>
                       )}
+                      {user.status !== 'blocked' ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                          onClick={() => confirmAction('block', user)}
+                        >
+                          <UserX className="h-4 w-4 mr-2" />
+                          Block
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-green-600 border-green-200 hover:bg-green-50"
+                          onClick={() => confirmAction('activate', user)}
+                        >
+                          <UserCheck className="h-4 w-4 mr-2" />
+                          Activate
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-red-600 border-red-200 hover:bg-red-50"
+                        onClick={() => confirmAction('delete', user)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -522,7 +589,7 @@ const JobseekerTable = () => {
           </CardContent>
         </Card>
 
-        {/* Jobseeker Details Dialog */}
+      
         <Dialog open={!!selectedJobseeker} onOpenChange={() => setSelectedJobseeker(null)}>
           <DialogContent className="max-w-xl">
             <DialogHeader>
@@ -546,7 +613,7 @@ const JobseekerTable = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Resume Preview Dialog */}
+     
         <Dialog open={resumeDialog.open} onOpenChange={() => setResumeDialog({ open: false, url: '' })}>
           <DialogContent className="max-w-4xl h-[90vh]">
             <DialogHeader>
@@ -569,7 +636,7 @@ const JobseekerTable = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Action Confirmation Dialog */}
+    
         <Dialog open={actionDialog.open} onOpenChange={() => setActionDialog({ open: false, action: '', title: '', description: '', userId: null })}>
           <DialogContent>
             <DialogHeader>

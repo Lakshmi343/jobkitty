@@ -11,6 +11,9 @@ import { Briefcase, MapPin, DollarSign, Clock, Users, Calendar,Building,CheckCir
 import Navbar from './shared/Navbar';
 import { Avatar, AvatarImage } from './ui/avatar'
 import LoadingSpinner from './shared/LoadingSpinner';
+import { formatLocationForDisplay } from '../utils/locationUtils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
+import ResumeUpload from './jobseeker/ResumeUpload';
 
 const JobDescription = () => {
     const {singleJob} = useSelector(store => store.job);
@@ -27,6 +30,18 @@ const JobDescription = () => {
     const jobDescriptionRef = useRef(null);
     const headerRef = useRef(null);
 
+    const [showResumeDialog, setShowResumeDialog] = useState(false);
+    const [applyAfterUpload, setApplyAfterUpload] = useState(false);
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+    const isProfileComplete = (u) => {
+        if (!u) return false;
+        // Define your completeness criteria here (adjust as needed)
+        const hasPhone = Boolean(u.phoneNumber);
+        const hasResume = Boolean(u.profile?.resume);
+        return hasPhone && hasResume; // extend with more fields if required
+    };
+
     const applyJobHandler = async () => {
         // Check if user is logged in
         if (!user) {
@@ -42,20 +57,56 @@ const JobDescription = () => {
             return;
         }
 
+        // Check profile completeness first
+        if (!isProfileComplete(user)) {
+            // Save intent and send to profile editor
+            localStorage.setItem('pendingJobApplication', JSON.stringify({
+                jobId,
+                jobTitle: singleJob?.title,
+                returnUrl: window.location.pathname,
+                requireConfirm: true
+            }));
+            toast.info('Please complete your profile before applying.');
+            navigate('/profile?edit=1');
+            return;
+        }
+
+        // Profile complete -> show confirm with resume preview before submit
+        setShowConfirmDialog(true);
+        return;
+
+        // Note: actual API call will be done after user confirms in the dialog
+    }
+
+    const handleResumeUploaded = async () => {
+        setShowResumeDialog(false);
+        if (applyAfterUpload && !isApplied) {
+            setApplyAfterUpload(false);
+            // Give a brief moment for auth store to refresh with resume URL
+            setTimeout(() => {
+                // After resume upload, show confirmation dialog instead of immediate apply
+                setShowConfirmDialog(true);
+            }, 500);
+        }
+    };
+
+    const confirmApply = async () => {
         try {
-            const res = await axios.get(`${APPLICATION_API_END_POINT}/apply/${jobId}`, {withCredentials:true});
-            
-            if(res.data.success){
-                setIsApplied(true); 
-                const updatedSingleJob = {...singleJob, applications:[...singleJob.applications,{applicant:user?._id}]}
-                dispatch(setSingleJob(updatedSingleJob)); 
+            const res = await axios.get(`${APPLICATION_API_END_POINT}/apply/${jobId}`, { withCredentials: true });
+            if (res.data.success) {
+                setIsApplied(true);
+                const updatedSingleJob = { ...singleJob, applications: [...singleJob.applications, { applicant: user?._id }] };
+                dispatch(setSingleJob(updatedSingleJob));
                 toast.success('Great! Your application has been sent successfully!');
+                localStorage.removeItem('pendingJobApplication');
             }
         } catch (error) {
             console.log(error);
             toast.error(error.response?.data?.message || 'Something went wrong. Please try again.');
+        } finally {
+            setShowConfirmDialog(false);
         }
-    }
+    };
 
     useEffect(()=>{
         const fetchSingleJob = async () => {
@@ -64,10 +115,18 @@ const JobDescription = () => {
                 if(res.data.success){
                     dispatch(setSingleJob(res.data.job));
                     setIsApplied(res.data.job.applications.some(application=>application.applicant === user?._id))
+                } else {
+                    toast.error('Job not found');
                 }
             } catch (error) {
-                console.log(error);
-                toast.error('Failed to load job details');
+                console.error('Error fetching job details:', error);
+                if (error.response?.status === 404) {
+                    toast.error('Job not found');
+                } else if (error.response?.status === 401) {
+                    toast.error('Please login to view job details');
+                } else {
+                    toast.error('Failed to load job details');
+                }
             }
         }
         fetchSingleJob(); 
@@ -82,13 +141,9 @@ const JobDescription = () => {
                 
                 // Check if this is the same job the user wanted to apply for
                 if (applicationData.jobId === jobId) {
-                    localStorage.removeItem('pendingJobApplication');
-                    
-                    // Auto-apply if not already applied
-                    if (!isApplied) {
-                        setTimeout(() => {
-                            applyJobHandler();
-                        }, 1000); // Small delay for better UX
+                    // If profile is now complete, show confirmation dialog
+                    if (isProfileComplete(user) && !isApplied) {
+                        setShowConfirmDialog(true);
                     }
                 }
             }
@@ -170,7 +225,7 @@ const JobDescription = () => {
                                     <div className="flex flex-wrap items-center gap-3">
                                         <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
                                             <MapPin className="w-3 h-3 mr-1" />
-                                            {singleJob?.location}
+                                            {formatLocationForDisplay(singleJob?.location)}
                                         </Badge>
                                         <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
                                             <Clock className="w-3 h-3 mr-1" />
@@ -285,7 +340,7 @@ const JobDescription = () => {
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-gray-600">Location</span>
-                                                <span className="font-medium text-gray-900">{singleJob?.location}</span>
+                                                <span className="font-medium text-gray-900">{formatLocationForDisplay(singleJob?.location)}</span>
                                             </div>
                                             <div className="flex items-center justify-between">
                                                 <span className="text-gray-600">Openings</span>
@@ -326,7 +381,7 @@ const JobDescription = () => {
                     <h3 className='font-semibold text-lg text-gray-900 truncate'>{singleJob?.company?.name}</h3>
                     <div className="flex items-center gap-1 text-sm text-gray-500">
                         <MapPin className="w-4 h-4" />
-                        <span>{singleJob?.location || 'India'}</span>
+                        <span>{formatLocationForDisplay(singleJob?.location) || 'India'}</span>
                     </div>
                 </div>
                                             {singleJob.company.description && (
@@ -360,6 +415,50 @@ const JobDescription = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Resume required dialog */}
+            <Dialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
+                <DialogContent className="max-w-xl">
+                    <DialogHeader>
+                        <DialogTitle>Upload your resume to apply</DialogTitle>
+                        <DialogDescription>
+                            Please upload a PDF or Word document (max 5MB). Once uploaded, we will submit your application automatically.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-2">
+                        <ResumeUpload onSuccess={handleResumeUploaded} />
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Confirmation dialog with resume preview */}
+            <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Confirm your application</DialogTitle>
+                        <DialogDescription>
+                            Review your resume before submitting your application to this job.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                        {user?.profile?.resume ? (
+                            <div className="h-[480px] border rounded overflow-hidden">
+                                <iframe
+                                    src={user.profile.resume}
+                                    title="Resume Preview"
+                                    className="w-full h-full"
+                                />
+                            </div>
+                        ) : (
+                            <p className="text-sm text-red-600">No resume found. Please upload your resume.</p>
+                        )}
+                    </div>
+                    <DialogFooter className="mt-4 flex gap-2">
+                        <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>Cancel</Button>
+                        <Button onClick={confirmApply} disabled={isApplied || !user?.profile?.resume}>Submit Application</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     )
 }

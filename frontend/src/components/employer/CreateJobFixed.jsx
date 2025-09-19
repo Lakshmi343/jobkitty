@@ -67,9 +67,6 @@ const CreateJob = () => {
                         navigate('/employer/company/setup');
                     } else {
                         setUserCompany(freshUser.profile.company);
-                        if (!input.location && freshUser.profile.company.location) {
-                            setInput(prev => ({ ...prev, location: freshUser.profile.company.location }));
-                        }
                     }
                 } else {
                     if (!user.profile?.company || !user.profile.company.name) {
@@ -86,9 +83,6 @@ const CreateJob = () => {
                     navigate('/employer/company/setup');
                 } else {
                     setUserCompany(user.profile.company);
-                    if (!input.location && user.profile.company.location) {
-                        setInput(prev => ({ ...prev, location: user.profile.company.location }));
-                    }
                 }
             } finally {
                 setCheckingCompany(false);
@@ -155,14 +149,6 @@ const CreateJob = () => {
                 }
                 return true;
             case 2:
-                if (!input.location) {
-                    toast.error("Please select a job location");
-                    return false;
-                }
-                if (!input.jobType) {
-                    toast.error("Please select a job type");
-                    return false;
-                }
                 return true;
             case 3:
                 if (input.salaryMin === undefined || input.salaryMin === "") {
@@ -243,8 +229,8 @@ const CreateJob = () => {
         try {
             const updatedInput = {
                 ...input,
-                location: input.location,
-                jobType: input.jobType,
+                location: input.location || "Remote",
+                jobType: input.jobType || "Full-time",
                 salaryMin: input.salaryMin || "0",
                 salaryMax: input.salaryMax || "0",
                 openings: input.openings || "1",
@@ -266,8 +252,7 @@ const CreateJob = () => {
             const expMax = parseInt(updatedInput.experienceMax);
             const openingsCount = parseInt(updatedInput.openings);
             
-           
-            // Location is required and validated in step 2; normalize for backend
+            // Parse location string to get state and district
             const locationData = parseLocation(updatedInput.location);
             
             const jobData = {
@@ -394,7 +379,7 @@ const CreateJob = () => {
                                                 value={input.description}
                                                 onChange={changeEventHandler}
                                                 placeholder="Describe the role, responsibilities, and ideal candidate..."
-                                                className="min-h-[320px] resize-y"
+                                                className="min-h-[150px]"
                                                 required
                                             />
                                         </div>
@@ -443,9 +428,6 @@ const CreateJob = () => {
                                                 required={true}
                                                 placeholder="Select job location"
                                             />
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                Supported states: Tamil Nadu, Kerala, Telangana, Andhra Pradesh, Karnataka
-                                            </p>
                                         </div>
                                         <div>
                                             <Label>Job Type*</Label>
@@ -525,7 +507,7 @@ const CreateJob = () => {
                             </div>
                         )}
 
-                       
+                        {/* Step 4: Experience & Requirements */}
                         {currentStep === 4 && (
                             <div className='bg-white p-8 rounded-lg shadow-md border'>
                                 <CardHeader>

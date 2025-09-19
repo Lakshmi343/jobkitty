@@ -1,6 +1,8 @@
 import React from 'react'
 import LatestJobCards from './LatestJobCards';
 import { useSelector } from 'react-redux'; 
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const LatestJobs = () => {
     const {allJobs} = useSelector(store=>store.job);
@@ -14,6 +16,17 @@ const LatestJobs = () => {
                     allJobs.length <= 0 ? <span className="col-span-full text-center text-gray-500">No Job Available</span> : allJobs?.slice(0,6).map((job) => <LatestJobCards key={job._id} job={job}/>)
                 }
             </div>
+           <div className="text-center mt-8">
+                    <Link to="/jobs" ><motion.button
+                   
+                       className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300 font-medium"
+                       whileHover={{ scale: 1.05 }}
+                       whileTap={{ scale: 0.95 }}
+                     >
+                       Show More Jobs 
+                     </motion.button></Link>
+                   </div>
+            
         </div>
     )
 }
@@ -21,5 +34,3 @@ const LatestJobs = () => {
 export default LatestJobs
 
 
-// "email": "moderator1@example.com",
-// "password": "modpass123",

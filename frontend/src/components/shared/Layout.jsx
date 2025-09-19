@@ -5,7 +5,7 @@ const Layout = ({ children }) => {
   return (
     <>
       <Navbar />
-      {/* ✅ Push content below the fixed navbar */}
+  
       <div className="pt-10">{children}</div>
       <Footer />
     </>

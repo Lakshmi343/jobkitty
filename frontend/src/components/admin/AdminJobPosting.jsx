@@ -8,9 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import axios from 'axios';
 import { CATEGORY_API_END_POINT, ADMIN_API_END_POINT } from '../../utils/constant';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Briefcase, MapPin, DollarSign, Building, FileText, ArrowLeft, Plus, CheckCircle, X, Users, Upload, Image } from 'lucide-react';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import LocationSelector from '../ui/LocationSelector';
 
 const locations = [
     "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
@@ -24,19 +25,10 @@ const AdminJobPosting = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState([]);
+    const [companies, setCompanies] = useState([]);
+    const [selectedCompanyId, setSelectedCompanyId] = useState("");
     const navigate = useNavigate();
-
-    // Company details state
-    const [companyData, setCompanyData] = useState({
-        name: "",
-        description: "",
-        website: "",
-        location: "",
-        logo: ""
-    });
-
-    const [logoFile, setLogoFile] = useState(null);
-    const [logoPreview, setLogoPreview] = useState(null);
+    const [searchParams] = useSearchParams();
 
     // Job posting state
     const [jobData, setJobData] = useState({
@@ -66,38 +58,34 @@ const AdminJobPosting = () => {
                 toast.error("Failed to fetch categories");
             }
         };
+        const fetchCompanies = async () => {
+            try {
+                const token = localStorage.getItem('adminToken');
+                if (!token) throw new Error('Missing admin token');
+                const res = await axios.get(`${ADMIN_API_END_POINT}/companies`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.data.success) {
+                    setCompanies(res.data.companies || []);
+                }
+            } catch (error) {
+                toast.error('Failed to load companies');
+            }
+        };
         fetchCategories();
+        fetchCompanies();
     }, []);
 
-    const handleCompanyChange = (e) => {
-        setCompanyData({ ...companyData, [e.target.name]: e.target.value });
-    };
-
-    const handleLogoUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                toast.error("Please select an image smaller than 5MB");
-                return;
-            }
-            if (!file.type.startsWith('image/')) {
-                toast.error("Please select a valid image file");
-                return;
-            }
-            setLogoFile(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setLogoPreview(reader.result);
-            };
-            reader.readAsDataURL(file);
+    // Preselect company from query param
+    useEffect(() => {
+        const cid = searchParams.get('companyId');
+        if (cid) {
+            setSelectedCompanyId(cid);
+            setCurrentStep(2); // jump to job details if company is preselected
         }
-    };
+    }, [searchParams]);
 
-    const removeLogo = () => {
-        setLogoFile(null);
-        setLogoPreview(null);
-        setCompanyData({ ...companyData, logo: "" });
-    };
+    // Company fields removed in favor of dropdown
 
     const handleJobChange = (e) => {
         setJobData({ ...jobData, [e.target.name]: e.target.value });
@@ -126,7 +114,7 @@ const AdminJobPosting = () => {
     };
 
     const validateCompanyStep = () => {
-        return companyData.name && companyData.description && companyData.location;
+        return Boolean(selectedCompanyId);
     };
 
     const validateJobStep = () => {
@@ -139,7 +127,7 @@ const AdminJobPosting = () => {
         if (currentStep === 1 && validateCompanyStep()) {
             setCurrentStep(2);
         } else if (currentStep === 1) {
-            toast.error("Please complete all required company information");
+            toast.error("Please select a company to continue");
         }
     };
 
@@ -157,26 +145,9 @@ const AdminJobPosting = () => {
         
         try {
             setLoading(true);
-            
-            // Create FormData for file upload
-            const formData = new FormData();
-            
-            // Add company details
-            const companyDetails = {
-                name: companyData.name,
-                description: companyData.description,
-                website: companyData.website,
-                location: companyData.location
-            };
-            
-            // Add logo file if uploaded
-            if (logoFile) {
-                formData.append('file', logoFile);
-            }
-            
-            // Add all other data as JSON
-            const jobDetails = {
-                company: companyDetails,
+            // Build JSON payload with companyId
+            const payload = {
+                companyId: selectedCompanyId,
                 title: jobData.title,
                 description: jobData.description,
                 requirements: requirements.length > 0 ? requirements : ["No specific requirements"],
@@ -190,15 +161,12 @@ const AdminJobPosting = () => {
                 openings: Number(jobData.openings),
                 category: jobData.category
             };
-            
-            formData.append('jobData', JSON.stringify(jobDetails));
-            
-            // Get admin token
+
             const adminToken = localStorage.getItem('adminToken') || localStorage.getItem('token');
-            
-            const response = await axios.post(`${ADMIN_API_END_POINT}/post-job`, formData, {
+            const response = await axios.post(`${ADMIN_API_END_POINT}/post-job`, payload, {
                 headers: {
-                    'Authorization': `Bearer ${adminToken}`
+                    'Authorization': `Bearer ${adminToken}`,
+                    'Content-Type': 'application/json'
                 },
                 withCredentials: true
             });
@@ -265,121 +233,44 @@ const AdminJobPosting = () => {
                             ></div>
                         </div>
                         <div className="flex justify-between mt-2 text-xs text-gray-500">
-                            <span>Company Details</span>
+                            <span>Select Company</span>
                             <span>Job Details</span>
                         </div>
                     </div>
                 </div>
 
                 <form onSubmit={submitHandler}>
-                    {/* Step 1: Company Details */}
+                    {/* Step 1: Company Selection */}
                     {currentStep === 1 && (
                         <div className='bg-white p-8 rounded-lg shadow-md border'>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Building className="h-6 w-6 text-blue-600" />
-                                    Company Details
+                                    Select Company
                                 </CardTitle>
-                                <CardDescription>Provide company information for the job posting.</CardDescription>
+                                <CardDescription>Choose an existing company to post a job for.</CardDescription>
                             </CardHeader>
                             <CardContent className='mt-4 space-y-6'>
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <div>
-                                        <Label>Company Name *</Label>
-                                        <Input 
-                                            name="name" 
-                                            value={companyData.name} 
-                                            onChange={handleCompanyChange} 
-                                            placeholder="e.g., Tech Solutions Inc." 
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label>Website</Label>
-                                        <Input 
-                                            name="website" 
-                                            value={companyData.website} 
-                                            onChange={handleCompanyChange} 
-                                            placeholder="e.g., https://company.com" 
-                                        />
-                                    </div>
-                                </div>
                                 <div>
-                                    <Label>Company Description *</Label>
-                                    <Textarea 
-                                        name="description" 
-                                        value={companyData.description} 
-                                        onChange={handleCompanyChange} 
-                                        placeholder="Describe the company and its mission" 
-                                        required
-                                    />
-                                </div>
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    <div>
-                                        <Label>Company Location *</Label>
-                                        <Select
-                                            name="location"
-                                            value={companyData.location}
-                                            onValueChange={(value) => setCompanyData({...companyData, location: value})}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select company location" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    {locations.map(loc => (
-                                                        <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                                                    ))}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div>
-                                        <Label>Company Logo</Label>
-                                        <div className="space-y-2">
-                                            <div className="flex items-center gap-2">
-                                                <Input 
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={handleLogoUpload}
-                                                    className="hidden"
-                                                    id="logo-upload"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    onClick={() => document.getElementById('logo-upload').click()}
-                                                    className="flex items-center gap-2"
-                                                >
-                                                    <Upload className="h-4 w-4" />
-                                                    Choose Logo
-                                                </Button>
-                                                {logoPreview && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={removeLogo}
-                                                        className="text-red-600 hover:text-red-700"
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                            {logoPreview && (
-                                                <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                                                    <Image className="h-4 w-4 text-gray-500" />
-                                                    <img 
-                                                        src={logoPreview} 
-                                                        alt="Logo preview" 
-                                                        className="h-12 w-12 object-cover rounded"
-                                                    />
-                                                    <span className="text-sm text-gray-600">Logo selected</span>
-                                                </div>
-                                            )}
-                                            <p className="text-xs text-gray-500">Max size: 5MB. Supported: JPG, PNG, GIF</p>
-                                        </div>
-                                    </div>
+                                    <Label>Company *</Label>
+                                    <Select
+                                        value={selectedCompanyId}
+                                        onValueChange={(value) => setSelectedCompanyId(value)}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a company" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                {companies.map(c => (
+                                                    <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
+                                    {!companies.length && (
+                                        <p className="text-sm text-gray-500 mt-2">No companies found. Create a company first from Companies page.</p>
+                                    )}
                                 </div>
                             </CardContent>
                         </div>
@@ -434,6 +325,7 @@ const AdminJobPosting = () => {
                                         value={jobData.description} 
                                         onChange={handleJobChange} 
                                         placeholder="Describe the role and responsibilities" 
+                                        className="min-h-[240px] resize-y"
                                         required
                                     />
                                 </div>
@@ -475,23 +367,13 @@ const AdminJobPosting = () => {
                                 </div>
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div>
-                                        <Label>Location *</Label>
-                                        <Select
-                                            name="location"
+                                        <LocationSelector
+                                            label="Job Location"
                                             value={jobData.location}
-                                            onValueChange={(value) => selectChangeHandler("location", value)}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select job location" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectGroup>
-                                                    {locations.map(loc => (
-                                                        <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                                                    ))}
-                                                </SelectGroup>
-                                            </SelectContent>
-                                        </Select>
+                                            onChange={(value) => selectChangeHandler("location", value)}
+                                            required={true}
+                                            placeholder="Select job location"
+                                        />
                                     </div>
                                     <div>
                                         <Label>Job Type *</Label>

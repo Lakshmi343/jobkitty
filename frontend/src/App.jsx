@@ -39,6 +39,7 @@ import AdminJobPosting from './components/admin/AdminJobPosting';
 import AdminJobEdit from './components/admin/AdminJobEdit';
 import AdminForgotPassword from './components/admin/AdminForgotPassword';
 import AdminResetPassword from './components/admin/AdminResetPassword';
+import AdminCompanyCreate from './components/admin/AdminCompanyCreate';
 
 // Employer & Jobseeker
 import EmployerJobs from './components/employer/EmployerJobs';
@@ -243,7 +244,7 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/jobseekers",
     element: (
-      <AdminProtectedRoute>
+      <AdminProtectedRoute allowedRoles={['super_admin']}>
         <AdminLayout>
           <JobseekerTable />
         </AdminLayout>
@@ -253,7 +254,7 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/employers",
     element: (
-      <AdminProtectedRoute>
+      <AdminProtectedRoute allowedRoles={['super_admin']}>
         <AdminLayout>
           <EmployerTable />
         </AdminLayout>
@@ -263,7 +264,7 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/jobs",
     element: (
-      <AdminProtectedRoute>
+      <AdminProtectedRoute allowedRoles={['super_admin', 'admin', 'moderator']}>
         <AdminLayout>
           <AdminJobs />
         </AdminLayout>
@@ -273,7 +274,7 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/jobs/:id/edit",
     element: (
-      <AdminProtectedRoute allowedRoles={['super_admin', 'admin']}>
+      <AdminProtectedRoute allowedRoles={['super_admin', 'admin', 'moderator']}>
         <AdminLayout>
           <AdminJobEdit />
         </AdminLayout>
@@ -283,7 +284,7 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/companies",
     element: (
-      <AdminProtectedRoute>
+      <AdminProtectedRoute allowedRoles={['super_admin', 'admin', 'moderator']}>
         <AdminLayout>
           <Companies />
         </AdminLayout>
@@ -291,9 +292,19 @@ const appRouter = createBrowserRouter([
     )
   },
   {
+    path: "/admin/companies/create",
+    element: (
+      <AdminProtectedRoute allowedRoles={['super_admin', 'admin', 'moderator']}>
+        <AdminLayout>
+          <AdminCompanyCreate />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
+  {
     path: "/admin/companies/:id",
     element: (
-      <AdminProtectedRoute>
+      <AdminProtectedRoute allowedRoles={['super_admin', 'admin', 'moderator']}>
         <AdminLayout>
           <CompanySetup />
         </AdminLayout>
@@ -303,7 +314,7 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/categories",
     element: (
-      <AdminProtectedRoute>
+      <AdminProtectedRoute allowedRoles={['super_admin', 'admin', 'moderator']}>
         <AdminLayout>
           <AdminCategories />
         </AdminLayout>
@@ -353,7 +364,7 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/job-posting",
     element: (
-      <AdminProtectedRoute allowedRoles={['super_admin', 'admin']}>
+      <AdminProtectedRoute allowedRoles={['super_admin', 'admin', 'moderator']}>
         <AdminLayout>
           <AdminJobPosting />
         </AdminLayout>
@@ -383,7 +394,7 @@ const appRouter = createBrowserRouter([
   {
     path: "/admin/admin-management",
     element: (
-      <AdminProtectedRoute>
+      <AdminProtectedRoute allowedRoles={['super_admin']}>
         <AdminLayout>
           <AdminManagement />
         </AdminLayout>

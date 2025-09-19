@@ -754,7 +754,6 @@ const EmployerApplicants = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* Profile Details Dialog */}
             <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                     {profileDetails && (
@@ -768,7 +767,7 @@ const EmployerApplicants = () => {
                             
                             <div className="py-4 space-y-6">
                                 
-                                {/* Profile Header */}
+                             
                                 <div className="flex items-center gap-4 pb-4 border-b border-gray-200">
                                     <Avatar className="w-20 h-20 border-2 border-blue-100">
                                         <AvatarImage 
@@ -795,7 +794,7 @@ const EmployerApplicants = () => {
                                     </div>
                                 </div>
 
-                                {/* Bio/Summary */}
+                        
                                 {profileDetails?.applicant?.profile?.bio && (
                                     <div>
                                         <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
@@ -808,7 +807,7 @@ const EmployerApplicants = () => {
                                     </div>
                                 )}
 
-                                {/* Education */}
+                              
                                 {profileDetails?.applicant?.profile?.education && (
                                     <div>
                                         <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -836,7 +835,6 @@ const EmployerApplicants = () => {
                                     </div>
                                 )}
 
-                                {/* Skills */}
                                 {profileDetails?.applicant?.profile?.skills && profileDetails.applicant.profile.skills.length > 0 && (
                                     <div>
                                         <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -853,7 +851,7 @@ const EmployerApplicants = () => {
                                     </div>
                                 )}
 
-                                {/* Location */}
+                                
                                 {profileDetails?.applicant?.profile?.place && (
                                     <div>
                                         <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
@@ -866,7 +864,7 @@ const EmployerApplicants = () => {
                                     </div>
                                 )}
 
-                                {/* Resume */}
+                           
                                 {profileDetails?.applicant?.profile?.resume && (
                                     <div>
                                         <h3 className="text-lg font-semibold text-gray-900 mb-3">Resume</h3>

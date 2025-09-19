@@ -14,22 +14,22 @@ const AdminLayout = ({ children }) => {
 
   const baseNavigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Jobseeker Management', href: '/admin/jobseeker-management', icon: Users },
-    { name: 'Employer Management', href: '/admin/employer-management', icon: Building2 },
+    // Jobseeker/Employer lists only for super admin; conditionally appended below
     { name: 'Companies', href: '/admin/companies', icon: Building2 },
     { name: 'Jobs', href: '/admin/jobs', icon: Briefcase },
     { name: 'Job Posting', href: '/admin/job-posting', icon: Plus },
     { name: 'Applications', href: '/admin/applications', icon: FileText },
     { name: 'CV Management', href: '/admin/cv-management', icon: FolderOpen },
     { name: 'Categories', href: '/admin/categories', icon: Settings },
-   
   ];
 
-  const superAdminNavigation = [
+  const superAdminOnly = [
+    { name: 'Jobseeker Management', href: '/admin/jobseeker-management', icon: Users },
+    { name: 'Employer Management', href: '/admin/employer-management', icon: Building2 },
     { name: 'User Management', href: '/admin/user-management', icon: Shield },
   ];
 
-  const navigation = isSuperAdmin ? [...baseNavigation, ...superAdminNavigation] : baseNavigation;
+  const navigation = isSuperAdmin ? [...baseNavigation, ...superAdminOnly] : baseNavigation;
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');

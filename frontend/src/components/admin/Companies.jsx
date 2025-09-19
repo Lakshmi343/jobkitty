@@ -178,7 +178,10 @@ const Companies = () => {
 					<h1 className="text-2xl font-bold text-gray-900">Company Management</h1>
 					<p className="text-gray-600 mt-1">Manage all registered companies and their job postings</p>
 				</div>
-				<div className="flex gap-2">
+				<div className="flex items-center gap-2">
+					<Button onClick={() => navigate('/admin/companies/create')} className="bg-blue-600 hover:bg-blue-700">
+						+ Add Company
+					</Button>
 					<Badge variant="outline" className="bg-blue-50 text-blue-700">
 						Total: {stats.total}
 					</Badge>

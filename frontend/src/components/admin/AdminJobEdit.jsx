@@ -10,9 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import { formatLocationForDisplay } from '../../utils/locationUtils';
+import { ADMIN_API_END_POINT, CATEGORY_API_END_POINT } from '../../utils/constant';
 
 const AdminJobEdit = () => {
-  const { jobId } = useParams();
+  const { jobId, id } = useParams();
+  const routeJobId = jobId || id;
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -42,14 +45,19 @@ const AdminJobEdit = () => {
   });
 
   useEffect(() => {
+    if (!routeJobId) {
+      toast.error('Invalid job id in URL');
+      navigate('/admin/jobs');
+      return;
+    }
     fetchJobData();
     fetchCategories();
-  }, [jobId]);
+  }, [routeJobId]);
 
   const fetchJobData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/admin/jobs/${jobId}/edit`, {
+      const token = localStorage.getItem('adminAccessToken') || localStorage.getItem('adminToken') || localStorage.getItem('token');
+      const response = await axios.get(`${ADMIN_API_END_POINT}/jobs/${routeJobId}/edit`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -60,7 +68,7 @@ const AdminJobEdit = () => {
             name: job.company.name || '',
             description: job.company.description || '',
             website: job.company.website || '',
-            location: job.company.location || '',
+            location: typeof job.company.location === 'object' ? formatLocationForDisplay(job.company.location) : (job.company.location || ''),
             logo: job.company.logo || ''
           },
           title: job.title || '',
@@ -70,7 +78,7 @@ const AdminJobEdit = () => {
             min: job.salary?.min || '',
             max: job.salary?.max || ''
           },
-          location: job.location || '',
+          location: typeof job.location === 'object' ? formatLocationForDisplay(job.location) : (job.location || ''),
           jobType: job.jobType || 'Full-time',
           position: job.position || 1,
           openings: job.openings || 1,
@@ -92,7 +100,7 @@ const AdminJobEdit = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/v1/category/get`);
+      const response = await axios.get(`${CATEGORY_API_END_POINT}/get`);
       if (response.data.success) {
         setCategories(response.data.categories);
       }
@@ -185,7 +193,7 @@ const AdminJobEdit = () => {
       }
 
       const response = await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/v1/admin/jobs/${jobId}/edit`,
+        `${ADMIN_API_END_POINT}/jobs/${routeJobId}/edit`,
         submitData,
         {
           headers: {
@@ -373,7 +381,7 @@ const AdminJobEdit = () => {
                     <SelectContent>
                       {categories.map((cat) => (
                         <SelectItem key={cat._id} value={cat._id}>
-                          {cat.categoryName}
+                          {cat.name || cat.categoryName}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -388,7 +396,7 @@ const AdminJobEdit = () => {
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   placeholder="Detailed job description..."
-                  rows={5}
+                  className="min-h-[240px] resize-y"
                   required
                 />
               </div>

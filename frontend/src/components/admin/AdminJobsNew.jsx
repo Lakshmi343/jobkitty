@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import { formatLocationForDisplay, getLocationSearchString } from '../../utils/locationUtils';
 
 const AdminJobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -42,7 +43,7 @@ const AdminJobs = () => {
     let filtered = jobs.filter(job =>
       job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       job.company?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.location?.toLowerCase().includes(searchTerm.toLowerCase())
+      getLocationSearchString(job.location).includes(searchTerm.toLowerCase())
     );
 
     if (statusFilter !== 'all') {
@@ -68,9 +69,13 @@ const AdminJobs = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
+      if (!token) {
+        console.error('No admin token found');
+        toast.error('Authentication required. Please login again.');
+        return;
+      }
       const response = await axios.get(`${ADMIN_API_END_POINT}/jobs`, {
-        headers: { Authorization: `Bearer ${token}` },
-        timeout: 10000
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
@@ -79,6 +84,13 @@ const AdminJobs = () => {
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+        localStorage.removeItem('adminToken');
+        navigate('/admin/login');
+      } else {
+        toast.error('Failed to fetch jobs. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -353,7 +365,7 @@ const AdminJobs = () => {
                               <div className="space-y-1">
                                 <div className="flex items-center gap-1 text-sm text-gray-900">
                                   <MapPin className="w-3 h-3 text-gray-500" />
-                                  <span>{job.location || 'Remote'}</span>
+                                  <span>{formatLocationForDisplay(job.location) || 'Remote'}</span>
                                 </div>
                                 <div className="flex items-center gap-1 text-sm text-gray-600">
                                   <DollarSign className="w-3 h-3 text-gray-500" />
@@ -462,7 +474,7 @@ const AdminJobs = () => {
                             <div className="flex items-center gap-4 text-xs text-gray-500">
                               <span className="flex items-center gap-1">
                                 <MapPin className="w-3 h-3" />
-                                {job.location || 'Remote'}
+                                {formatLocationForDisplay(job.location) || 'Remote'}
                               </span>
                               <span className="flex items-center gap-1">
                                 <DollarSign className="w-3 h-3" />

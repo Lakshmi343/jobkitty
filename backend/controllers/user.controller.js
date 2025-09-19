@@ -31,22 +31,27 @@ export const register = async (req, res) => {
 				success: false
 			});
 		}
-		const fileUri = getDataUri(req.file);
-		const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
-			folder: "profile-photos"
-		});
+		let profilePhotoUrl = undefined;
+		if (req.file) {
+			const fileUri = getDataUri(req.file);
+			const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
+				folder: "profile-photos"
+			});
+			profilePhotoUrl = cloudResponse.secure_url;
+		}
 		const hashedPassword = await bcrypt.hash(password, 10);
 
-		await User.create({
+		const userPayload = {
 			fullname,
 			email,
 			phoneNumber,
 			password: hashedPassword,
-			role,
-			profile: {
-				profilePhoto: cloudResponse.secure_url
-			}
-		});
+			role
+		};
+		if (profilePhotoUrl) {
+			userPayload.profile = { profilePhoto: profilePhotoUrl };
+		}
+		await User.create(userPayload);
 		const user = await User.findOne({ email });
 		if (user) {
 			

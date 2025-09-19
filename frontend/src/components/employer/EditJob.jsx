@@ -14,6 +14,7 @@ import Navbar from '../shared/Navbar';
 import { useSelector } from 'react-redux';
 import Footer from '../shared/Footer';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import { formatLocationForDisplay } from '../../utils/locationUtils';
 
 const EditJob = () => {
     const { id } = useParams();
@@ -86,7 +87,7 @@ const EditJob = () => {
                     experienceLevel: job.experienceLevel || "",
                     experienceMin: job.experience?.min?.toString() || "",
                     experienceMax: job.experience?.max?.toString() || "",
-                    location: job.location || "",
+                    location: typeof job.location === 'object' ? formatLocationForDisplay(job.location) : job.location || "",
                     jobType: job.jobType || "",
                     position: job.position?.toString() || "",
                     openings: job.openings?.toString() || "",
@@ -281,7 +282,7 @@ const EditJob = () => {
                                 <h2 className="text-2xl font-bold text-gray-800">Job Details</h2>
                                 <div className="flex-1 h-px bg-gradient-to-r from-blue-200 to-purple-200 ml-4"></div>
                             </div>
-                        <CardContent className="px-0 pb-0">
+                            <CardContent className="px-0 pb-0">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
                                     <Label className="text-lg font-semibold text-gray-700 mb-3 block">Job Title*</Label>
@@ -301,7 +302,7 @@ const EditJob = () => {
                                         value={input.description}
                                         onChange={changeEventHandler}
                                         placeholder="Describe the role, responsibilities, and ideal candidate..."
-                                        className="min-h-[180px] text-lg border-2 border-gray-200 focus:border-purple-400 rounded-xl transition-all duration-300 resize-none"
+                                        className="min-h-[240px] text-lg border-2 border-gray-200 focus:border-purple-400 rounded-xl transition-all duration-300 resize-y"
                                         required
                                     />
                                 </div>
@@ -326,6 +327,7 @@ const EditJob = () => {
                                 </div>
                             </div>
                         </CardContent>
+                        </div>
                     </div>
 
                     {/* Location & Job Type */}

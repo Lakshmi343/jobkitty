@@ -99,7 +99,12 @@ const EmployerProfile = () => {
     e.preventDefault();
     const formData = new FormData();
     Object.keys(input).forEach(key => {
-      if (input[key] !== null && key !== 'file') formData.append(key, input[key]);
+      if (key === 'file') return;
+      const val = input[key];
+      // Skip nulls and empty strings to avoid overwriting with invalid/empty values
+      if (val === null) return;
+      if (typeof val === 'string' && val.trim() === '') return;
+      formData.append(key, val);
     });
     if (input.file) formData.append('file', input.file);
 
@@ -171,7 +176,7 @@ const EmployerProfile = () => {
             <div className="relative group flex-shrink-0">
               <Avatar className="h-32 w-32 border-4 border-white shadow-lg ring-2 ring-blue-100">
                 {input.file ? (
-                  <AvatarImage src={URL.createObjectURL(input.file)} className="object-cover" />
+                  <AvatarImage src={URL.createObjectURL(input.file)} className="object-cover" style={{objectFit:"Contain"}} />
                 ) : company.logo ? (
                   <AvatarImage src={company.logo} className="object-cover" />
                 ) : (
@@ -336,10 +341,14 @@ const EmployerProfile = () => {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                   >
                     <option value="">Select Company Type</option>
-                    {['Startup', 'MNC', 'SME', 'Government', 'Non-Profit', 'IT Services', 
-                      'Finance', 'Healthcare', 'Education', 'E-commerce', 'Manufacturing', 'Other'].map(t => 
+                    {[
+                      'Startup','MNC','SME','Government','Non-Profit','Other','HR','Manufacturing','IT Services','Education',
+                      'Healthcare','Finance','E-commerce','Consulting','Real Estate','Media & Entertainment','Telecommunications',
+                      'Energy','Logistics','Agriculture','Automobile','Hospitality','Pharmaceutical','Retail','Construction',
+                      'Legal','Cybersecurity','AI & Machine Learning','Gaming','Research & Development'
+                    ].map(t => (
                       <option key={t} value={t}>{t}</option>
-                    )}
+                    ))}
                   </select>
                 </div>
                 
