@@ -1157,6 +1157,34 @@ export const postJobAdmin = async (req, res) => {
 };
 
 
+// Bulk approve all pending jobs
+export const bulkApproveJobs = async (req, res) => {
+  try {
+    // Update all jobs with pending status to approved
+    const result = await Job.updateMany(
+      { status: 'pending' },
+      { $set: { status: 'approved' } }
+    );
+
+    // Optionally log an admin activity (no specific jobId here)
+    const adminId = req.id;
+    if (adminId) {
+      await logActivity(adminId, 'jobs_bulk_approved', 'job', null, `Approved ${result.modifiedCount} pending jobs`);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Approved ${result.modifiedCount} pending jobs`,
+      matched: result.matchedCount ?? result.nMatched,
+      modified: result.modifiedCount ?? result.nModified
+    });
+  } catch (error) {
+    console.error('Bulk approve jobs error:', error);
+    return res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
+
 export const getJobForEdit = async (req, res) => {
   try {
     const { jobId } = req.params;

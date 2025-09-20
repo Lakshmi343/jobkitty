@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { JOB_API_END_POINT } from '../../utils/constant';
+import { JOB_API_END_POINT, ADMIN_API_END_POINT } from '../../utils/constant';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
@@ -44,6 +44,31 @@ const AdminJobs = () => {
     pending: jobs.filter(job => job.status === 'pending').length,
     approved: jobs.filter(job => job.status === 'approved').length,
     rejected: jobs.filter(job => job.status === 'rejected').length
+  };
+
+  const handleBulkApprove = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      if (!token) {
+        toast.error('Authentication required. Please login again.');
+        return;
+      }
+      const confirm = window.confirm('Approve all pending jobs? This will set status=approved for every pending job.');
+      if (!confirm) return;
+
+      const res = await axios.post(`${ADMIN_API_END_POINT}/jobs/bulk-approve`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.data?.success) {
+        toast.success(res.data.message || 'Approved all pending jobs');
+        await fetchJobs();
+      } else {
+        toast.error(res.data?.message || 'Bulk approve failed');
+      }
+    } catch (error) {
+      console.error('Bulk approve error:', error);
+      toast.error(error.response?.data?.message || 'Bulk approve failed');
+    }
   };
 
   useEffect(() => {
@@ -388,6 +413,10 @@ const AdminJobs = () => {
             <Button onClick={fetchJobs} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
+            </Button>
+            <Button onClick={handleBulkApprove} variant="default" size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Approve All Pending
             </Button>
             <Button variant="outline" size="sm">
               <Download className="h-4 w-4 mr-2" />

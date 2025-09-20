@@ -33,6 +33,7 @@ import {
     updateAdmin,
     deleteAdmin,
     toggleAdminStatus,
+    bulkApproveJobs,
     getAllJobseekers,
     getAllEmployers,
     checkJobQuality,
@@ -86,6 +87,7 @@ router.patch('/jobs/:jobId/approve', adminAuth, approveJob);
 router.patch('/jobs/:jobId/reject', adminAuth, rejectJob);
 router.delete('/jobs/:jobId', adminAuth, deleteJob);
 router.post('/jobs/:jobId/quality-check', adminAuth, checkJobQuality);
+router.post('/jobs/bulk-approve', adminAuth, bulkApproveJobs);
 router.post('/post-job', adminAuth, singleUpload, postJobAdmin);
 router.get('/jobs/:jobId/edit', adminAuth, getJobForEdit);
 router.put('/jobs/:jobId/edit', adminAuth, singleUpload, updateJobAdmin);
