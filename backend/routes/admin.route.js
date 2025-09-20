@@ -47,6 +47,7 @@ import {
     updateApplicationStatus,
     deleteApplication,
     getApplicationStats,
+    bulkAcceptApplications,
     forgotPassword,
     resetPassword
 } from "../controllers/admin.Controller.js";
@@ -112,6 +113,7 @@ router.get('/applications/stats', adminAuth, getApplicationStats);
 router.get('/applications/:applicationId', adminAuth, getApplicationById);
 router.patch('/applications/:applicationId/status', adminAuth, updateApplicationStatus);
 router.delete('/applications/:applicationId', adminAuth, deleteApplication);
+router.post('/jobs/:jobId/applications/bulk-accept', adminAuth, bulkAcceptApplications);
 
 
 router.get('/admins', adminAuth, getAllAdmins);

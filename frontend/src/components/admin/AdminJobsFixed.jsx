@@ -227,6 +227,29 @@ const AdminJobs = () => {
     }
   };
 
+  const handleBulkAcceptApplications = async () => {
+    if (!selectedJob?._id) return;
+    const confirmed = window.confirm('Accept all applications for this job?');
+    if (!confirmed) return;
+    try {
+      const token = localStorage.getItem('adminToken');
+      const res = await axios.post(
+        `${ADMIN_API_END_POINT}/jobs/${selectedJob._id}/applications/bulk-accept`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.data?.success) {
+        toast.success(res.data.message || 'Accepted all applications');
+        await fetchJobApplications(selectedJob._id);
+      } else {
+        toast.error(res.data?.message || 'Bulk accept failed');
+      }
+    } catch (error) {
+      console.error('Bulk accept applications error:', error);
+      toast.error(error.response?.data?.message || 'Bulk accept failed');
+    }
+  };
+
   const handleViewJob = (job) => {
     setSelectedJob(job);
     setShowJobModal(true);
@@ -810,6 +833,14 @@ const AdminJobs = () => {
                     <h3 className="font-semibold text-gray-900">Applications ({applications.length})</h3>
                     {applications.length > 0 && (
                       <div className="flex gap-2 text-xs">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                          onClick={handleBulkAcceptApplications}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" /> Accept All
+                        </Button>
                         <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded">Pending: {getApplicationStats().pending}</span>
                         <span className="px-2 py-1 bg-green-100 text-green-800 rounded">Accepted: {getApplicationStats().accepted}</span>
                         <span className="px-2 py-1 bg-red-100 text-red-800 rounded">Rejected: {getApplicationStats().rejected}</span>

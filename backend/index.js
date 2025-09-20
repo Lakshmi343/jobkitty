@@ -30,7 +30,9 @@ const corsOptions = {
     "https://jobkitty.in",  
     "http://jobkitty.in", 
     "http://168.231.123.129:8000",
-    "https://168.231.123.129:8000"
+    "https://168.231.123.129:8000",
+    "https://api.jobkitty.in" ,
+    "http://api.jobkitty.in" 
           
   ],
   credentials: true,

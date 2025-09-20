@@ -34,6 +34,38 @@ const logActivity = async (adminId, action, target, targetId, details) => {
 };
 
 
+// Bulk accept all applications for a specific job
+export const bulkAcceptApplications = async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    if (!jobId) {
+      return res.status(400).json({ success: false, message: 'jobId is required' });
+    }
+
+    // Accept all non-accepted applications for this job
+    const result = await Application.updateMany(
+      { job: jobId, status: { $ne: 'accepted' } },
+      { $set: { status: 'accepted' } }
+    );
+
+    const adminId = req.id;
+    if (adminId) {
+      await logActivity(adminId, 'applications_bulk_accepted', 'job', jobId, `Accepted ${result.modifiedCount} applications`);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `Accepted ${result.modifiedCount} applications`,
+      matched: result.matchedCount ?? result.nMatched,
+      modified: result.modifiedCount ?? result.nModified
+    });
+  } catch (error) {
+    console.error('Bulk accept applications error:', error);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+
 export const getAllJobseekers = async (req, res) => {
   try {
     const jobseekers = await User.find({ role: 'jobseeker' })
