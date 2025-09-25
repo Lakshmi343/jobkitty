@@ -543,7 +543,7 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
             </div>
           </div>
 
-          {/* Experience */}
+         
           <div>
             <Label>Experience</Label>
             <div className="grid gap-2">
