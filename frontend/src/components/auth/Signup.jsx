@@ -21,7 +21,7 @@ const Signup = () => {
     password: "",
     confirmPassword: "",
     role: "",
-    file: ""
+    file: null
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -259,7 +259,7 @@ const Signup = () => {
 
           
               <div className='space-y-3'>
-                <Label className="text-sm font-medium text-gray-700">Profile Photo</Label>
+                <Label className="text-sm font-medium text-gray-700">Profile Photo (optional)</Label>
                 <div className="relative flex flex-col items-center">
                   <input
                     accept="image/*"
@@ -274,9 +274,9 @@ const Signup = () => {
                   >
                     <Camera className="w-8 h-8 text-gray-400 mb-2" />
                     <span className="text-sm text-gray-600">
-                      {input.file ? input.file.name : 'Click to upload profile photo'}
+                      {input.file ? input.file.name : 'Click to upload profile photo (optional)'}
                     </span>
-                    <span className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</span>
+                    <span className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB • You can skip this for now</span>
                   </Label>
                   {previewImage && (
                     <img

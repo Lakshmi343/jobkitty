@@ -223,6 +223,7 @@
 //         // Reset the file input
 //         const fileInput = document.getElementById('resume-upload');
 //         if (fileInput) fileInput.value = '';
+
 import React, { useState } from 'react';
 import axios from 'axios';
 import { USER_API_END_POINT } from '../../utils/constant';
