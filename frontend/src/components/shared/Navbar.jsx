@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Button } from '../ui/button'
-import { Avatar, AvatarImage } from '../ui/avatar'
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar'
 import { LogOut, User2, Menu } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
@@ -101,6 +101,7 @@ const Navbar = () => {
                             <PopoverTrigger asChild>
                                 <Avatar className="cursor-pointer">
                                     <AvatarImage src={user?.profile?.profilePhoto} alt="@user" />
+                                    <AvatarFallback>{(user?.fullname?.[0] || 'U').toUpperCase()}</AvatarFallback>
                                 </Avatar>
                             </PopoverTrigger>
                             <PopoverContent className="w-80">
@@ -108,6 +109,7 @@ const Navbar = () => {
                                     <div className='flex gap-2 space-y-2'>
                                         <Avatar>
                                             <AvatarImage src={user?.profile?.profilePhoto} alt="@user" />
+                                            <AvatarFallback>{(user?.fullname?.[0] || 'U').toUpperCase()}</AvatarFallback>
                                         </Avatar>
                                         <div>
                                             <h4 className='font-medium'>{user?.fullname}</h4>
@@ -118,6 +120,12 @@ const Navbar = () => {
                                             <div className='flex w-fit items-center gap-2 cursor-pointer'>
                                                 <User2 />
                                                 <Button variant="link"><Link to="/profile">View Profile</Link></Button>
+                                            </div>
+                                        )}
+                                        {user?.role === 'Jobseeker' && (
+                                            <div className='flex w-fit items-center gap-2 cursor-pointer'>
+                                                <User2 />
+                                                <Button variant="link"><Link to="/profile?edit=1">Edit Profile</Link></Button>
                                             </div>
                                         )}
                                         {user?.role === 'Employer' && (
@@ -180,9 +188,14 @@ const Navbar = () => {
                         ) : (
                             <div className='flex flex-col gap-2 p-4'>
                                 {user?.role === 'Jobseeker' && (
-                                    <Button variant="link" className="w-full flex items-center gap-2 justify-start" onClick={() => setMobileMenuOpen(false)}>
-                                        <User2 /> <Link to="/profile">View Profile</Link>
-                                    </Button>
+                                    <>
+                                        <Button variant="link" className="w-full flex items-center gap-2 justify-start" onClick={() => setMobileMenuOpen(false)}>
+                                            <User2 /> <Link to="/profile">View Profile</Link>
+                                        </Button>
+                                        <Button variant="link" className="w-full flex items-center gap-2 justify-start" onClick={() => setMobileMenuOpen(false)}>
+                                            <User2 /> <Link to="/profile?edit=1">Edit Profile</Link>
+                                        </Button>
+                                    </>
                                 )}
                                 {user?.role === 'Employer' && (
                                     <Button variant="link" className="w-full flex items-center gap-2 justify-start" onClick={() => setMobileMenuOpen(false)}>

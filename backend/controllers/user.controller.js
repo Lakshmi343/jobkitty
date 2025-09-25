@@ -18,12 +18,6 @@ export const register = async (req, res) => {
 				success: false
 			});
 		}
-		if (!req.file) {
-			return res.status(400).json({
-				message: "Profile photo is required.",
-				success: false
-			});
-		}
 		const existingUser = await User.findOne({ email });
 		if (existingUser) {
 			return res.status(400).json({
@@ -82,6 +76,42 @@ export const register = async (req, res) => {
 		console.error(error);
 		res.status(500).json({ message: "Server error", success: false });
 	}
+};
+
+
+// Update profile photo
+export const updateProfilePhoto = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                message: "Profile photo file is required.",
+                success: false
+            });
+        }
+
+        const userId = req.id;
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found.", success: false });
+        }
+
+        const fileUri = getDataUri(req.file);
+        const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
+            folder: "profile-photos"
+        });
+
+        user.profile.profilePhoto = cloudResponse.secure_url;
+        const updatedUser = await user.save();
+
+        return res.status(200).json({
+            message: "Profile photo updated successfully.",
+            user: updatedUser,
+            success: true
+        });
+    } catch (error) {
+        console.error("Update profile photo error:", error);
+        return res.status(500).json({ message: "Failed to update profile photo.", success: false });
+    }
 };
 
 

@@ -57,14 +57,14 @@ const ClientShowcase = () => {
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Building2 className="w-5 h-5 text-blue-600" />
-                <span className="text-2xl font-bold text-blue-600">100+</span>
+                <span className="text-2xl font-bold text-blue-600">4000+</span>
               </div>
               <p className="text-gray-600 text-sm">Trusted Partners</p>
             </div>
             <div className="text-center">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Users className="w-5 h-5 text-green-600" />
-                <span className="text-2xl font-bold text-green-600">1000+</span>
+                <span className="text-2xl font-bold text-green-600">3000+</span>
               </div>
               <p className="text-gray-600 text-sm">Successful Placements</p>
             </div>

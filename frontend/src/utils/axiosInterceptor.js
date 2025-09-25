@@ -23,7 +23,16 @@ class AxiosInterceptor {
         
           else {
           
-            const protectedEndpoints = ['/profile', '/application', '/company', '/job'];
+            // Endpoints that require user auth and should include Authorization + support refresh
+            const protectedEndpoints = [
+              '/profile',
+              '/profile/update',
+              '/profile/photo',
+              '/upload-resume',
+              '/application',
+              '/company',
+              '/job'
+            ];
             const needsAuth = protectedEndpoints.some(endpoint => config.url.includes(endpoint));
             
             if (needsAuth) {
@@ -70,7 +79,15 @@ class AxiosInterceptor {
           } 
     
           else {
-            const protectedEndpoints = ['/profile', '/application', '/company', '/job'];
+            const protectedEndpoints = [
+              '/profile',
+              '/profile/update',
+              '/profile/photo',
+              '/upload-resume',
+              '/application',
+              '/company',
+              '/job'
+            ];
             const needsAuth = protectedEndpoints.some(endpoint => originalRequest.url.includes(endpoint));
             
             if (needsAuth) {

@@ -13,6 +13,7 @@ import IframePdfViewer from "./IframePdfViewer";
 import useGetAppliedJobs from "../hooks/useGetAppliedJobs";
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
+import ResumeUpload from "./jobseeker/ResumeUpload";
 
 import axios from "axios";
 
@@ -230,6 +231,40 @@ const Profile = () => {
                     )}
                   </CardContent>
                 </Card>
+
+                {/* Experience */}
+                <Card className="shadow-md border border-gray-200">
+                  <CardHeader className="bg-white border-b border-gray-200 p-4 sm:p-6">
+                    <CardTitle className="flex items-center gap-2 sm:gap-3 text-gray-800 text-lg sm:text-xl">
+                      <Briefcase size={18} className="sm:w-5 sm:h-5" />
+                      Experience
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 sm:p-6 bg-white">
+                    {user?.profile?.experience?.years || user?.profile?.experience?.field ? (
+                      <div className="space-y-2">
+                        {user?.profile?.experience?.years && (
+                          <p className="text-gray-700 text-sm sm:text-base"><span className="font-medium">Years:</span> {user.profile.experience.years}</p>
+                        )}
+                        {user?.profile?.experience?.field && (
+                          <p className="text-gray-700 text-sm sm:text-base"><span className="font-medium">Field:</span> {user.profile.experience.field}</p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6">
+                        <Briefcase size={40} className="mx-auto text-gray-400 mb-3" />
+                        <p className="text-gray-500 mb-3">No experience added</p>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setOpen(true)}
+                          size="sm"
+                        >
+                          Add Experience
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
 
              
@@ -242,62 +277,8 @@ const Profile = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-4 sm:p-6 bg-white">
-                    {user?.profile?.resume ? (
-                      <div className="space-y-4">
-                        <div className="bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
-                          <div className="text-center">
-                            <FileDown size={24} className="sm:w-7 sm:h-7 mx-auto text-gray-600 mb-2" />
-                            <p className="text-xs sm:text-sm font-medium text-gray-700 mb-1 truncate">
-                              {user.profile.resumeOriginalName || "resume.pdf"}
-                            </p>
-                            <p className="text-xs text-gray-500">PDF Document</p>
-                          </div>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <Button
-                            onClick={() => setPdfViewerOpen(true)}
-                            className="w-full gap-2 text-sm"
-                            size="sm"
-                          >
-                            <Eye size={14} className="sm:w-4 sm:h-4" />
-                            Preview Resume
-                          </Button>
-                          
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              const link = document.createElement('a');
-                              link.href = user.profile.resume;
-                              link.download = user.profile.resumeOriginalName || 'resume.pdf';
-                              link.target = '_blank';
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                            }}
-                            className="w-full gap-2 text-sm"
-                            size="sm"
-                          >
-                            <FileDown size={14} className="sm:w-4 sm:h-4" />
-                            Download
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-6">
-                        <FileDown size={40} className="mx-auto text-gray-400 mb-3" />
-                        <p className="text-gray-500 mb-3">No resume uploaded</p>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setOpen(true)}
-                          className="gap-2"
-                          size="sm"
-                        >
-                          <FileDown size={16} />
-                          Upload Resume
-                        </Button>
-                      </div>
-                    )}
+                    {/* Use unified resume upload component for viewing/replacing resume */}
+                    <ResumeUpload onSuccess={() => { /* no-op */ }} />
                   </CardContent>
                 </Card>
               </div>

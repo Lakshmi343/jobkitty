@@ -9,12 +9,7 @@ const LOCATIONS = ["Thiruvananthapuram","Kollam","Pathanamthitta","Alappuzha","K
 const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Internship", "Temporary"]
 const SALARY = ["0-40k","42-1lakh","1lakh to 5lakh","5lakh+"]
 const EXPERIENCE = ["0-1 years","1-3 years","3-5 years","5+ years"]
-const COMPANY_TYPES = [
-  'Startup','MNC','SME','Government','Non-Profit','Other','HR','Manufacturing','IT Services','Education',
-  'Healthcare','Finance','E-commerce','Consulting','Real Estate','Media & Entertainment','Telecommunications',
-  'Energy','Logistics','Agriculture','Automobile','Hospitality','Pharmaceutical','Retail','Construction',
-  'Legal','Cybersecurity','AI & Machine Learning','Gaming','Research & Development'
-]
+
 const DATE_POSTED = [
   { label: 'Any time', value: '' },
   { label: 'Last 24 hours', value: '24h' },
@@ -77,7 +72,7 @@ const TopFilterBar = ({ variant = 'top', locationInputMode = 'select' }) => {
 
     const hasActiveFilters = location || role || salary || jobType || experience || categoryId || companyType || datePosted;
 
-    // Layout differs for sidebar vs top bar
+    
     const containerClasses = variant === 'top'
         ? 'w-full bg-white shadow-lg border-b border-gray-200 sticky top-0 z-20'
         : 'w-full';
@@ -89,9 +84,9 @@ const TopFilterBar = ({ variant = 'top', locationInputMode = 'select' }) => {
     return (
         <div className={containerClasses}>
             <div className={innerClasses}>
-                {/* Main Filter Row */}
+               
                 <div className={variant === 'top' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-4" : "grid grid-cols-1 gap-4 mb-4"}>
-                    {/* Search Role Input */}
+                    
                     <div className="relative xl:col-span-2">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <Search className="h-5 w-5 text-gray-400" />
@@ -203,21 +198,7 @@ const TopFilterBar = ({ variant = 'top', locationInputMode = 'select' }) => {
                     </div>
 
                  
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Briefcase className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <select
-                            value={companyType}
-                            onChange={(e) => setCompanyType(e.target.value)}
-                            className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white appearance-none cursor-pointer"
-                        >
-                            <option value=''>All Company Types</option>
-                            {COMPANY_TYPES.map((t) => (
-                                <option key={t} value={t}>{t}</option>
-                            ))}
-                        </select>
-                    </div>
+                   
 
                 
                     <div className="relative">
