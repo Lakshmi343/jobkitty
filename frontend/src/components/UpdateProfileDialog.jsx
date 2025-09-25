@@ -309,6 +309,44 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
     }
   }, [user]);
 
+  // Wizard state
+  const steps = ["Profile", "Education", "Skills", "Experience & Resume"];
+  const [currentStep, setCurrentStep] = useState(0);
+
+  const nextStep = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep((s) => Math.min(s + 1, steps.length - 1));
+    }
+  };
+
+  const prevStep = () => setCurrentStep((s) => Math.max(s - 1, 0));
+
+  // Per-step validation
+  const validateStep = (stepIndex) => {
+    switch (stepIndex) {
+      case 0: // Profile
+        if (!input.fullname || !input.email || !input.phoneNumber) {
+          toast.error("Name, email, and phone number are required");
+          return false;
+        }
+        return true;
+      case 1: // Education
+        if (!input.degree || !input.institution || !input.yearOfCompletion) {
+          toast.error("Education details are required");
+          return false;
+        }
+        return true;
+      case 2: // Skills
+        // Skills optional, but you can enforce minimum if desired
+        return true;
+      case 3: // Experience & Resume
+        // Optional fields
+        return true;
+      default:
+        return true;
+    }
+  };
+
   // react-tag-input handlers
   const handleDelete = (i) => {
     setTags(tags.filter((_, index) => index !== i));
@@ -338,15 +376,16 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
   const submitHandler = async (e) => {
     e.preventDefault();
 
-    if (!input.fullname || !input.email || !input.phoneNumber) {
-      toast.error("Name, email, and phone number are required");
+    // If not on last step, move to next after validation
+    if (currentStep < steps.length - 1) {
+      if (validateStep(currentStep)) {
+        nextStep();
+      }
       return;
     }
 
-    if (!input.degree || !input.institution || !input.yearOfCompletion) {
-      toast.error("Education details are required");
-      return;
-    }
+    // On last step, validate all required sections
+    if (!validateStep(0) || !validateStep(1)) return;
 
     const skillsArray = tags.map((tag) => tag.text);
     const skillsString = skillsArray.join(", ");
@@ -426,171 +465,124 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
           <DialogTitle>Update Profile</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={submitHandler} className="space-y-5">
-          {/* Full Name */}
-          <div>
-            <Label htmlFor="fullname">Full Name *</Label>
-            <Input
-              id="fullname"
-              name="fullname"
-              type="text"
-              value={input.fullname}
-              onChange={changeEventHandler}
-              required
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              value={input.email}
-              onChange={changeEventHandler}
-              required
-            />
-          </div>
-
-          {/* Phone */}
-          <div>
-            <Label htmlFor="phoneNumber">Phone *</Label>
-            <Input
-              id="phoneNumber"
-              name="phoneNumber"
-              type="text"
-              value={input.phoneNumber}
-              onChange={changeEventHandler}
-              required
-            />
-          </div>
-
-          {/* Place */}
-          <div>
-            <Label htmlFor="place">Place</Label>
-            <Input
-              id="place"
-              name="place"
-              type="text"
-              value={input.place}
-              onChange={changeEventHandler}
-              placeholder="Your location"
-            />
-          </div>
-
-          {/* Bio */}
-          <div>
-            <Label htmlFor="bio">Bio</Label>
-            <Input
-              id="bio"
-              name="bio"
-              type="text"
-              value={input.bio}
-              onChange={changeEventHandler}
-              placeholder="Tell us about yourself..."
-            />
-          </div>
-
-          {/* Skills */}
-          <div>
-            <Label>Skills</Label>
-            <div className="border rounded-md p-2">
-              <ReactTags
-                tags={tags}
-                suggestions={skillSuggestions}
-                handleDelete={handleDelete}
-                handleAddition={handleAddition}
-                handleDrag={handleDrag}
-                delimiters={[188, 13]} // comma & enter
-                placeholder="Add a skill"
-              />
-            </div>
-          </div>
-
-          {/* Education */}
-          <div>
-            <Label>Education *</Label>
-            <div className="grid gap-2">
-              <Input
-                name="degree"
-                placeholder="Degree (e.g. B.Tech)"
-                value={input.degree}
-                onChange={changeEventHandler}
-                required
-              />
-              <Input
-                name="institution"
-                placeholder="Institution"
-                value={input.institution}
-                onChange={changeEventHandler}
-                required
-              />
-              <Input
-                name="yearOfCompletion"
-                type="number"
-                placeholder="Year of Completion"
-                value={input.yearOfCompletion}
-                onChange={changeEventHandler}
-                required
-              />
-              <Input
-                name="grade"
-                placeholder="Grade (optional)"
-                value={input.grade}
-                onChange={changeEventHandler}
-              />
-            </div>
-          </div>
-
-         
-          <div>
-            <Label>Experience</Label>
-            <div className="grid gap-2">
-              <Input
-                name="years"
-                type="number"
-                placeholder="Years of experience"
-                value={input.years}
-                onChange={changeEventHandler}
-              />
-              <Input
-                name="field"
-                placeholder="Field (optional)"
-                value={input.field}
-                onChange={changeEventHandler}
-              />
-            </div>
-          </div>
-
-          {/* Resume Upload */}
-          <div>
-            <Label htmlFor="file">Resume (PDF, DOC, DOCX)</Label>
-            <Input
-              id="file"
-              name="file"
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={fileChangeHandler}
-            />
-            {input.file && (
-              <p className="text-sm text-green-600 mt-1">
-                ✅ Selected: {input.file.name} ({(input.file.size / 1024 / 1024).toFixed(2)} MB)
-              </p>
-            )}
-          </div>
-
-          {/* Submit */}
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? (
-              <div className="flex items-center justify-center">
-                <LoadingSpinner size={20} color="#ffffff" />
-                <span className="ml-2">Updating...</span>
+        {/* Stepper */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between">
+            {steps.map((label, idx) => (
+              <div key={label} className="flex-1 flex items-center">
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium 
+                  ${idx <= currentStep ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                  {idx + 1}
+                </div>
+                {idx < steps.length - 1 && (
+                  <div className={`h-1 flex-1 mx-2 rounded ${idx < currentStep ? 'bg-blue-600' : 'bg-gray-200'}`}></div>
+                )}
               </div>
-            ) : (
-              "Update Profile"
-            )}
-          </Button>
+            ))}
+          </div>
+          <div className="mt-2 text-center text-sm text-gray-700 font-medium">{steps[currentStep]}</div>
+        </div>
+
+        <form onSubmit={submitHandler} className="space-y-5">
+          {currentStep === 0 && (
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="fullname">Full Name *</Label>
+                <Input id="fullname" name="fullname" type="text" value={input.fullname} onChange={changeEventHandler} required />
+              </div>
+              <div>
+                <Label htmlFor="email">Email *</Label>
+                <Input id="email" name="email" type="email" value={input.email} onChange={changeEventHandler} required />
+              </div>
+              <div>
+                <Label htmlFor="phoneNumber">Phone *</Label>
+                <Input id="phoneNumber" name="phoneNumber" type="text" value={input.phoneNumber} onChange={changeEventHandler} required />
+              </div>
+              <div>
+                <Label htmlFor="place">Place</Label>
+                <Input id="place" name="place" type="text" value={input.place} onChange={changeEventHandler} placeholder="Your location" />
+              </div>
+              <div>
+                <Label htmlFor="bio">Bio</Label>
+                <Input id="bio" name="bio" type="text" value={input.bio} onChange={changeEventHandler} placeholder="Tell us about yourself..." />
+              </div>
+            </div>
+          )}
+
+          {currentStep === 1 && (
+            <div className="space-y-3">
+              <div>
+                <Label>Education *</Label>
+                <div className="grid gap-2">
+                  <Input name="degree" placeholder="Degree (e.g. B.Tech)" value={input.degree} onChange={changeEventHandler} required />
+                  <Input name="institution" placeholder="Institution" value={input.institution} onChange={changeEventHandler} required />
+                  <Input name="yearOfCompletion" type="number" placeholder="Year of Completion" value={input.yearOfCompletion} onChange={changeEventHandler} required />
+                  <Input name="grade" placeholder="Grade (optional)" value={input.grade} onChange={changeEventHandler} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 2 && (
+            <div>
+              <Label>Skills</Label>
+              <div className="border rounded-md p-2">
+                <ReactTags
+                  tags={tags}
+                  suggestions={skillSuggestions}
+                  handleDelete={handleDelete}
+                  handleAddition={handleAddition}
+                  handleDrag={handleDrag}
+                  delimiters={[188, 13]}
+                  placeholder="Add a skill"
+                />
+              </div>
+            </div>
+          )}
+
+          {currentStep === 3 && (
+            <div className="space-y-4">
+              <div>
+                <Label>Experience</Label>
+                <div className="grid gap-2">
+                  <Input name="years" type="number" placeholder="Years of experience" value={input.years} onChange={changeEventHandler} />
+                  <Input name="field" placeholder="Field (optional)" value={input.field} onChange={changeEventHandler} />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="file">Resume (PDF, DOC, DOCX)</Label>
+                <Input id="file" name="file" type="file" accept=".pdf,.doc,.docx" onChange={fileChangeHandler} />
+                {input.file && (
+                  <p className="text-sm text-green-600 mt-1">✅ Selected: {input.file.name} ({(input.file.size / 1024 / 1024).toFixed(2)} MB)</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="flex items-center justify-between pt-2">
+            <Button type="button" variant="outline" onClick={prevStep} disabled={currentStep === 0 || loading}>
+              Back
+            </Button>
+            <div className="flex gap-2">
+              {currentStep < steps.length - 1 ? (
+                <Button type="submit" disabled={loading}>
+                  Next
+                </Button>
+              ) : (
+                <Button type="submit" disabled={loading}>
+                  {loading ? (
+                    <div className="flex items-center justify-center">
+                      <LoadingSpinner size={20} color="#ffffff" />
+                      <span className="ml-2">Updating...</span>
+                    </div>
+                  ) : (
+                    "Save Profile"
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
         </form>
       </DialogContent>
     </Dialog>
