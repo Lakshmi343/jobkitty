@@ -1,5 +1,10 @@
-// State-District mapping for South Indian states
+
 export const stateDistrictData = {
+  "Kerala": [
+    "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
+    "Idukki", "Ernakulam", "Thrissur", "Palakkad", "Malappuram",
+    "Kozhikode", "Wayanad", "Kannur", "Kasaragod"
+  ],
   "Tamil Nadu": [
     "Ariyalur", "Chengalpattu", "Chennai", "Coimbatore", "Cuddalore", 
     "Dharmapuri", "Dindigul", "Erode", "Kallakurichi", "Kanchipuram", 
@@ -10,11 +15,7 @@ export const stateDistrictData = {
     "Tirupathur", "Tiruppur", "Tiruvallur", "Tiruvannamalai", "Tiruvarur", 
     "Vellore", "Viluppuram", "Virudhunagar"
   ],
-  "Kerala": [
-    "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
-    "Idukki", "Ernakulam", "Thrissur", "Palakkad", "Malappuram",
-    "Kozhikode", "Wayanad", "Kannur", "Kasaragod"
-  ],
+ 
   "Telangana": [
     "Adilabad", "Bhadradri Kothagudem", "Hyderabad", "Jagtial", "Jangaon",
     "Jayashankar Bhupalpally", "Jogulamba Gadwal", "Kamareddy", "Karimnagar",
@@ -39,46 +40,45 @@ export const stateDistrictData = {
   ]
 };
 
-// Get all states
+
 export const getStates = () => {
   return Object.keys(stateDistrictData);
 };
 
-// Get districts for a specific state
+
 export const getDistricts = (state) => {
   return stateDistrictData[state] || [];
 };
 
-// Validate state-district combination
+
 export const isValidLocation = (state, district) => {
   const districts = getDistricts(state);
   return districts.includes(district);
 };
 
-// Format location for display
+
 export const formatLocation = (state, district) => {
   if (!state && !district) return '';
   if (!district) return state;
   return `${district}, ${state}`;
 };
 
-// Parse location string back to state and district
+
 export const parseLocation = (locationString) => {
   if (!locationString) return { state: '', district: '' };
   
-  // If it contains comma, split it
+  
   if (locationString.includes(',')) {
     const [district, state] = locationString.split(',').map(s => s.trim());
     return { state, district };
   }
   
-  // Otherwise, check if it's a state or district
+ 
   const states = getStates();
   if (states.includes(locationString)) {
     return { state: locationString, district: '' };
   }
-  
-  // Check if it's a district in any state
+
   for (const state of states) {
     const districts = getDistricts(state);
     if (districts.includes(locationString)) {

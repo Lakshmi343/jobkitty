@@ -47,7 +47,8 @@ const Profile = () => {
  
   useEffect(() => {
     // Open edit dialog if requested via query param
-    if (searchParams.get('edit') === '1') {
+    const editRequested = searchParams.get('edit') === '1';
+    if (editRequested) {
       setOpen(true);
     }
 
@@ -55,9 +56,12 @@ const Profile = () => {
     const pending = localStorage.getItem('pendingJobApplication');
     if (pending) {
       const data = JSON.parse(pending);
-      if (isProfileComplete && data.returnUrl) {
+      // Only auto-return if profile is complete, a returnUrl exists, and we know we came here for application flow
+      if (editRequested && isProfileComplete && data.returnUrl && data.autoReturn) {
         // Navigate back to job page; JobDescription will show confirm dialog
         navigate(data.returnUrl, { replace: true });
+        // Clear pending marker so future visits to profile don't redirect
+        localStorage.removeItem('pendingJobApplication');
       }
     }
   }, [searchParams, isProfileComplete, navigate]);

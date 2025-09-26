@@ -64,7 +64,8 @@ const JobDescription = () => {
                 jobId,
                 jobTitle: singleJob?.title,
                 returnUrl: window.location.pathname,
-                requireConfirm: true
+                requireConfirm: true,
+                autoReturn: true
             }));
             toast.info('Please complete your profile before applying.');
             navigate('/profile?edit=1');

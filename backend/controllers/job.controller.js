@@ -43,9 +43,10 @@ export const postJob = async (req, res) => {
         const defaultRequirements = ["No specific requirements"];
         const defaultSalary = { min: 0, max: 0 };
         const defaultExperience = { min: 0, max: 5 };
+        // Avoid forcing a specific city/state; prefer a neutral default
         const defaultLocation = {
-            state: "Tamil Nadu",
-            district: "Chennai",
+            state: "",
+            district: "",
             legacy: "Remote"
         };
         const defaultJobType = "Full-time";
@@ -61,7 +62,56 @@ export const postJob = async (req, res) => {
             });
         }
         
-        // Create job with employer's company, using default values for missing fields
+        // Derive final location respecting provided legacy text
+        let finalLocation;
+        if (location) {
+            const parseFromLegacy = (legacy) => {
+                if (!legacy || typeof legacy !== 'string') return { state: '', district: '', legacy: '' };
+                const parts = legacy.split(',').map(s => s.trim()).filter(Boolean);
+                if (parts.length >= 3) {
+                    // Format: City, District, State (or with more commas; take last as state, second last as district)
+                    const state = parts[parts.length - 1];
+                    const district = parts[parts.length - 2];
+                    return { district, state, legacy };
+                }
+                if (parts.length === 2) {
+                    // Format: District, State
+                    return { district: parts[0], state: parts[1], legacy };
+                }
+                // Single token: treat as district (free text), leave state empty
+                return { district: legacy, state: '', legacy };
+            };
+
+            // Support both string and object inputs
+            if (typeof location === 'string') {
+                const parsed = parseFromLegacy(location.trim());
+                finalLocation = {
+                    state: parsed.state || undefined,
+                    district: parsed.district || undefined,
+                    legacy: parsed.legacy || location.trim()
+                };
+            } else if (typeof location === 'object') {
+                // If structured fields missing, try to parse from legacy
+                const fromLegacy = (!location.state || !location.district) && location.legacy
+                    ? parseFromLegacy(location.legacy)
+                    : null;
+
+                const stateVal = location.state || fromLegacy?.state || undefined;
+                const districtVal = location.district || fromLegacy?.district || undefined;
+                const legacyVal = location.legacy || (districtVal && stateVal ? `${districtVal}, ${stateVal}` : (location.legacy ?? undefined));
+
+                // If we have at least something, build object without forcing specific defaults
+                if (stateVal || districtVal || legacyVal) {
+                    finalLocation = {
+                        state: stateVal,
+                        district: districtVal,
+                        legacy: legacyVal
+                    };
+                }
+            }
+        }
+
+        // Create job with employer's company, using default values only if no location info
         const job = await Job.create({
             title,
             description,
@@ -74,10 +124,10 @@ export const postJob = async (req, res) => {
                 min: experience && experience.min !== undefined ? Number(experience.min) : 0,
                 max: experience && experience.max !== undefined ? Number(experience.max) : 5
             },
-            location: location ? {
-                state: location.state || defaultLocation.state,
-                district: location.district || defaultLocation.district,
-                legacy: location.legacy || `${location.district || defaultLocation.district}, ${location.state || defaultLocation.state}`
+            location: finalLocation ? {
+                state: finalLocation.state,
+                district: finalLocation.district,
+                legacy: finalLocation.legacy || ((finalLocation.district && finalLocation.state) ? `${finalLocation.district}, ${finalLocation.state}` : (finalLocation.district || finalLocation.state || ''))
             } : defaultLocation,
             jobType: jobType || defaultJobType,
             experienceLevel: experienceLevel || defaultExperienceLevel,
@@ -128,7 +178,9 @@ export const getAllJobs = async (req, res) => {
                 $or: [
                     { title: { $regex: keyword, $options: "i" } },
                     { description: { $regex: keyword, $options: "i" } },
-                    { location: { $regex: keyword, $options: "i" } }
+                    { "location.state": { $regex: keyword, $options: "i" } },
+                    { "location.district": { $regex: keyword, $options: "i" } },
+                    { "location.legacy": { $regex: keyword, $options: "i" } }
                 ]
             });
         }
@@ -337,19 +389,72 @@ export const updateJob = async (req, res) => {
             });
         }
         
-        // Update the job with employer's company
-        const updatedJob = await Job.findByIdAndUpdate(jobId, {
-            title,
-            description,
-            requirements: Array.isArray(requirements) ? requirements : requirements.split(",").map(req => req.trim()),
-            salary: Number(salary),
-            location,
-            jobType,
-            experienceLevel: Number(experienceLevel),
-            position: Number(position),
-            company: company._id,    // Use employer's company
-            category
-        }, { new: true });
+        // Parse and normalize incoming fields
+        const normalized = {};
+        if (title !== undefined) normalized.title = title;
+        if (description !== undefined) normalized.description = description;
+        if (requirements !== undefined) {
+            normalized.requirements = Array.isArray(requirements)
+                ? requirements
+                : String(requirements).split(',').map(req => req.trim()).filter(Boolean);
+        }
+        if (salary !== undefined) {
+            if (typeof salary === 'object') {
+                normalized.salary = {
+                    min: salary.min !== undefined ? Number(salary.min) : 0,
+                    max: salary.max !== undefined ? Number(salary.max) : 0
+                };
+            } else {
+                // Backward compatibility if sent as single number (set both bounds same)
+                const num = Number(salary) || 0;
+                normalized.salary = { min: num, max: num };
+            }
+        }
+
+        if (jobType !== undefined) normalized.jobType = jobType;
+        if (experienceLevel !== undefined) normalized.experienceLevel = String(experienceLevel);
+        if (position !== undefined) normalized.position = Number(position);
+        if (category !== undefined) normalized.category = category;
+
+        // Normalize location: accept string or object like in postJob
+        if (location !== undefined) {
+            const parseFromLegacy = (legacy) => {
+                if (!legacy || typeof legacy !== 'string') return { state: '', district: '', legacy: '' };
+                const parts = legacy.split(',').map(s => s.trim()).filter(Boolean);
+                if (parts.length >= 3) {
+                    const state = parts[parts.length - 1];
+                    const district = parts[parts.length - 2];
+                    return { district, state, legacy };
+                }
+                if (parts.length === 2) {
+                    return { district: parts[0], state: parts[1], legacy };
+                }
+                return { district: legacy, state: '', legacy };
+            };
+
+            if (typeof location === 'string') {
+                const parsed = parseFromLegacy(location.trim());
+                normalized.location = {
+                    state: parsed.state || undefined,
+                    district: parsed.district || undefined,
+                    legacy: parsed.legacy || location.trim()
+                };
+            } else if (typeof location === 'object') {
+                const fromLegacy = (!location.state || !location.district) && location.legacy
+                    ? parseFromLegacy(location.legacy)
+                    : null;
+                const stateVal = location.state || fromLegacy?.state || undefined;
+                const districtVal = location.district || fromLegacy?.district || undefined;
+                const legacyVal = location.legacy || (districtVal && stateVal ? `${districtVal}, ${stateVal}` : (location.legacy ?? undefined));
+                normalized.location = { state: stateVal, district: districtVal, legacy: legacyVal };
+            }
+        }
+
+        // Ensure company remains the employer's company
+        normalized.company = company;
+
+        // Update the job
+        const updatedJob = await Job.findByIdAndUpdate(jobId, normalized, { new: true });
 
         return res.status(200).json({
             message: "Job updated successfully",

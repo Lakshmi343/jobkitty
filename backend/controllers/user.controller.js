@@ -108,7 +108,10 @@ export const updateProfilePhoto = async (req, res) => {
         const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
             folder: "profile-photos"
         });
-
+        // Ensure profile object exists to avoid setting property on undefined
+        if (!user.profile) {
+            user.profile = {};
+        }
         user.profile.profilePhoto = cloudResponse.secure_url;
         const updatedUser = await user.save();
 

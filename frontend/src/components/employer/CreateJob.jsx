@@ -284,8 +284,9 @@ const CreateJob = () => {
                 },
                 experienceLevel: updatedInput.experienceLevel,
                 location: {
-                    state: locationData.state || "Tamil Nadu",
-                    district: locationData.district || "Chennai",
+                    // Do not force defaults here; let backend fallback only when entirely missing
+                    state: locationData.state || "",
+                    district: locationData.district || "",
                     legacy: updatedInput.location
                 },
                 jobType: updatedInput.jobType,

@@ -977,6 +977,7 @@ export const deleteCategory = async (req, res) => {
   }
 };
 
+
 export const postJobAdmin = async (req, res) => {
   try {
 
@@ -1092,15 +1093,16 @@ export const postJobAdmin = async (req, res) => {
     // Set default values for missing fields
     const defaultRequirements = requirements && requirements.length > 0 ? requirements : ["No specific requirements"];
     const defaultSalary = salary || { min: 0, max: 0 };
-    const defaultLocation = location ? {
-        state: location.state || "Tamil Nadu",
-        district: location.district || "Chennai",
-        legacy: location.legacy || `${location.district || "Chennai"}, ${location.state || "Tamil Nadu"}`
-    } : {
-        state: "Tamil Nadu",
-        district: "Chennai", 
-        legacy: (company?.location || (companyData && companyData.location)) || "Chennai, Tamil Nadu"
-    };
+   // Itha nammal kandath - problem ulla code
+const defaultLocation = location ? {
+  state: location.state || "Tamil Nadu",  // ← Itho problem! Always "Tamil Nadu" varum
+  district: location.district || "Chennai", // ← Ithum problem! Always "Chennai" varum
+  legacy: location.legacy || `${location.district || "Chennai"}, ${location.state || "Tamil Nadu"}`
+} : {
+  state: "Tamil Nadu",  // ← Hardcoded
+  district: "Chennai",  // ← Hardcoded
+  legacy: "Chennai, Tamil Nadu" // ← Hardcoded
+};
     const defaultJobType = jobType || "Full-time";
     const defaultPosition = position ? Number(position) : 1;
     const defaultOpenings = openings ? Number(openings) : 1;

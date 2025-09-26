@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from 'react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
@@ -13,12 +15,6 @@ import { Briefcase, MapPin, DollarSign, Building, FileText, ArrowLeft, Plus, Che
 import LoadingSpinner from '../shared/LoadingSpinner';
 import LocationSelector from '../ui/LocationSelector';
 
-const locations = [
-    "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
-    "Idukki", "Ernakulam", "Thrissur", "Palakkad", "Malappuram",
-    "Kozhikode", "Wayanad", "Kannur", "Kasaragod"
-];
-
 const jobTypes = ["Full-time", "Part-time", "Contract", "Internship", "Temporary"];
 
 const AdminJobPosting = () => {
@@ -30,14 +26,18 @@ const AdminJobPosting = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
 
-    // Job posting state
+    // Job posting state - FIXED: Added proper location structure
     const [jobData, setJobData] = useState({
         title: "",
         description: "",
         requirements: [],
         salaryMin: "",
         salaryMax: "",
-        location: "",
+        location: {
+            state: "",
+            district: "",
+            legacy: ""
+        },
         jobType: "",
         position: "",
         openings: "1",
@@ -58,6 +58,7 @@ const AdminJobPosting = () => {
                 toast.error("Failed to fetch categories");
             }
         };
+        
         const fetchCompanies = async () => {
             try {
                 const token = localStorage.getItem('adminToken');
@@ -72,6 +73,7 @@ const AdminJobPosting = () => {
                 toast.error('Failed to load companies');
             }
         };
+        
         fetchCategories();
         fetchCompanies();
     }, []);
@@ -81,14 +83,53 @@ const AdminJobPosting = () => {
         const cid = searchParams.get('companyId');
         if (cid) {
             setSelectedCompanyId(cid);
-            setCurrentStep(2); // jump to job details if company is preselected
+            setCurrentStep(2);
         }
     }, [searchParams]);
 
-    // Company fields removed in favor of dropdown
-
     const handleJobChange = (e) => {
         setJobData({ ...jobData, [e.target.name]: e.target.value });
+    };
+
+    // FIXED: Enhanced location handling
+    const handleLocationChange = (selectedLocation) => {
+        // If selectedLocation is a string (from LocationSelector), convert to object
+        if (typeof selectedLocation === 'string') {
+            const parts = selectedLocation.split(',').map(s => s.trim()).filter(Boolean);
+            let state = '';
+            let district = '';
+            if (parts.length >= 2) {
+                state = parts[parts.length - 1];
+                district = parts[parts.length - 2];
+            } else if (parts.length === 1) {
+                state = parts[0];
+            }
+
+            const legacy = district && state ? `${district}, ${state}` : (state || '');
+
+            setJobData(prev => ({
+                ...prev,
+                location: {
+                    state,
+                    district,
+                    legacy
+                }
+            }));
+        } else if (selectedLocation && typeof selectedLocation === 'object') {
+            // If it's already an object, normalize and use it directly
+            const state = selectedLocation.state || '';
+            const district = selectedLocation.district || '';
+            const legacy = selectedLocation.legacy || (district && state ? `${district}, ${state}` : (state || ''));
+            setJobData(prev => ({
+                ...prev,
+                location: { state, district, legacy }
+            }));
+        } else {
+            setJobData(prev => ({
+                ...prev,
+                location: { state: '', district: '', legacy: '' }
+            }));
+        }
     };
 
     const selectChangeHandler = (name, value) => {
@@ -118,9 +159,16 @@ const AdminJobPosting = () => {
     };
 
     const validateJobStep = () => {
-        return jobData.title && jobData.description && jobData.category && 
-               requirements.length > 0 && jobData.location && jobData.jobType &&
-               jobData.salaryMin && jobData.salaryMax && jobData.openings;
+        return jobData.title && 
+               jobData.description && 
+               jobData.category && 
+               requirements.length > 0 && 
+               jobData.location.district && 
+               jobData.location.state &&
+               jobData.jobType &&
+               jobData.salaryMin && 
+               jobData.salaryMax && 
+               jobData.openings;
     };
 
     const nextStep = () => {
@@ -145,7 +193,8 @@ const AdminJobPosting = () => {
         
         try {
             setLoading(true);
-            // Build JSON payload with companyId
+            
+            // FIXED: Build proper location structure for backend
             const payload = {
                 companyId: selectedCompanyId,
                 title: jobData.title,
@@ -155,12 +204,14 @@ const AdminJobPosting = () => {
                     min: Number(jobData.salaryMin),
                     max: Number(jobData.salaryMax)
                 },
-                location: jobData.location,
+                location: jobData.location, // Now sends proper object structure
                 jobType: jobData.jobType,
-                position: jobData.position,
+                position: jobData.position || 1,
                 openings: Number(jobData.openings),
                 category: jobData.category
             };
+
+            console.log("Submitting job data:", payload); // Debug log
 
             const adminToken = localStorage.getItem('adminToken') || localStorage.getItem('token');
             const response = await axios.post(`${ADMIN_API_END_POINT}/post-job`, payload, {
@@ -181,6 +232,7 @@ const AdminJobPosting = () => {
             
             if (error.response?.status === 400) {
                 errorMessage = 'Please check all required fields and try again.';
+                console.error('Validation error:', error.response.data);
             } else if (error.response?.status === 401) {
                 errorMessage = 'You need to log in again to continue.';
             } else if (error.response?.status === 403) {
@@ -272,6 +324,26 @@ const AdminJobPosting = () => {
                                         <p className="text-sm text-gray-500 mt-2">No companies found. Create a company first from Companies page.</p>
                                     )}
                                 </div>
+                                
+                                {/* Company Quick Actions */}
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h3 className="font-medium text-blue-900">Don't see your company?</h3>
+                                            <p className="text-blue-700 text-sm">Create a new company profile first</p>
+                                        </div>
+                                        <Button 
+                                            type="button"
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => navigate('/admin/companies')}
+                                            className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                                        >
+                                            <Plus className="h-4 w-4 mr-1" />
+                                            Add Company
+                                        </Button>
+                                    </div>
+                                </div>
                             </CardContent>
                         </div>
                     )}
@@ -287,6 +359,30 @@ const AdminJobPosting = () => {
                                 <CardDescription>Provide the job posting details.</CardDescription>
                             </CardHeader>
                             <CardContent className='mt-4 space-y-6'>
+                                {/* Selected Company Info */}
+                                {selectedCompanyId && (
+                                    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <Building className="h-5 w-5 text-green-600" />
+                                            <div>
+                                                <span className="text-sm text-green-800 font-medium">Posting job for: </span>
+                                                <span className="text-green-900 font-semibold">
+                                                    {companies.find(c => c._id === selectedCompanyId)?.name || 'Selected Company'}
+                                                </span>
+                                            </div>
+                                            <Button 
+                                                type="button"
+                                                variant="ghost" 
+                                                size="sm"
+                                                onClick={() => setCurrentStep(1)}
+                                                className="text-green-700 hover:text-green-900 ml-auto"
+                                            >
+                                                Change
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div>
                                         <Label>Job Title *</Label>
@@ -318,17 +414,19 @@ const AdminJobPosting = () => {
                                         </Select>
                                     </div>
                                 </div>
+                                
                                 <div>
                                     <Label>Job Description *</Label>
                                     <Textarea 
                                         name="description" 
                                         value={jobData.description} 
                                         onChange={handleJobChange} 
-                                        placeholder="Describe the role and responsibilities" 
-                                        className="min-h-[240px] resize-y"
+                                        placeholder="Describe the role and responsibilities..." 
+                                        className="min-h-[120px] resize-y"
                                         required
                                     />
                                 </div>
+                                
                                 <div>
                                     <Label>Requirements * (Point-based format)</Label>
                                     <div className="flex gap-2 mb-2">
@@ -365,16 +463,25 @@ const AdminJobPosting = () => {
                                         <p className="text-sm text-gray-500 mt-2">Add job requirements as bullet points.</p>
                                     )}
                                 </div>
+                                
                                 <div className="grid md:grid-cols-2 gap-6">
+                                    {/* FIXED: Enhanced Location Selector */}
                                     <div>
+                                        <Label>Job Location *</Label>
                                         <LocationSelector
-                                            label="Job Location"
-                                            value={jobData.location}
-                                            onChange={(value) => selectChangeHandler("location", value)}
+                                            value={jobData.location.legacy || `${jobData.location.district}, ${jobData.location.state}`}
+                                            onChange={handleLocationChange}
                                             required={true}
-                                            placeholder="Select job location"
+                                            placeholder="Select job location (e.g., Kochi, Kerala)"
                                         />
+                                        <div className="text-xs text-gray-500 mt-1">
+                                            Currently selected: {jobData.location.district && jobData.location.state 
+                                                ? `${jobData.location.district}, ${jobData.location.state}`
+                                                : 'No location selected'
+                                            }
+                                        </div>
                                     </div>
+                                    
                                     <div>
                                         <Label>Job Type *</Label>
                                         <Select
@@ -395,9 +502,10 @@ const AdminJobPosting = () => {
                                         </Select>
                                     </div>
                                 </div>
+                                
                                 <div className="grid md:grid-cols-3 gap-6">
                                     <div>
-                                        <Label>Salary Min (LPA) *</Label>
+                                        <Label>Minimum Salary (LPA) *</Label>
                                         <Input
                                             name="salaryMin"
                                             type="number"
@@ -409,7 +517,7 @@ const AdminJobPosting = () => {
                                         />
                                     </div>
                                     <div>
-                                        <Label>Salary Max (LPA) *</Label>
+                                        <Label>Maximum Salary (LPA) *</Label>
                                         <Input
                                             name="salaryMax"
                                             type="number"
@@ -421,7 +529,7 @@ const AdminJobPosting = () => {
                                         />
                                     </div>
                                     <div>
-                                        <Label>No. of Openings *</Label>
+                                        <Label>Number of Openings *</Label>
                                         <Input
                                             name="openings"
                                             type="number"
@@ -432,6 +540,18 @@ const AdminJobPosting = () => {
                                             min="1"
                                         />
                                     </div>
+                                </div>
+                                
+                                {/* Additional Information */}
+                                <div>
+                                    <Label>Position (Optional)</Label>
+                                    <Input 
+                                        name="position" 
+                                        value={jobData.position} 
+                                        onChange={handleJobChange} 
+                                        placeholder="e.g., Senior Developer, Team Lead" 
+                                    />
+                                    <p className="text-xs text-gray-500 mt-1">Specific position title if different from job title</p>
                                 </div>
                             </CardContent>
                         </div>
@@ -444,34 +564,45 @@ const AdminJobPosting = () => {
                             variant="outline" 
                             onClick={prevStep} 
                             disabled={currentStep === 1}
+                            className="flex items-center gap-2"
                         >
-                            <ArrowLeft className='mr-2 h-4 w-4' /> Previous
+                            <ArrowLeft className='h-4 w-4' /> 
+                            Previous
                         </Button>
-                        <div className="text-sm text-gray-500">Step {currentStep} of 2</div>
+                        
+                        <div className="text-sm text-gray-500">
+                            Step {currentStep} of 2
+                        </div>
+                        
                         {currentStep < 2 ? (
-                            <Button type="button" onClick={nextStep}>
-                                Next
+                            <Button 
+                                type="button" 
+                                onClick={nextStep}
+                                className="flex items-center gap-2"
+                            >
+                                Next Step
                             </Button>
                         ) : (
                             <Button 
-                                onClick={submitHandler} 
+                                type="submit"
                                 disabled={loading || requirements.length === 0} 
-                                className="bg-green-600 hover:bg-green-700"
+                                className="bg-green-600 hover:bg-green-700 flex items-center gap-2"
                             >
                                 {loading ? (
-                                    <div className="flex items-center justify-center">
+                                    <>
                                         <LoadingSpinner size={20} color="#ffffff" />
-                                        <span className="ml-2">Posting...</span>
-                                    </div>
+                                        <span>Posting Job...</span>
+                                    </>
                                 ) : (
                                     <>
-                                        <CheckCircle className='mr-2 h-4 w-4' />
-                                        Post Job
+                                        <CheckCircle className='h-4 w-4' />
+                                        <span>Post Job</span>
                                     </>
                                 )}
                             </Button>
                         )}
                     </div>
+                    
                     {currentStep === 2 && requirements.length === 0 && (
                         <p className="text-amber-600 text-sm mt-2 text-center">
                             ⚠️ Please add at least one requirement to post the job

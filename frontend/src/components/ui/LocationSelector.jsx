@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './select';
 import { Label } from './label';
-import { getStates, getDistricts, formatLocation, parseLocation } from '../../utils/locationData';
+import { getStates, getDistricts } from '../../utils/locationData';
+import { Input } from './input';
 
 const LocationSelector = ({ 
   value = '', 
@@ -14,37 +15,51 @@ const LocationSelector = ({
   const [selectedState, setSelectedState] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [availableDistricts, setAvailableDistricts] = useState([]);
-
-  // Initialize from value prop
   useEffect(() => {
     if (value) {
-      const { state, district } = parseLocation(value);
+      // Parse values like "District, State" or just "State". If more than 2 parts, take the last two as District, State
+      const parts = String(value).split(',').map(s => s.trim()).filter(Boolean);
+      let state = '';
+      let district = '';
+      if (parts.length >= 2) {
+        state = parts[parts.length - 1];
+        district = parts[parts.length - 2];
+      } else if (parts.length === 1) {
+        state = parts[0];
+      }
+
       setSelectedState(state);
       setSelectedDistrict(district);
       if (state) {
         setAvailableDistricts(getDistricts(state));
       }
+    } else {
+      // reset
+      setSelectedState('');
+      setSelectedDistrict('');
+      setAvailableDistricts([]);
     }
   }, [value]);
 
   const handleStateChange = (state) => {
     setSelectedState(state);
-    setSelectedDistrict(''); // Reset district when state changes
+    setSelectedDistrict('');
     const districts = getDistricts(state);
     setAvailableDistricts(districts);
-    
-    // If there's only one district or no districts, auto-select or notify parent
-    if (districts.length === 0) {
-      onChange(state); // Just state
-    } else {
-      onChange(''); // Reset value until district is selected
-    }
+    // Emit state only for now; district/city can follow
+    onChange(state || '');
   };
 
-  const handleDistrictChange = (district) => {
-    setSelectedDistrict(district);
-    const formattedLocation = formatLocation(selectedState, district);
-    onChange(formattedLocation);
+  const buildLegacy = (state, district) => {
+    if (district && state) return `${district}, ${state}`;
+    if (state) return state;
+    return '';
+  };
+
+  const handleDistrictInput = (e) => {
+    const dist = e.target.value;
+    setSelectedDistrict(dist);
+    onChange(buildLegacy(selectedState, dist));
   };
 
   const states = getStates();
@@ -56,7 +71,7 @@ const LocationSelector = ({
           {label} {required && <span className="text-red-500">*</span>}
         </Label>
       )}
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* State Selection */}
         <div>
@@ -79,41 +94,29 @@ const LocationSelector = ({
           </Select>
         </div>
 
-        {/* District Selection */}
+        {/* District Typing Input */}
         <div>
           <Label className="text-xs text-gray-500 mb-1">District</Label>
-          <Select
+          <Input
+            list="district-options"
+            placeholder={!selectedState ? 'Select state first' : 'Type or select district'}
             value={selectedDistrict}
-            onValueChange={handleDistrictChange}
-            disabled={!selectedState || availableDistricts.length === 0}
-            required={required && selectedState}
-          >
-            <SelectTrigger>
-              <SelectValue 
-                placeholder={
-                  !selectedState 
-                    ? "Select state first" 
-                    : availableDistricts.length === 0 
-                      ? "No districts available"
-                      : "Select district"
-                } 
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {availableDistricts.map(district => (
-                  <SelectItem key={district} value={district}>{district}</SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+            onChange={handleDistrictInput}
+            disabled={!selectedState}
+            required={!!(required && selectedState)}
+          />
+          <datalist id="district-options">
+            {availableDistricts.map(d => (
+              <option key={d} value={d} />
+            ))}
+          </datalist>
         </div>
       </div>
 
       {/* Display selected location */}
-      {selectedState && selectedDistrict && (
+      {(selectedState || selectedDistrict) && (
         <div className="text-sm text-gray-600 bg-blue-50 p-2 rounded border">
-          <span className="font-medium">Selected:</span> {formatLocation(selectedState, selectedDistrict)}
+          <span className="font-medium">Selected:</span> {buildLegacy(selectedState, selectedDistrict)}
         </div>
       )}
     </div>

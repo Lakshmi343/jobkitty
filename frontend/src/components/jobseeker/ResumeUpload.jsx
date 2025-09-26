@@ -229,6 +229,7 @@ import axios from 'axios';
 import { USER_API_END_POINT } from '../../utils/constant';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { toast } from 'sonner';
 import { FileText, Upload, Loader2, X, Eye, Download } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
@@ -358,7 +359,7 @@ const  ResumeUpload = ({ onSuccess }) => {
                                 </div>
                                 <div>
                                     <p className="font-semibold text-blue-900">
-                                        {formatFileName(getFileNameFromUrl(user.profile.resume))}
+                                        {formatFileName(user.profile.resumeOriginalName || getFileNameFromUrl(user.profile.resume))}
                                     </p>
                                     <p className="text-xs text-blue-700">
                                         Uploaded resume
@@ -391,25 +392,24 @@ const  ResumeUpload = ({ onSuccess }) => {
                     </div>
 
                     {/* PDF Preview */}
-                    {showPreview && isPdfFile(user.profile.resume) && (
-                        <div className="border rounded-lg overflow-hidden">
-                            <div className="flex items-center justify-between p-2 bg-gray-50 border-b">
-                                <span className="text-sm font-medium">Resume Preview</span>
-                                <button
-                                    onClick={() => setShowPreview(false)}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
+                    {/* Use a modal dialog for a larger, contained preview */}
+                    <Dialog open={showPreview && isPdfFile(user?.profile?.resume)} onOpenChange={setShowPreview}>
+                        <DialogContent className="max-w-4xl w-[92vw]">
+                            <DialogHeader>
+                                <DialogTitle className="text-base sm:text-lg">Resume Preview</DialogTitle>
+                            </DialogHeader>
+                            <div className="relative w-full h-[65vh] overflow-hidden rounded-md border">
+                                {user?.profile?.resume && (
+                                    <iframe
+                                        src={`${user.profile.resume}#view=FitH`}
+                                        title="Resume Preview"
+                                        className="absolute inset-0 w-full h-full block"
+                                        frameBorder="0"
+                                    />
+                                )}
                             </div>
-                            <iframe
-                                src={`${user.profile.resume}#view=FitH`}
-                                title="Resume Preview"
-                                className="w-full h-64"
-                                frameBorder="0"
-                            />
-                        </div>
-                    )}
+                        </DialogContent>
+                    </Dialog>
                 </div>
             ) : (
                 <div className="text-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg">

@@ -21,7 +21,7 @@ export const adminAuth = async (req, res, next) => {
       return res.status(401).json({ message: 'Access denied. No valid token provided.', success: false });
     }
 
-    // Check if token looks like a JWT (has 3 parts separated by dots)
+   
     const tokenParts = token.split('.');
     if (tokenParts.length !== 3) {
       console.log('Invalid token format - parts:', tokenParts.length);
@@ -40,7 +40,7 @@ export const adminAuth = async (req, res, next) => {
 
     console.log('Admin authenticated:', admin.email, 'Role:', admin.role);
     req.admin = admin;
-    req.id = admin._id; // Set the admin ID for use in controllers
+    req.id = admin._id; 
     next();
   } catch (error) {
     console.error('Admin auth error:', error.message);

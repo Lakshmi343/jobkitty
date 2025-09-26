@@ -1,22 +1,74 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER || 'jobkitty.in@gmail.com',
-        pass: process.env.EMAIL_PASSWORD
-    },
-    tls: {
-        rejectUnauthorized: false
+
+// Build a robust transporter with env-driven config and Gmail SMTP defaults
+const buildTransporter = () => {
+    const {
+        EMAIL_HOST,
+        EMAIL_PORT,
+        EMAIL_SECURE,
+        EMAIL_SERVICE,
+        EMAIL_USER,
+        EMAIL_PASSWORD
+    } = process.env;
+
+    // Prefer explicit host/port if provided
+    if (EMAIL_HOST || EMAIL_PORT || EMAIL_SERVICE) {
+        const usingService = Boolean(EMAIL_SERVICE);
+        return nodemailer.createTransport({
+            service: usingService ? EMAIL_SERVICE : undefined,
+            host: usingService ? undefined : (EMAIL_HOST || 'smtp.gmail.com'),
+            port: usingService ? undefined : Number(EMAIL_PORT || 465),
+            secure: usingService ? undefined : (String(EMAIL_SECURE || 'true').toLowerCase() === 'true'),
+            auth: {
+                user: EMAIL_USER || 'jobkitty.in@gmail.com',
+                pass: EMAIL_PASSWORD
+            },
+            tls: { rejectUnauthorized: false }
+        });
     }
-});
+
+    // Default to Gmail SMTP
+    return nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+            user: EMAIL_USER || 'jobkitty.in@gmail.com',
+            pass: EMAIL_PASSWORD
+        },
+        tls: { rejectUnauthorized: false }
+    });
+};
+
+const transporter = buildTransporter();
+
+// Proactively verify transport once on startup for clearer diagnostics
+(async () => {
+    try {
+        await transporter.verify();
+        console.log('[Email] Transporter verified and ready to send emails');
+    } catch (err) {
+        console.error('[Email] Transporter verification failed:', {
+            message: err?.message,
+            code: err?.code,
+            command: err?.command
+        });
+        if (!process.env.EMAIL_PASSWORD) {
+            console.error('[Email] Missing EMAIL_PASSWORD in environment. For Gmail, use an App Password (2FA required).');
+        }
+        if (!process.env.EMAIL_USER) {
+            console.error('[Email] Missing EMAIL_USER in environment. Falling back to jobkitty.in@gmail.com');
+        }
+    }
+})();
 
 
 export const sendApplicationAcceptanceEmail = async (studentEmail, studentName, jobTitle, companyName, currentResumeUrl, currentResumeName) => {
     try {
         const mailOptions = {
-            from: 'jobkitty.in@gmail.com',
+            from: process.env.EMAIL_USER || 'jobkitty.in@gmail.com',
             to: studentEmail,
             subject: `🎉 Application Accepted - ${jobTitle} at ${companyName}`,
             html: `
@@ -88,7 +140,7 @@ export const sendApplicationAcceptanceEmail = async (studentEmail, studentName, 
 export const sendApplicationRejectionEmail = async (studentEmail, studentName, jobTitle, companyName) => {
     try {
         const mailOptions = {
-            from: 'jobkitty.in@gmail.com',
+            from: process.env.EMAIL_USER || 'jobkitty.in@gmail.com',
             to: studentEmail,
             subject: `Application Status Update - ${jobTitle} at ${companyName}`,
             html: `
@@ -130,7 +182,7 @@ export const sendApplicationRejectionEmail = async (studentEmail, studentName, j
 export const sendApplicationPendingEmail = async (studentEmail, studentName, jobTitle, companyName) => {
     try {
         const mailOptions = {
-            from: 'jobkitty.in@gmail.com',
+            from: process.env.EMAIL_USER || 'jobkitty.in@gmail.com',
             to: studentEmail,
             subject: `Application Status: Pending - ${jobTitle} at ${companyName}`,
             html: `
@@ -260,7 +312,7 @@ export const sendContactFormEmail = async (contactData) => {
 export const sendPasswordResetEmail = async (userEmail, resetLink) => {
     try {
         const mailOptions = {
-            from: 'jobkitty.in@gmail.com',
+            from: process.env.EMAIL_USER || 'jobkitty.in@gmail.com',
             to: userEmail,
             subject: 'Password Reset Request - JobKitty',
             html: `
@@ -302,7 +354,7 @@ export const sendPasswordResetEmail = async (userEmail, resetLink) => {
 export const sendAdminPasswordResetEmail = async (adminEmail, resetLink) => {
     try {
         const mailOptions = {
-            from: 'jobkitty.in@gmail.com',
+            from: process.env.EMAIL_USER || 'jobkitty.in@gmail.com',
             to: adminEmail,
             subject: 'Admin Password Reset Request - JobKitty',
             html: `
@@ -348,7 +400,7 @@ export const sendAdminPasswordResetEmail = async (adminEmail, resetLink) => {
 export const sendWelcomeEmail = async (userEmail, userName, userRole) => {
     try {
         const mailOptions = {
-            from: 'jobkitty.in@gmail.com',
+            from: process.env.EMAIL_USER || 'jobkitty.in@gmail.com',
             to: userEmail,
             subject: 'Welcome to JobKitty - Your Career Journey Starts Here! 🎉',
             html: `
@@ -416,7 +468,7 @@ export const sendJobAlertEmail = async (userEmail, userName, jobs) => {
         `).join('');
 
         const mailOptions = {
-            from: 'jobkitty.in@gmail.com',
+            from: process.env.EMAIL_USER || 'jobkitty.in@gmail.com',
             to: userEmail,
             subject: `🔔 New Job Opportunities for You - ${jobs.length} Jobs Found!`,
             html: `

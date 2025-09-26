@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Badge } from '../ui/badge';
 import axios from 'axios';
 import { JOB_API_END_POINT, CATEGORY_API_END_POINT, USER_API_END_POINT } from '../../utils/constant';
+import { parseLocation } from '../../utils/locationData';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Briefcase, MapPin,  DollarSign, Clock, Users,  Building,  FileText,ArrowLeft,Plus,CheckCircle, AlertCircle, X} from 'lucide-react';
@@ -145,6 +146,7 @@ const PostJob = () => {
         
         try {
             setLoading(true);
+            const parsedLoc = parseLocation(input.location);
             const formData = {
                 ...input,
                 requirements: requirements.length > 0 ? requirements : ["No specific requirements"],
@@ -152,7 +154,12 @@ const PostJob = () => {
                     min: Number(input.salaryMin),
                     max: Number(input.salaryMax)
                 },
-               
+                // Normalize location into structured object for backend
+                location: {
+                    state: parsedLoc.state || "",
+                    district: parsedLoc.district || "",
+                    legacy: input.location || ""
+                },
                 experience: (input.experienceMin || input.experienceMax) ? {
                     min: Number(input.experienceMin || 0),
                     max: Number(input.experienceMax || 0)
