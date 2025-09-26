@@ -79,10 +79,9 @@ const AdminCompanyCreate = () => {
       });
       if (res.data.success) {
         toast.success('Company created');
-        const id = res.data.company?._id;
-        if (id) navigate(`/admin/companies/${id}`);
-        else navigate('/admin/companies');
+        navigate('/admin/companies');
       }
+      
     } catch (err) {
       console.error(err);
       toast.error(err.response?.data?.message || 'Failed to create company');

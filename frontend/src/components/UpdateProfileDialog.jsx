@@ -757,6 +757,12 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
       return;
     }
 
+    // Require resume: either an existing uploaded resume or a new file selected
+    if (!input.file && !user?.profile?.resume) {
+      toast.error("Please upload your resume to save your profile.");
+      return;
+    }
+
     try {
       setLoading(true);
       const skillsArray = tags.map((tag) => tag.text);
@@ -952,18 +958,23 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
           <form onSubmit={submitHandler}>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="file">Resume (PDF, DOC, DOCX - max 5MB)</Label>
+                <Label htmlFor="file">Resume (PDF, DOC, DOCX - max 5MB) <span className="text-red-500">*</span></Label>
                 <Input id="file" name="file" type="file" accept=".pdf,.doc,.docx" onChange={fileChangeHandler} className="mt-2" />
                 {input.file && (
                   <p className="text-sm text-green-600 mt-1">
                     ✅ Selected: {input.file.name} ({(input.file.size / 1024 / 1024).toFixed(2)} MB)
                   </p>
                 )}
+                {(!input.file && !user?.profile?.resume) && (
+                  <p className="text-xs text-red-600 mt-2">Resume is required to save your profile.</p>
+                )}
                 <div className="mt-3 flex gap-2">
                   <Button type="button" variant="outline" onClick={uploadResumeNow} disabled={resumeUploading || !input.file}>
                     {resumeUploading ? "Uploading..." : "Upload Resume Now"}
                   </Button>
-                  <span className="text-sm text-gray-500 self-center">Or it will be saved with your profile</span>
+                  {!input.file && !user?.profile?.resume && (
+                    <p className="text-xs text-red-600 mt-2">Please upload your resume or save your profile with an existing resume.</p>
+                  )}
                 </div>
                 {(resumePreviewUrl || (user?.profile?.resume && user.profile.resume.toLowerCase().endsWith('.pdf'))) && (
                   <div className="mt-4 border rounded-md overflow-hidden">
@@ -995,7 +1006,7 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
                 Back
               </Button>
               
-              <Button type="submit" disabled={loading}>
+              <Button type="submit" disabled={loading || (!input.file && !user?.profile?.resume)}>
                 {loading ? (
                   <div className="flex items-center justify-center">
                     <LoadingSpinner size={20} color="#ffffff" />

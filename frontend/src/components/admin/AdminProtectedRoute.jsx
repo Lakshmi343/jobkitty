@@ -23,8 +23,13 @@ const AdminProtectedRoute = ({ children, allowedRoles = [] }) => {
           const admin = JSON.parse(adminData);
           console.log('AdminProtectedRoute - Admin data:', admin);
           
+          // Normalize roles to handle naming differences like 'superadmin' vs 'super_admin'
+          const normalize = (r) => (r || '').toString().trim().toLowerCase().replace(/-/g, '_');
+          const userRole = normalize(admin.role);
+          const normalizedAllowed = allowedRoles.map(normalize);
+
           // Check if role is allowed (if allowedRoles is specified)
-          if (allowedRoles.length > 0 && !allowedRoles.includes(admin.role)) {
+          if (normalizedAllowed.length > 0 && !normalizedAllowed.includes(userRole)) {
             console.log('AdminProtectedRoute - Role not allowed:', { userRole: admin.role, allowedRoles });
             setIsAuthenticated(false);
             setIsLoading(false);

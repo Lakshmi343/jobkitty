@@ -543,16 +543,7 @@ const AdminJobPosting = () => {
                                 </div>
                                 
                                 {/* Additional Information */}
-                                <div>
-                                    <Label>Position (Optional)</Label>
-                                    <Input 
-                                        name="position" 
-                                        value={jobData.position} 
-                                        onChange={handleJobChange} 
-                                        placeholder="e.g., Senior Developer, Team Lead" 
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">Specific position title if different from job title</p>
-                                </div>
+                               
                             </CardContent>
                         </div>
                     )}
