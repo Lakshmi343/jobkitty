@@ -36,6 +36,7 @@ const CreateJob = () => {
     
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState([]);
+    const [categoryQuery, setCategoryQuery] = useState("");
     const [currentStep, setCurrentStep] = useState(1);
     const [requirements, setRequirements] = useState([]);
     const [newRequirement, setNewRequirement] = useState("");
@@ -94,6 +95,10 @@ const CreateJob = () => {
                 setCheckingCompany(false);
             }
         };
+
+    const filteredCategories = categories.filter(cat =>
+        cat?.name?.toLowerCase().includes(categoryQuery.toLowerCase())
+    );
 
         checkCompanySetup();
     }, [user, navigate]);
@@ -222,6 +227,11 @@ const CreateJob = () => {
                 return false;
         }
     };
+
+    // Derived list for searchable category select
+    const filteredCategories = categories.filter(cat =>
+        cat?.name?.toLowerCase().includes(categoryQuery.toLowerCase())
+    );
 
     const submitHandler = async (e) => {
         e.preventDefault();
@@ -379,16 +389,6 @@ const CreateJob = () => {
                                 <CardContent className='mt-4 space-y-6'>
                                     <div className="grid md:grid-cols-2 gap-6">
                                         <div className="md:col-span-2">
-                                            <Label>Job Title*</Label>
-                                            <Input 
-                                                name="title"
-                                                value={input.title}
-                                                onChange={changeEventHandler}
-                                                placeholder="e.g., Senior Software Engineer"
-                                                required
-                                            />
-                                        </div>
-                                        <div className="md:col-span-2">
                                             <Label>Job Description*</Label>
                                             <Textarea 
                                                 name="description"
@@ -411,10 +411,21 @@ const CreateJob = () => {
                                                     <SelectValue placeholder="Select a category" />
                                                 </SelectTrigger>
                                                 <SelectContent>
+                                                    <div className="p-2 sticky top-0 bg-white border-b">
+                                                        <Input
+                                                            value={categoryQuery}
+                                                            onChange={(e) => setCategoryQuery(e.target.value)}
+                                                            placeholder="Search category..."
+                                                        />
+                                                    </div>
                                                     <SelectGroup>
-                                                        {categories.map(cat => (
-                                                            <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
-                                                        ))}
+                                                        {filteredCategories.length > 0 ? (
+                                                            filteredCategories.map(cat => (
+                                                                <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
+                                                            ))
+                                                        ) : (
+                                                            <SelectItem disabled value="no_results">No categories found</SelectItem>
+                                                        )}
                                                     </SelectGroup>
                                                 </SelectContent>
                                             </Select>
@@ -423,7 +434,6 @@ const CreateJob = () => {
                                 </CardContent>
                             </div>
                         )}
-
                         {/* Step 2: Location & Type */}
                         {currentStep === 2 && (
                             <div className='bg-white p-8 rounded-lg shadow-md border'>

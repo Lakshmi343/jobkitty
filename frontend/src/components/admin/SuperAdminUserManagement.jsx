@@ -169,17 +169,20 @@ const SuperAdminUserManagement = () => {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm('Are you sure you want to delete this admin user?')) return;
+    if (!window.confirm('Are you sure you want to delete this admin user? This cannot be undone.')) return;
 
     try {
       const token = localStorage.getItem('adminAccessToken') || localStorage.getItem('adminToken');
-      const response = await axios.delete(`${ADMIN_API_END_POINT}/users/${userId}`, {
+      // Admin users live in the Admin collection -> use /admins/:adminId
+      const response = await axios.delete(`${ADMIN_API_END_POINT}/admins/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       if (response.data.success) {
         setUsers(users.filter(user => user._id !== userId));
         toast.success('Admin user deleted successfully');
+      } else {
+        toast.error(response.data.message || 'Failed to delete user');
       }
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -188,7 +191,7 @@ const SuperAdminUserManagement = () => {
         localStorage.clear();
         window.location.href = '/admin/login';
       } else {
-        toast.error('Failed to delete user');
+        toast.error(error.response?.data?.message || 'Failed to delete user');
       }
     }
   };

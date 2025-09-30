@@ -303,16 +303,16 @@ const JobseekerTable = () => {
           </CardHeader>
           <CardContent className="p-0">
         
-            <div className="hidden lg:block overflow-x-auto">
+            <div className="hidden lg:block overflow-x-auto rounded-lg border">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50 hover:bg-gray-50 border-b">
-                    <TableHead className="font-semibold text-gray-700 py-4">Jobseeker</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Contact Info</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Profile Details</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Resume</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Status</TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-right">Actions</TableHead>
+                  <TableRow className="bg-gray-50 hover:bg-gray-50 border-b sticky top-0 z-10">
+                    <TableHead className="font-semibold text-gray-700 py-4 w-[18rem] min-w-[18rem]">Jobseeker</TableHead>
+                    <TableHead className="font-semibold text-gray-700 w-[20rem] min-w-[18rem]">Contact Info</TableHead>
+                    <TableHead className="font-semibold text-gray-700 w-[20rem] min-w-[18rem]">Profile Details</TableHead>
+                    <TableHead className="font-semibold text-gray-700 w-[15rem] min-w-[14rem]">Resume</TableHead>
+                    <TableHead className="font-semibold text-gray-700 w-[8rem] min-w=[8rem]">Status</TableHead>
+                    <TableHead className="font-semibold text-gray-700 text-right w-[11rem] min-w-[10rem]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -335,15 +335,20 @@ const JobseekerTable = () => {
                               {getInitials(user.fullname)}
                             </AvatarFallback>
                           </Avatar>
-                          <div>
-                            <div className="font-semibold text-gray-900">{user.fullname}</div>
-                            <div className="text-sm text-gray-500">ID: {user._id.substring(0, 8)}...</div>
+                          <div className="min-w-0">
+                            <div className="font-semibold text-gray-900 truncate max-w-[17rem]">{user.fullname}</div>
+                            <div className="flex items-center gap-2">
+                              <div className="text-sm text-gray-500">ID: {user._id.substring(0, 8)}...</div>
+                              <Badge variant="secondary" className={`${user.profile?.resume ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'} text-[10px] py-0.5 px-2`}>
+                                {user.profile?.resume ? 'Resume' : 'No Resume'}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="align-top">
                         <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-sm max-w-[280px] md:max-w-[360px] truncate">
+                          <div className="flex items-center gap-2 text-sm max-w-[18rem] md:max-w-[22rem] truncate">
                             <Mail className="h-4 w-4 text-gray-500" />
                             <span className="truncate text-gray-700">{user.email}</span>
                           </div>
@@ -353,7 +358,7 @@ const JobseekerTable = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="align-top">
                         <div className="space-y-1">
                           {user.profile?.place && (
                             <div className="flex items-center gap-2 text-sm">
@@ -364,19 +369,19 @@ const JobseekerTable = () => {
                           {user.profile?.skills && user.profile.skills.length > 0 && (
                             <div className="flex items-center gap-2 text-sm">
                               <Award className="h-4 w-4 text-gray-500" />
-                              <span className="text-gray-700">{user.profile.skills.slice(0, 2).join(', ')}</span>
+                              <span className="text-gray-700 truncate max-w-[14rem]">{user.profile.skills.slice(0, 2).join(', ')}</span>
                               {user.profile.skills.length > 2 && <span className="text-gray-500">+{user.profile.skills.length - 2}</span>}
                             </div>
                           )}
                           {user.profile?.education && (
                             <div className="flex items-center gap-2 text-sm">
                               <GraduationCap className="h-4 w-4 text-gray-500" />
-                              <span className="text-gray-700 truncate max-w-[150px]">{user.profile.education.degree}</span>
+                              <span className="text-gray-700 truncate max-w-[12rem]">{user.profile.education.degree}</span>
                             </div>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="align-top">
                         <div className="flex gap-2">
                           {user.profile?.resume ? (
                             <>
@@ -392,12 +397,12 @@ const JobseekerTable = () => {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="align-top">
                         <Badge className={`${getStatusColor(user.status)} border`}>
                           {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right align-top">
                         <div className="flex items-center justify-end gap-2">
                           <Button 
                             variant="outline" 

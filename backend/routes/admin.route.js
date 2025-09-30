@@ -1,28 +1,6 @@
 import express from "express";
-import { 
-    loginAdmin, 
-    registerAdmin,
-    createAdmin, 
-    getDashboardStats,
-    getAnalytics,
-    getAllUsers,
-    updateUserStatus,
-    deleteUser,
-    getUserResume,
-    getAllJobs,
-    approveJob,
-    rejectJob,
-    deleteJob,
-    getJobByIdAdmin,
-    updateJobDetailsAdmin,
-    postJobAdmin,
-    getJobForEdit,
-    updateJobAdmin,
-    getAllCompanies,
-    getCompanyByIdAdmin,
-    updateCompanyDetailsAdmin,
-    updateCompanyStatus,
-    deleteCompany,
+import { loginAdmin, registerAdmin,createAdmin, getDashboardStats,getAnalytics,getAllUsers,updateUserStatus, deleteUser, getUserResume,getAllJobs,approveJob,rejectJob,deleteJob,getJobByIdAdmin,
+updateJobDetailsAdmin, postJobAdmin, getJobForEdit, updateJobAdmin, getAllCompanies, getCompanyByIdAdmin,updateCompanyDetailsAdmin, updateCompanyStatus, deleteCompany,
     createCompanyAdmin,
     getAllCategories,
     createCategory,
@@ -100,36 +78,23 @@ router.patch('/companies/:companyId/status', adminAuth, updateCompanyStatus);
 router.put('/companies/:companyId', adminAuth, singleUpload, updateCompanyDetailsAdmin);
 router.delete('/companies/:companyId', adminAuth, deleteCompany);
 
-
 router.get('/categories', adminAuth, getAllCategories);
 router.post('/categories', adminAuth, createCategory);
 router.put('/categories/:categoryId', adminAuth, updateCategory);
 router.delete('/categories/:categoryId', adminAuth, deleteCategory);
-
 
 router.get('/applications', adminAuth, getAllApplications);
 router.get('/applications/stats', adminAuth, getApplicationStats);
 router.get('/applications/:applicationId', adminAuth, getApplicationById);
 router.patch('/applications/:applicationId/status', adminAuth, updateApplicationStatus);
 router.delete('/applications/:applicationId', adminAuth, deleteApplication);
-
-
 router.get('/admins', adminAuth, getAllAdmins);
 router.get('/admins/:adminId', adminAuth, getAdminById);
 router.put('/admins/:adminId', adminAuth, updateAdmin);
 router.delete('/admins/:adminId', adminAuth, deleteAdmin);
 router.patch('/admins/:adminId/status', adminAuth, toggleAdminStatus);
 
-// Report Handling (commented out - controllers not implemented)
-// router.get('/reports', adminAuth, getAllReports);
-// router.get('/reports/:reportId', adminAuth, getReportById);
-// router.patch('/reports/:reportId/assign', adminAuth, assignReport);
-// router.patch('/reports/:reportId/resolve', adminAuth, resolveReport);
-
-// Admin Activity Log
 router.get('/activity/:adminId', adminAuth, getAdminActivity);
-
-// Compliance Enforcement
 router.post('/compliance/:targetType/:targetId', adminAuth, enforceCompliance);
 
 export default router;

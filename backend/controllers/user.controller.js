@@ -8,90 +8,230 @@ import cloudinary from "../utils/cloudinary.js";
 import { sendRegistrationReminderEmail, sendPasswordResetEmail, sendWelcomeEmail } from "../utils/emailService.js";
 import crypto from "crypto";
 
+
+
 export const register = async (req, res) => {
   try {
-      const { fullname, email, phoneNumber, password, role } = req.body;
+    const { fullname, email, password, role, phoneNumber } = req.body;
 
-      if (!fullname || !email || !phoneNumber || !password || !role) {
-          return res.status(400).json({
-              message: "All fields are required.",
-              success: false
-          });
-      }
+    console.log('Registration attempt:', { 
+      fullname: fullname?.substring(0, 10) + '...', 
+      email, 
+      role,
+      phoneNumber 
+    });
 
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-          return res.status(400).json({
-              message: "User already exists with this email.",
-              success: false
-          });
-      }
-
-      let profilePhotoUrl = undefined;
-      
-      // Only process profile photo if file is provided
-      if (req.file) {
-          const fileUri = getDataUri(req.file);
-          const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
-              folder: "profile-photos"
-          });
-          profilePhotoUrl = cloudResponse.secure_url;
-      }
-
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      const userPayload = {
-          fullname,
-          email,
-          phoneNumber,
-          password: hashedPassword,
-          role
-      };
-
-      // Only add profile photo if it exists
-      if (profilePhotoUrl) {
-          userPayload.profile = { profilePhoto: profilePhotoUrl };
-      }
-
-      const user = await User.create(userPayload);
-
-      // Send welcome email (non-blocking)
-      try {
-          await sendWelcomeEmail(user.email, user.fullname, user.role);
-          console.log('Welcome email sent to', user.email);
-      } catch (err) {
-          console.error('Failed to send welcome email:', err);
-      }
-
-      // Schedule reminder email (non-blocking)
-      setTimeout(async () => {
-          try {
-              await sendRegistrationReminderEmail(user.email, user.fullname);
-              console.log('Reminder email sent to', user.email);
-          } catch (err) {
-              console.error('Failed to send reminder email:', err);
-          }
-      }, 4 * 60 * 1000);
-
-      return res.status(201).json({
-          message: "Account created successfully.",
-          success: true
+    // Validate required fields
+    const missing = [];
+    if (!fullname || !String(fullname).trim()) missing.push('fullname');
+    if (!email || !String(email).trim()) missing.push('email');
+    if (!password || !String(password).trim()) missing.push('password');
+    if (!role || !String(role).trim()) missing.push('role');
+    
+    if (missing.length > 0) {
+      return res.status(400).json({
+        message: `Missing required field(s): ${missing.join(', ')}`,
+        success: false,
+        missing
       });
+    }
+
+    // Validate role
+    const validRoles = ['Jobseeker', 'Employer', 'admin'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({
+        message: "Invalid role. Must be either 'Jobseeker' or 'Employer'",
+        success: false
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existingUser) {
+      return res.status(400).json({
+        message: "User already exists with this email.",
+        success: false
+      });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user WITHOUT profile photo
+    const user = await User.create({
+      fullname: fullname.trim(),
+      email: email.toLowerCase().trim(),
+      phoneNumber: phoneNumber ? phoneNumber.trim() : undefined,
+      password: hashedPassword,
+      role: role.trim(),
+      profile: {
+        // Empty profile - no profile photo required
+        profilePhoto: "",
+        bio: "",
+        place: ""
+      }
+    });
+
+    console.log('User created successfully:', user._id);
+
+    // Send welcome email (optional - can be removed if not needed)
+    try {
+      await sendWelcomeEmail(user.email, user.fullname, user.role);
+      console.log('Welcome email sent to', user.email);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't fail registration if email fails
+    }
+
+    // Send reminder email after 4 minutes (optional)
+    setTimeout(async () => {
+      try {
+        await sendRegistrationReminderEmail(user.email, user.fullname);
+        console.log('Reminder email sent to', user.email);
+      } catch (reminderError) {
+        console.error('Failed to send reminder email:', reminderError);
+      }
+    }, 4 * 60 * 1000);
+
+    return res.status(201).json({
+      message: "Account created successfully! You can now login.",
+      success: true,
+      user: {
+        id: user._id,
+        fullname: user.fullname,
+        email: user.email,
+        role: user.role
+      }
+    });
 
   } catch (error) {
-      console.error(error);
-      res.status(500).json({ 
-          message: "Server error", 
-          success: false 
+    console.error('Registration error:', error);
+    
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: "User already exists with this email.",
+        success: false
       });
+    }
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({
+        message: `Validation error: ${errors.join(', ')}`,
+        success: false
+      });
+    }
+
+    return res.status(500).json({ 
+      message: "Internal server error during registration", 
+      success: false 
+    });
   }
 };
 
-// Update profile photo
+
+// export const register = async (req, res) => {
+//   try {
+//       const { fullname, email, password, role } = req.body || {};
+
+//       // Debug: log received keys to trace body parsing issues
+//       try {
+//         console.log('Register Content-Type:', req.headers['content-type']);
+//         console.log('Register body keys:', Object.keys(req.body || {}));
+//         console.log('Register raw body sample:', {
+//           fullname: typeof fullname === 'string' ? fullname : typeof fullname,
+//           email: typeof email === 'string' ? email : typeof email,
+//           password: password ? '***' : undefined,
+//           role
+//         });
+//       } catch {}
+
+//       const missing = [];
+//       if (!fullname || !String(fullname).trim()) missing.push('fullname');
+//       if (!email || !String(email).trim()) missing.push('email');
+//       if (!password || !String(password).trim()) missing.push('password');
+//       if (!role || !String(role).trim()) missing.push('role');
+//       if (missing.length) {
+//         return res.status(400).json({
+//           message: `Missing required field(s): ${missing.join(', ')}`,
+//           success: false,
+//           missing
+//         });
+//       }
+
+//       const existingUser = await User.findOne({ email });
+//       if (existingUser) {
+//           return res.status(400).json({
+//               message: "User already exists with this email.",
+//               success: false
+//           });
+//       }
+
+//       let profilePhotoUrl = undefined;
+      
+      
+//       if (req.file) {
+//           const fileUri = getDataUri(req.file);
+//           const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
+//               folder: "profile-photos"
+//           });
+//           profilePhotoUrl = cloudResponse.secure_url;
+//       }
+
+//       const hashedPassword = await bcrypt.hash(password, 10);
+
+//       const userPayload = {
+//           fullname: String(fullname).trim(),
+//           email: String(email).trim().toLowerCase(),
+//           password: hashedPassword,
+//           role: String(role).trim()
+//       };
+
+     
+//       if (profilePhotoUrl) {
+//           userPayload.profile = { profilePhoto: profilePhotoUrl };
+//       }
+
+//       const user = await User.create(userPayload);
+
+    
+//       try {
+//           await sendWelcomeEmail(user.email, user.fullname, user.role);
+//           console.log('Welcome email sent to', user.email);
+//       } catch (err) {
+//           console.error('Failed to send welcome email:', err);
+//       }
+
+//       setTimeout(async () => {
+//           try {
+//               await sendRegistrationReminderEmail(user.email, user.fullname);
+//               console.log('Reminder email sent to', user.email);
+//           } catch (err) {
+//               console.error('Failed to send reminder email:', err);
+//           }
+//       }, 4 * 60 * 1000);
+
+//       return res.status(201).json({
+//           message: "Account created successfully.",
+//           success: true
+//       });
+
+//   } catch (error) {
+//       console.error(error);
+//       res.status(500).json({ 
+//           message: "Server error", 
+//           success: false 
+//       });
+//   }
+// };
+
+
 export const updateProfilePhoto = async (req, res) => {
     try {
         if (!req.file) {
-            // Make this endpoint tolerant: no-op when no file is provided
+          
             return res.status(200).json({
                 message: "No file provided. Profile photo unchanged.",
                 success: true

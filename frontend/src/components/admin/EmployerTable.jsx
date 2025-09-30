@@ -321,13 +321,13 @@ const EmployerTable = () => {
             <div className="hidden lg:block overflow-x-auto rounded-lg border">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="font-semibold text-gray-700">Employer</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Contact Info</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Company</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Date Joined</TableHead>
-                    <TableHead className="font-semibold text-gray-700">Status</TableHead>
-                    <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
+                  <TableRow className="bg-gray-50 sticky top-0 z-10">
+                    <TableHead className="font-semibold text-gray-700 py-4 w-[18rem] min-w-[18rem]">Employer</TableHead>
+                    <TableHead className="font-semibold text-gray-700 w-[20rem] min-w-[18rem]">Contact Info</TableHead>
+                    <TableHead className="font-semibold text-gray-700 w-[20rem] min-w-[18rem]">Company</TableHead>
+                    <TableHead className="font-semibold text-gray-700 w-[10rem] min-w-[10rem]">Date Joined</TableHead>
+                    <TableHead className="font-semibold text-gray-700 w-[8rem] min-w-[8rem]">Status</TableHead>
+                    <TableHead className="text-right font-semibold text-gray-700 w-[11rem] min-w-[10rem]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

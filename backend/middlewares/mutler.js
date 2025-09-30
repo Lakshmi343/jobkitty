@@ -1,5 +1,25 @@
 import multer from "multer";
 
 const storage = multer.memoryStorage();
-export const singleUpload = multer({storage}).single("file");
+
+// Accept either 'file' or 'profilePhoto' and normalize to req.file
+const multiSingleUpload = multer({ storage }).fields([
+  { name: "file", maxCount: 1 },
+  { name: "profilePhoto", maxCount: 1 },
+]);
+
+export const singleUpload = (req, res, next) => {
+  // If not multipart, skip multer to preserve JSON body
+  if (!req.is('multipart/form-data')) {
+    return next();
+  }
+  multiSingleUpload(req, res, (err) => {
+    if (err) return next(err);
+    // Normalize to req.file for downstream controllers
+    const files = req.files || {};
+    req.file = (files.file && files.file[0]) || (files.profilePhoto && files.profilePhoto[0]) || undefined;
+    return next();
+  });
+};
+
 export const resumeUpload = multer({ storage }).single("resume");

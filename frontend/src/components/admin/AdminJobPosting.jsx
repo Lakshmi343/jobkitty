@@ -21,6 +21,7 @@ const AdminJobPosting = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState([]);
+    const [categoryQuery, setCategoryQuery] = useState("");
     const [companies, setCompanies] = useState([]);
     const [selectedCompanyId, setSelectedCompanyId] = useState("");
     const navigate = useNavigate();
@@ -46,6 +47,10 @@ const AdminJobPosting = () => {
 
     const [requirements, setRequirements] = useState([]);
     const [newRequirement, setNewRequirement] = useState("");
+
+    const filteredCategories = categories.filter(cat =>
+        cat?.name?.toLowerCase().includes(categoryQuery.toLowerCase())
+    );
 
     useEffect(() => {
         const fetchCategories = async () => {
@@ -405,10 +410,21 @@ const AdminJobPosting = () => {
                                                 <SelectValue placeholder="Select a category" />
                                             </SelectTrigger>
                                             <SelectContent>
+                                                <div className="p-2 sticky top-0 bg-white border-b">
+                                                    <Input
+                                                        value={categoryQuery}
+                                                        onChange={(e) => setCategoryQuery(e.target.value)}
+                                                        placeholder="Search category..."
+                                                    />
+                                                </div>
                                                 <SelectGroup>
-                                                    {categories.map(cat => (
-                                                        <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
-                                                    ))}
+                                                    {filteredCategories.length > 0 ? (
+                                                        filteredCategories.map(cat => (
+                                                            <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
+                                                        ))
+                                                    ) : (
+                                                        <SelectItem disabled value="no_results">No categories found</SelectItem>
+                                                    )}
                                                 </SelectGroup>
                                             </SelectContent>
                                         </Select>
@@ -542,13 +558,13 @@ const AdminJobPosting = () => {
                                     </div>
                                 </div>
                                 
-                                {/* Additional Information */}
+                                
                                
                             </CardContent>
                         </div>
                     )}
 
-                    {/* Navigation Buttons */}
+                 
                     <div className='mt-8 flex justify-between items-center'>
                         <Button 
                             type="button" 
