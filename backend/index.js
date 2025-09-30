@@ -25,12 +25,14 @@ app.use(helmet());
 
 const corsOptions = {
   origin: [
+    
     "http://localhost:5173",       
     "http://localhost:8000", 
     "https://jobkitty.in",  
     "http://jobkitty.in", 
     "http://168.231.123.129:8000",
-    "https://168.231.123.129:8000"
+    "https://168.231.123.129:8000",
+    "https://api.jobkitty.in/api/v1"
           
   ],
   credentials: true,
