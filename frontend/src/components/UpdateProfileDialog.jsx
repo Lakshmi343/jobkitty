@@ -186,7 +186,12 @@
 //       });
 //       if (res.data?.success) {
 //         toast.success("Resume uploaded successfully");
-//         const prof = await axios.get(`${USER_API_END_POINT}/profile`);
+//         const prof = await axios.get(`${USER_API_END_POINT}/profile`, {
+//           headers: {
+//             Authorization: `Bearer ${authUtils.getAccessToken?.() || localStorage.getItem('accessToken') || ''}`,
+//           },
+//           withCredentials: true,
+//         });
 //         if (prof.data?.success && prof.data.user) {
 //           dispatch(setUser(prof.data.user));
 //           authUtils.setUser(prof.data.user);
@@ -685,11 +690,20 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
       const fd = new FormData();
       fd.append("resume", input.file);
       const res = await axios.post(`${USER_API_END_POINT}/upload-resume`, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${authUtils.getAccessToken?.() || localStorage.getItem('accessToken') || ''}`,
+        },
+        withCredentials: true,
       });
       if (res.data?.success) {
         toast.success("Resume uploaded successfully");
-        const prof = await axios.get(`${USER_API_END_POINT}/profile`);
+        const prof = await axios.get(`${USER_API_END_POINT}/profile`, {
+          headers: {
+            Authorization: `Bearer ${authUtils.getAccessToken?.() || localStorage.getItem('accessToken') || ''}`,
+          },
+          withCredentials: true,
+        });
         if (prof.data?.success && prof.data.user) {
           dispatch(setUser(prof.data.user));
           authUtils.setUser(prof.data.user);
@@ -721,10 +735,12 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
       
       const fd = new FormData();
       fd.append("file", file);
-      
-     
       const res = await axios.post(`${USER_API_END_POINT}/profile/photo`, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${authUtils.getAccessToken?.() || localStorage.getItem('accessToken') || ''}`,
+        },
+        withCredentials: true,
       });
       
       if (res.data?.success && res.data.user) {
@@ -802,7 +818,11 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
 
       console.log("Submitting profile update...");
       const res = await axios.post(`${USER_API_END_POINT}/profile/update`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${authUtils.getAccessToken?.() || localStorage.getItem('accessToken') || ''}`,
+        },
+        withCredentials: true,
       });
 
       console.log("Profile update response:", res.data);

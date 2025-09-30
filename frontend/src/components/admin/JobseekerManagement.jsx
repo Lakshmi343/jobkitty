@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { USER_API_END_POINT } from '../../utils/constant';
+import { ADMIN_API_END_POINT } from '../../utils/constant';
 import { Users, UserCheck, UserX, FileText, TrendingUp, Search } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -21,11 +21,24 @@ const JobseekerManagement = () => {
     const fetchJobseekerStats = async () => {
       try {
         setLoading(true);
-        
-        const response = await axios.get(`${USER_API_END_POINT}/jobseekers`, { 
-          withCredentials: true 
+        const token = localStorage.getItem('adminToken');
+        const response = await axios.get(`${ADMIN_API_END_POINT}/jobseekers`, { 
+          withCredentials: true,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
-        const jobseekers = response.data.jobseekers || [];
+        let jobseekers = Array.isArray(response.data) ? response.data : (response.data?.jobseekers || []);
+        // Fallback to user endpoint if no data (for backward compatibility)
+        if (!jobseekers || jobseekers.length === 0) {
+          try {
+            const fb = await axios.get(`${ADMIN_API_END_POINT.replace('/admin', '/user')}/jobseekers`, { 
+              withCredentials: true,
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            jobseekers = Array.isArray(fb.data) ? fb.data : (fb.data?.jobseekers || []);
+          } catch (fbErr) {
+            console.error('Fallback jobseeker stats fetch failed:', fbErr);
+          }
+        }
         
         const jobseekerStats = {
           total: jobseekers.length,
@@ -62,7 +75,7 @@ const JobseekerManagement = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
+     
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Jobseeker Management</h1>

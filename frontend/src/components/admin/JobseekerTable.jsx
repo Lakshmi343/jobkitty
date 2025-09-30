@@ -4,7 +4,7 @@ import { USER_API_END_POINT, ADMIN_API_END_POINT } from '../../utils/constant';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { FileText, FileDown, UserCheck, UserX, Trash2, MoreHorizontal, Users, Search, Filter, Calendar, ChevronDown, RefreshCw, Eye, Download, Mail, Phone, MapPin, GraduationCap, Award } from 'lucide-react';
+import { FileText, FileDown, UserCheck, UserX, Trash2, MoreHorizontal, Users, Search, Filter, Calendar, ChevronDown, RefreshCw, Eye, Download, Mail, Phone, MapPin, GraduationCap, Award, List } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
@@ -21,19 +21,74 @@ const JobseekerTable = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [resumeFilter, setResumeFilter] = useState('all'); // all | with | without
   const [sortBy, setSortBy] = useState('name');
+  const [page, setPage] = useState(1);
+  const [limit] = useState(25);
+  // Applications dialog state
+  const [appsDialog, setAppsDialog] = useState({ open: false, user: null });
+  const [apps, setApps] = useState([]);
+  const [appsLoading, setAppsLoading] = useState(false);
+  const [appsPage, setAppsPage] = useState(1);
+  const [appsTotalPages, setAppsTotalPages] = useState(1);
+  const [appsStatusFilter, setAppsStatusFilter] = useState('all'); // all|pending|accepted|rejected
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setResumeFilter('all');
+    setSortBy('name');
+    setPage(1);
+  };
 
   useEffect(() => {
     const fetchJobseekers = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${USER_API_END_POINT}/jobseekers`, { withCredentials: true });
-        const jobseekersData = res.data.jobseekers || [];
-        setJobseekers(jobseekersData);
-        setFilteredJobseekers(jobseekersData);
+        const token = localStorage.getItem('adminToken');
+        const res = await axios.get(`${ADMIN_API_END_POINT}/jobseekers`, {
+          withCredentials: true,
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const jobseekersData = Array.isArray(res.data)
+          ? res.data
+          : (res.data?.jobseekers || []);
+        if (jobseekersData.length > 0) {
+          setJobseekers(jobseekersData);
+          setFilteredJobseekers(jobseekersData);
+        } else {
+          // Fallback to user endpoint if admin endpoint returns empty (for backward compatibility)
+          try {
+            const fallback = await axios.get(`${USER_API_END_POINT}/jobseekers`, {
+              withCredentials: true,
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
+            });
+            const fbData = Array.isArray(fallback.data)
+              ? fallback.data
+              : (fallback.data?.jobseekers || []);
+            setJobseekers(fbData);
+            setFilteredJobseekers(fbData);
+          } catch (fbErr) {
+            console.error('Fallback jobseekers fetch failed:', fbErr);
+          }
+        }
       } catch (error) {
-        console.error("Failed to fetch jobseekers:", error);
-        toast.error('Failed to load jobseekers');
+        console.error("Failed to fetch jobseekers (admin endpoint):", error);
+        // Attempt fallback to user endpoint
+        try {
+          const token = localStorage.getItem('adminToken');
+          const fallback = await axios.get(`${USER_API_END_POINT}/jobseekers`, {
+            withCredentials: true,
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          const fbData = Array.isArray(fallback.data)
+            ? fallback.data
+            : (fallback.data?.jobseekers || []);
+          setJobseekers(fbData);
+          setFilteredJobseekers(fbData);
+        } catch (fbErr) {
+          console.error('Fallback jobseekers fetch failed:', fbErr);
+          toast.error('Failed to load jobseekers');
+        }
       } finally {
         setLoading(false);
       }
@@ -57,6 +112,12 @@ const JobseekerTable = () => {
       filtered = filtered.filter(jobseeker => jobseeker.status === statusFilter);
     }
 
+    if (resumeFilter === 'with') {
+      filtered = filtered.filter(jobseeker => Boolean(jobseeker.profile?.resume));
+    } else if (resumeFilter === 'without') {
+      filtered = filtered.filter(jobseeker => !jobseeker.profile?.resume);
+    }
+
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name':
@@ -71,7 +132,49 @@ const JobseekerTable = () => {
     });
 
     setFilteredJobseekers(filtered);
-  }, [jobseekers, searchTerm, statusFilter, sortBy]);
+    setPage(1); // reset to first page when filters change
+  }, [jobseekers, searchTerm, statusFilter, resumeFilter, sortBy]);
+
+  const total = filteredJobseekers.length;
+  const totalPages = Math.max(Math.ceil(total / limit), 1);
+  const startIndex = (page - 1) * limit;
+  const currentPageItems = filteredJobseekers.slice(startIndex, startIndex + limit);
+
+  const openApplications = async (user) => {
+    setAppsDialog({ open: true, user });
+    setAppsPage(1);
+    setAppsStatusFilter('all');
+    await fetchApplications(user._id, 1, 'all');
+  };
+
+  const fetchApplications = async (userId, page = 1, status = 'all') => {
+    try {
+      setAppsLoading(true);
+      const token = localStorage.getItem('adminToken');
+      const params = new URLSearchParams();
+      params.append('userId', userId);
+      params.append('page', String(page));
+      params.append('limit', '10');
+      if (status && status !== 'all') params.append('status', status);
+      const res = await axios.get(`${ADMIN_API_END_POINT}/applications?${params.toString()}` , {
+        withCredentials: true,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const applications = res.data?.applications || [];
+      const p = res.data?.pagination || { currentPage: 1, totalPages: 1 };
+      setApps(applications);
+      setAppsPage(p.currentPage || page);
+      setAppsTotalPages(p.totalPages || 1);
+    } catch (err) {
+      console.error('Failed to fetch applications', err);
+      toast.error('Failed to load applications');
+      setApps([]);
+      setAppsPage(1);
+      setAppsTotalPages(1);
+    } finally {
+      setAppsLoading(false);
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -265,7 +368,7 @@ const JobseekerTable = () => {
                 </div>
               </div>
               
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); }}>
                 <SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
                   <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Filter by status" />
@@ -275,6 +378,18 @@ const JobseekerTable = () => {
                   <SelectItem value="active">Active</SelectItem>
                   <SelectItem value="blocked">Blocked</SelectItem>
                   <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={resumeFilter} onValueChange={(v) => { setResumeFilter(v); }}>
+                <SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
+                  <ChevronDown className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Resume" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All (include no-resume)</SelectItem>
+                  <SelectItem value="with">With Resume</SelectItem>
+                  <SelectItem value="without">Without Resume</SelectItem>
                 </SelectContent>
               </Select>
               
@@ -289,30 +404,110 @@ const JobseekerTable = () => {
                   <SelectItem value="date">Date Joined</SelectItem>
                 </SelectContent>
               </Select>
+
+              <Button variant="outline" className="h-10 sm:h-11" onClick={clearFilters}>
+                Clear Filters
+              </Button>
             </div>
           </CardContent>
         </Card>
+
+        {/* Applications Dialog */}
+        <Dialog open={appsDialog.open} onOpenChange={(o) => setAppsDialog(prev => ({ ...prev, open: o }))}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Applications{appsDialog.user ? ` - ${appsDialog.user.fullname}` : ''}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">Total pages: {appsTotalPages}</div>
+                <div className="flex items-center gap-2">
+                  <Select value={appsStatusFilter} onValueChange={async (v) => { setAppsStatusFilter(v); if (appsDialog.user) await fetchApplications(appsDialog.user._id, 1, v); }}>
+                    <SelectTrigger className="w-40 h-9">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="accepted">Accepted</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={appsPage <= 1 || appsLoading}
+                    onClick={async () => { if (appsDialog.user) await fetchApplications(appsDialog.user._id, appsPage - 1, appsStatusFilter); }}
+                  >Prev</Button>
+                  <span className="text-sm">Page {appsPage} of {appsTotalPages}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={appsPage >= appsTotalPages || appsLoading}
+                    onClick={async () => { if (appsDialog.user) await fetchApplications(appsDialog.user._id, appsPage + 1, appsStatusFilter); }}
+                  >Next</Button>
+                </div>
+              </div>
+
+              <div className="border rounded-md overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead>Job</TableHead>
+                      <TableHead>Company</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Applied</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {appsLoading ? (
+                      <TableRow><TableCell colSpan={6} className="py-6 text-center">Loading...</TableCell></TableRow>
+                    ) : apps.length > 0 ? (
+                      apps.map((a) => (
+                        <TableRow key={a._id}>
+                          <TableCell className="font-medium">{a.job?.title || '—'}</TableCell>
+                          <TableCell>{a.job?.company?.name || '—'}</TableCell>
+                          <TableCell>{a.job?.location?.legacy || a.job?.location || '—'}</TableCell>
+                          <TableCell className="capitalize">{a.job?.jobType || '—'}</TableCell>
+                          <TableCell className="capitalize">{a.status || '—'}</TableCell>
+                          <TableCell>{new Date(a.createdAt).toLocaleString()}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow><TableCell colSpan={6} className="py-6 text-center">No applications found</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAppsDialog({ open: false, user: null })}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
       
         <Card className="shadow-lg">
           <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
             <CardTitle className="text-xl flex items-center gap-2">
               <Users className="w-6 h-6 text-green-600" />
-              Jobseekers ({filteredJobseekers.length})
+              Jobseekers ({total})
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
         
-            <div className="hidden lg:block overflow-x-auto rounded-lg border">
+            <div className="hidden lg:block rounded-lg border">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50 hover:bg-gray-50 border-b sticky top-0 z-10">
-                    <TableHead className="font-semibold text-gray-700 py-4 w-[18rem] min-w-[18rem]">Jobseeker</TableHead>
-                    <TableHead className="font-semibold text-gray-700 w-[20rem] min-w-[18rem]">Contact Info</TableHead>
-                    <TableHead className="font-semibold text-gray-700 w-[20rem] min-w-[18rem]">Profile Details</TableHead>
-                    <TableHead className="font-semibold text-gray-700 w-[15rem] min-w-[14rem]">Resume</TableHead>
-                    <TableHead className="font-semibold text-gray-700 w-[8rem] min-w=[8rem]">Status</TableHead>
-                    <TableHead className="font-semibold text-gray-700 text-right w-[11rem] min-w-[10rem]">Actions</TableHead>
+                    <TableHead className="font-semibold text-gray-700 py-4 whitespace-normal break-words">Jobseeker</TableHead>
+                    <TableHead className="font-semibold text-gray-700 whitespace-normal break-words">Contact Info</TableHead>
+                    <TableHead className="font-semibold text-gray-700 whitespace-normal break-words">Profile Details</TableHead>
+                    <TableHead className="font-semibold text-gray-700 whitespace-normal break-words">Resume</TableHead>
+                    <TableHead className="font-semibold text-gray-700 whitespace-normal break-words">Status</TableHead>
+                    <TableHead className="font-semibold text-gray-700 text-right whitespace-normal break-words">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -325,7 +520,7 @@ const JobseekerTable = () => {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ) : filteredJobseekers.length > 0 ? filteredJobseekers.map(user => (
+                  ) : currentPageItems.length > 0 ? currentPageItems.map(user => (
                     <TableRow key={user._id} className="hover:bg-green-50 transition-colors duration-200 border-b border-gray-100">
                       <TableCell className="py-4">
                         <div className="flex items-center gap-3">
@@ -413,6 +608,15 @@ const JobseekerTable = () => {
                             <Eye className="h-4 w-4 mr-1" />
                             View
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                            onClick={() => openApplications(user)}
+                          >
+                            <List className="h-4 w-4 mr-1" />
+                            Applications
+                          </Button>
                           {user.status !== 'blocked' ? (
                             <Button
                               variant="outline"
@@ -468,7 +672,7 @@ const JobseekerTable = () => {
                   <RefreshCw className="w-6 h-6 animate-spin text-green-600 mx-auto mb-2" />
                   <p className="text-gray-600">Loading jobseekers...</p>
                 </div>
-              ) : filteredJobseekers.length > 0 ? filteredJobseekers.map((user) => (
+              ) : currentPageItems.length > 0 ? currentPageItems.map((user) => (
                 <Card key={user._id} className="border border-gray-200 hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-3">
@@ -539,6 +743,15 @@ const JobseekerTable = () => {
                         <Eye className="h-4 w-4 mr-2" />
                         View
                       </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => openApplications(user)}
+                        className="flex-1 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                      >
+                        <List className="h-4 w-4 mr-2" />
+                        Applications
+                      </Button>
                       {user.profile?.resume && (
                         <Button 
                           variant="outline" 
@@ -593,6 +806,32 @@ const JobseekerTable = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Pagination Controls */}
+        <div className="mt-4 flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Showing {total === 0 ? 0 : startIndex + 1}-{Math.min(startIndex + limit, total)} of {total}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(p - 1, 1))}
+            >
+              Prev
+            </Button>
+            <span className="text-sm text-gray-700">Page {page} of {totalPages}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
 
       
         <Dialog open={!!selectedJobseeker} onOpenChange={() => setSelectedJobseeker(null)}>
