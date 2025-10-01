@@ -137,6 +137,48 @@ export const sendApplicationAcceptanceEmail = async (studentEmail, studentName, 
 };
 
 
+export const sendResumeReminderEmail = async (userEmail, userName) => {
+    try {
+        const mailOptions = {
+            from: process.env.EMAIL_USER || 'jobkitty.in@gmail.com',
+            to: userEmail,
+            subject: 'Please upload your resume to complete your JobKitty profile',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; background: #f9fafb; border-radius: 12px; border: 1px solid #e5e7eb;">
+                    <div style="background: linear-gradient(90deg, #6A38C2 0%, #F83002 100%); padding: 18px 0; border-radius: 10px 10px 0 0; text-align: center;">
+                        <h2 style="color: #fff; margin: 0; font-size: 1.5rem;">Action Required: Upload Your Resume</h2>
+                    </div>
+                    <div style="background: #fff; padding: 24px; border-radius: 0 0 10px 10px;">
+                        <p style="font-size: 1.05rem; color: #333;">Hi <strong>${userName || 'Jobseeker'}</strong>,</p>
+                        <p style="color: #333;">We noticed that your profile does not have a resume yet. Uploading your resume helps employers discover you and increases your chances of getting hired.</p>
+                        <div style="margin: 24px 0; text-align: center;">
+                            <a href="https://jobkitty.in/profile" style="background: #F83002; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 1.05rem; display: inline-block;">Upload Resume</a>
+                        </div>
+                        <div style="background: #f3f4f6; border-left: 4px solid #6A38C2; padding: 14px; border-radius: 6px;">
+                            <ul style="margin: 0; padding-left: 18px; color: #333;">
+                                <li>Accepted formats: PDF or DOC</li>
+                                <li>Keep your contact information up to date</li>
+                                <li>Highlight your latest skills and experience</li>
+                            </ul>
+                        </div>
+                        <p style="color: #555; margin-top: 16px;">If you need any help, reply to this email or contact our support team.</p>
+                        <p style="margin-top: 18px; color: #6A38C2; font-weight: bold;">Thank you,<br/>The JobKitty Team</p>
+                    </div>
+                    <div style="text-align: center; margin-top: 18px; color: #aaa; font-size: 12px;">
+                        <p>This is an automated message. Please do not reply to this email.</p>
+                    </div>
+                </div>
+            `
+        };
+        const result = await transporter.sendMail(mailOptions);
+        console.log('Resume reminder email sent:', result.messageId);
+        return { success: true, messageId: result.messageId };
+    } catch (error) {
+        console.error('Error sending resume reminder email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 export const sendApplicationRejectionEmail = async (studentEmail, studentName, jobTitle, companyName) => {
     try {
         const mailOptions = {

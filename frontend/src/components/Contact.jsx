@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const Contact = () => {
   
-  const email = "jobkitty.in@gmail.com";
+  const email = "jobkittyteam@gmail.com";
  
 
   const [formData, setFormData] = useState({

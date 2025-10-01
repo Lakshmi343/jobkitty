@@ -74,24 +74,28 @@ export const register = async (req, res) => {
 
     console.log('User created successfully:', user._id);
 
-    // Send welcome email (optional - can be removed if not needed)
-    try {
-      await sendWelcomeEmail(user.email, user.fullname, user.role);
-      console.log('Welcome email sent to', user.email);
-    } catch (emailError) {
-      console.error('Failed to send welcome email:', emailError);
-      // Don't fail registration if email fails
+    // Send welcome email (optional)
+    if (process.env.ENABLE_NONCRITICAL_EMAILS === 'true') {
+      try {
+        await sendWelcomeEmail(user.email, user.fullname, user.role);
+        console.log('Welcome email sent to', user.email);
+      } catch (emailError) {
+        console.error('Failed to send welcome email:', emailError);
+        // Don't fail registration if email fails
+      }
     }
 
     // Send reminder email after 4 minutes (optional)
-    setTimeout(async () => {
-      try {
-        await sendRegistrationReminderEmail(user.email, user.fullname);
-        console.log('Reminder email sent to', user.email);
-      } catch (reminderError) {
-        console.error('Failed to send reminder email:', reminderError);
-      }
-    }, 4 * 60 * 1000);
+    if (process.env.ENABLE_NONCRITICAL_EMAILS === 'true') {
+      setTimeout(async () => {
+        try {
+          await sendRegistrationReminderEmail(user.email, user.fullname);
+          console.log('Reminder email sent to', user.email);
+        } catch (reminderError) {
+          console.error('Failed to send reminder email:', reminderError);
+        }
+      }, 4 * 60 * 1000);
+    }
 
     return res.status(201).json({
       message: "Account created successfully! You can now login.",

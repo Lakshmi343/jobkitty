@@ -27,7 +27,6 @@ const JobseekerManagement = () => {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         let jobseekers = Array.isArray(response.data) ? response.data : (response.data?.jobseekers || []);
-        // Fallback to user endpoint if no data (for backward compatibility)
         if (!jobseekers || jobseekers.length === 0) {
           try {
             const fb = await axios.get(`${ADMIN_API_END_POINT.replace('/admin', '/user')}/jobseekers`, { 
@@ -127,7 +126,7 @@ const JobseekerManagement = () => {
       </div>
 
 
-      {/* Search and Filters */}
+    
       <div className="bg-white rounded-lg shadow-md p-4">
         <div className="flex flex-col sm:flex-row gap-4 items-center">
           <div className="relative flex-1">
@@ -150,7 +149,7 @@ const JobseekerManagement = () => {
         </div>
       </div>
 
-      {/* Jobseeker Table */}
+   
       <div className="bg-white rounded-lg shadow-md">
         <div className="p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-800">All Jobseekers</h2>
