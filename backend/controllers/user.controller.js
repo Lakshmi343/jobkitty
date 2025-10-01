@@ -516,21 +516,26 @@ export const forgotPassword = async (req, res) => {
 		}
 		
 		const resetLink = `${frontendUrl}/reset-password/${token}`;
-		console.log(`Generated reset link: ${resetLink}`); 
-		
-		const emailResult = await sendPasswordResetEmail(user.email, resetLink);
-		if (!emailResult.success) {
-			console.error('Failed to send password reset email:', emailResult.error);
-			return res.status(500).json({ message: "Failed to send reset email.", success: false });
-		}
-		
-		return res.status(200).json({ message: "Password reset link sent to your email.", success: true });
+		console.log(`Generated reset link: ${resetLink}`);        const emailResult = await sendPasswordResetEmail(user.email, resetLink);
+        if (!emailResult.success) {
+            console.error('Failed to send password reset email:', emailResult.error);
+            if (process.env.ALLOW_RESET_LINK_FALLBACK === 'true') {
+                return res.status(200).json({
+                    message: "Email quota exceeded or send failed. Using fallback reset link.",
+                    success: true,
+                    resetLink
+                });
+            } else {
+                return res.status(500).json({ message: "Failed to send reset email.", success: false });
+            }
+        }
+        
+        return res.status(200).json({ message: "Password reset link sent to your email.", success: true });
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Server error", success: false });
 	}
 };
-
 
 export const resetPassword = async (req, res) => {
 	try {
