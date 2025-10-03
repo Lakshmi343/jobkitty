@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { ADMIN_API_END_POINT } from '../../utils/constant';
-import { getLocationSearchString } from '../../utils/locationUtils';
+import { getLocationSearchString, formatLocationForDisplay } from '../../utils/locationUtils';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
@@ -533,7 +533,7 @@ const AdminApplications = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Location</p>
-                      <p>{selectedApplication.job?.location || 'N/A'}</p>
+                      <p>{formatLocationForDisplay(selectedApplication.job?.location) || 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Salary</p>
