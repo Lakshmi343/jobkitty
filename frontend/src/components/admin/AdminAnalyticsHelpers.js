@@ -33,6 +33,7 @@ export const calculateJobStatus = (jobs, dashboardData) => {
   }));
 };
 
+
 export const calculateJobCategories = (jobs) => {
   const categoryCounts = jobs.reduce((acc, job) => {
     const category = job.category?.name || 'Uncategorized';
@@ -59,6 +60,7 @@ export const calculateCompanyStatus = (companies) => {
   }));
 };
 
+
 export const calculateApplicationStatus = (applications, applicationStats) => {
   if (applicationStats.statusStats) {
     return applicationStats.statusStats.map(stat => ({
@@ -81,11 +83,9 @@ export const calculateApplicationStatus = (applications, applicationStats) => {
 
 export const calculateGrowth = (data) => {
   if (!data || data.length === 0) return 0;
-  
   const now = new Date();
   const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const lastMonth = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  
   const thisWeek = data.filter(item => new Date(item.createdAt) >= lastWeek).length;
   const thisMonth = data.filter(item => new Date(item.createdAt) >= lastMonth).length;
   const lastMonthData = data.filter(item => {
@@ -155,6 +155,9 @@ export const formatGrowthTrend = (data, timeRange = 'month') => {
   }));
 };
 
+
+
+
 export const calculateReportStatus = (reports) => {
   const statusCounts = reports.reduce((acc, report) => {
     const status = report.status || 'pending';
@@ -167,6 +170,9 @@ export const calculateReportStatus = (reports) => {
     count
   }));
 };
+
+
+
 
 export const calculateReportTypes = (reports) => {
   const typeCounts = reports.reduce((acc, report) => {
@@ -181,6 +187,10 @@ export const calculateReportTypes = (reports) => {
   }));
 };
 
+
+
+
+
 export const calculateJobApprovalRate = (jobs, dashboardData) => {
   const totalJobs = jobs.length || dashboardData.totalJobs || 0;
   const approvedJobs = dashboardData.approvedJobs || jobs.filter(job => job.status === 'approved').length || 0;
@@ -188,6 +198,8 @@ export const calculateJobApprovalRate = (jobs, dashboardData) => {
   if (totalJobs === 0) return 0;
   return Math.round((approvedJobs / totalJobs) * 100);
 };
+
+
 
 export const calculateQualityScore = (jobs) => {
   const qualityCheckedJobs = jobs.filter(job => job.qualityCheck?.score);

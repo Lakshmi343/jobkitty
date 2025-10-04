@@ -151,11 +151,20 @@ const Profile = () => {
                       <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 mt-3 text-gray-600">
                         <div className="flex items-center gap-2 min-w-0">
                           <Mail size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
-                          <span className="text-xs sm:text-sm truncate max-w-[220px] sm:max-w-[280px] md:max-w-none">{user?.email}</span>
+                          <a
+                            href={user?.email ? `mailto:${user.email}` : undefined}
+                            className="text-xs sm:text-sm truncate max-w-[220px] sm:max-w-[280px] md:max-w-none hover:underline"
+                          >
+                            {user?.email}
+                          </a>
                         </div>
                         <div className="flex items-center gap-2">
                           <Phone size={14} className="sm:w-4 sm:h-4 flex-shrink-0" />
-                          <span className="text-xs sm:text-sm">{user?.phoneNumber || "No phone"}</span>
+                          {user?.phoneNumber ? (
+                            <a href={`tel:${user.phoneNumber}`} className="text-xs sm:text-sm hover:underline">{user.phoneNumber}</a>
+                          ) : (
+                            <span className="text-xs sm:text-sm">No phone</span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -310,8 +319,10 @@ const Profile = () => {
                   Applied Jobs
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-6 bg-white">
-                <AppliedJobTable />
+              <CardContent className="p-0 sm:p-6 bg-white">
+                <div className="overflow-x-auto px-4 sm:px-0 py-4 sm:py-0">
+                  <AppliedJobTable />
+                </div>
               </CardContent>
             </Card>
 

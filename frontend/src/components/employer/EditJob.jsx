@@ -130,7 +130,7 @@ const EditJob = () => {
     const submitHandler = async (e) => {
         e.preventDefault();
         
-        // Basic validation
+    
         if (!input.title || !input.description || !input.category) {
             toast.error("Job title, description, and category are required");
             return;
@@ -139,7 +139,7 @@ const EditJob = () => {
         setLoading(true);
 
         try {
-            // Set default values for all fields before submission
+            
             const updatedInput = {
                 ...input,
                 location: input.location || "Remote",
@@ -152,11 +152,11 @@ const EditJob = () => {
                 experienceMax: input.experienceMax || "5"
             };
             
-            // Ensure all values are properly formatted
+           
             let salaryMin = parseInt(updatedInput.salaryMin);
             let salaryMax = parseInt(updatedInput.salaryMax);
             
-            // If min > max, swap the values
+         
             if (salaryMin > salaryMax) {
                 const temp = salaryMin;
                 salaryMin = salaryMax;
@@ -167,7 +167,7 @@ const EditJob = () => {
             const expMax = parseInt(updatedInput.experienceMax);
             const openingsCount = parseInt(updatedInput.openings);
             
-            // Create the job data object with all required fields and defaults
+    
             const jobData = {
                 title: updatedInput.title.trim(),
                 description: updatedInput.description.trim(),
@@ -240,7 +240,7 @@ const EditJob = () => {
         <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50">
             <Navbar />
             <div className="max-w-6xl mx-auto py-12 px-6">
-                {/* Hero Header */}
+         
                 <div className="relative mb-12">
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl transform rotate-1"></div>
                     <div className="relative bg-white rounded-3xl p-8 shadow-2xl border border-gray-100">
@@ -271,7 +271,7 @@ const EditJob = () => {
                 </div>
 
                 <form onSubmit={submitHandler} className="space-y-10">
-                    {/* Job Details */}
+           
                     <div className='relative group'>
                         <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 rounded-2xl transform rotate-1 group-hover:rotate-2 transition-transform duration-300"></div>
                         <div className='relative bg-white p-10 rounded-2xl shadow-xl border border-gray-100'>
@@ -330,7 +330,7 @@ const EditJob = () => {
                         </div>
                     </div>
 
-                    {/* Location & Job Type */}
+             
                     <div className='relative group'>
                         <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-blue-400 rounded-2xl transform -rotate-1 group-hover:-rotate-2 transition-transform duration-300"></div>
                         <div className='relative bg-white p-10 rounded-2xl shadow-xl border border-gray-100'>
@@ -414,7 +414,7 @@ const EditJob = () => {
                         </div>
                     </div>
 
-                    {/* Compensation & Openings */}
+                   
                     <div className='relative group'>
                         <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-2xl transform rotate-1 group-hover:rotate-2 transition-transform duration-300"></div>
                         <div className='relative bg-white p-10 rounded-2xl shadow-xl border border-gray-100'>
@@ -478,7 +478,7 @@ const EditJob = () => {
                         </div>
                     </div>
 
-                    {/* Experience & Requirements */}
+                    
                     <div className='bg-white p-8 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300'>
                         <CardHeader className="px-0 pt-0">
                             <CardTitle className="flex items-center gap-2">
@@ -573,7 +573,7 @@ const EditJob = () => {
                         </CardContent>
                     </div>
 
-                    {/* Additional Details */}
+             
                     <div className='bg-white p-8 rounded-xl shadow-lg border border-gray-200 hover:shadow-xl transition-shadow duration-300'>
                         <CardHeader className="px-0 pt-0">
                             <CardTitle className="flex items-center gap-2">
@@ -607,7 +607,7 @@ const EditJob = () => {
                         </CardContent>
                     </div>
 
-                    {/* Action Buttons */}
+                 
                     <div className='relative group'>
                         <div className="absolute inset-0 bg-gradient-to-r from-pink-400 to-purple-400 rounded-2xl transform rotate-1 group-hover:rotate-2 transition-transform duration-300"></div>
                         <div className="relative bg-white p-10 rounded-2xl shadow-xl border border-gray-100">

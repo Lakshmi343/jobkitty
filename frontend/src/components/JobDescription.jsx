@@ -133,6 +133,15 @@ const JobDescription = () => {
         fetchSingleJob(); 
     },[jobId,dispatch, user?._id]);
 
+    // Scroll to top on load if no specific section was requested
+    useEffect(() => {
+        const hasSection = Boolean(searchParams.get('section'));
+        if (!hasSection) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        // run when jobId changes (navigating to a different job details page)
+    }, [jobId, searchParams]);
+
     // Handle auto-apply after login
     useEffect(() => {
         if (user && singleJob) {

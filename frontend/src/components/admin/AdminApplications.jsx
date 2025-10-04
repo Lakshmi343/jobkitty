@@ -178,6 +178,34 @@ const AdminApplications = () => {
     }
   };
 
+  const formatSalaryDisplay = (salary) => {
+    const normalizeNumber = (val) => {
+      if (val == null) return null;
+      if (typeof val === 'object') {
+        if ('$numberDecimal' in val) return parseFloat(val.$numberDecimal);
+        if ('value' in val) return Number(val.value);
+      }
+      const n = Number(val);
+      return isNaN(n) ? null : n;
+    };
+
+    if (!salary) return 'N/A';
+    if (typeof salary === 'object') {
+      const min = normalizeNumber(salary.min ?? salary.minimum ?? salary.from ?? salary.start);
+      const max = normalizeNumber(salary.max ?? salary.maximum ?? salary.to ?? salary.end);
+      const unit = salary.unit; // only include if provided
+      const unitStr = unit ? ` ${unit}` : '';
+      if (min != null && max != null) return `${min}-${max}${unitStr}`;
+      if (min != null) return `${min}${unitStr}`;
+      if (max != null) return `${max}${unitStr}`;
+      if (typeof salary.legacy === 'string') return salary.legacy;
+      return 'N/A';
+    }
+    if (typeof salary === 'number') return `₹${salary.toLocaleString()}`;
+    if (typeof salary === 'string') return salary;
+    return 'N/A';
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -537,13 +565,7 @@ const AdminApplications = () => {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Salary</p>
-                      <p>
-                        {selectedApplication.job?.salary ? (
-                          typeof selectedApplication.job.salary === 'object' ? 
-                            `${selectedApplication.job.salary.min}-${selectedApplication.job.salary.max} LPA` : 
-                            `₹${selectedApplication.job.salary}/month`
-                        ) : 'N/A'}
-                      </p>
+                      <p>{formatSalaryDisplay(selectedApplication.job?.salary)}</p>
                     </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500">Job Type</p>

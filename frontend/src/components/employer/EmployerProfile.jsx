@@ -101,7 +101,7 @@ const EmployerProfile = () => {
     Object.keys(input).forEach(key => {
       if (key === 'file') return;
       const val = input[key];
-      // Skip nulls and empty strings to avoid overwriting with invalid/empty values
+    
       if (val === null) return;
       if (typeof val === 'string' && val.trim() === '') return;
       formData.append(key, val);
@@ -167,10 +167,7 @@ const EmployerProfile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-    
       <div className="flex-1 max-w-6xl mx-auto w-full px-4 py-8 space-y-6">
-        
-        {/* Header Section */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:p-8">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="relative group flex-shrink-0">
@@ -245,7 +242,7 @@ const EmployerProfile = () => {
           </div>
         </div>
 
-        {/* Profile Details */}
+  
         {!editMode ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <AccordionSection title="Company Information" icon={<Building size={20} />}>

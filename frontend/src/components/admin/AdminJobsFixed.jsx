@@ -240,7 +240,7 @@ const AdminJobs = () => {
   };
 
   const handleViewJobDetails = (jobId) => {
-    navigate(`/job/${jobId}?section=header`);
+    navigate(`/job/${jobId}`);
   };
 
   const handleViewApplicant = (applicant) => {
@@ -388,8 +388,35 @@ const AdminJobs = () => {
   };
 
   const formatSalary = (salary) => {
+    const normalizeNumber = (val) => {
+      if (val == null) return null;
+      if (typeof val === 'object') {
+        // Handle Mongo Decimal128 JSON: { $numberDecimal: "5.5" }
+        if ('$numberDecimal' in val) return parseFloat(val.$numberDecimal);
+        // Some APIs might wrap as { value: 5 }
+        if ('value' in val) return Number(val.value);
+      }
+      const n = Number(val);
+      return isNaN(n) ? null : n;
+    };
     if (!salary) return 'Not specified';
-    return `$${salary.toLocaleString()}`;
+
+    if (typeof salary === 'object') {
+      const rawMin = salary.min ?? salary.minimum ?? salary.start ?? salary.from;
+      const min = normalizeNumber(rawMin);
+      const max = normalizeNumber(salary.max ?? salary.maximum ?? salary.end ?? salary.to);
+      const unit = salary.unit;
+      const unitStr = unit ? ` ${unit}` : '';
+      if (min != null && max != null) return `${min}-${max}${unitStr}`;
+      if (min != null) return `${min}${unitStr}`;
+      if (max != null) return `${max}${unitStr}`;
+      if (salary.legacy) return salary.legacy; // fallback to legacy string if present
+      return 'Not specified';
+    }
+
+    if (typeof salary === 'number') return `₹${salary.toLocaleString()}`;
+    if (typeof salary === 'string') return salary;
+    return 'Not specified';
   };
 
   if (loading) {
@@ -763,7 +790,7 @@ const AdminJobs = () => {
                       <div className="space-y-2 text-sm">
                         <div><span className="font-medium">Title:</span> {selectedJob.title}</div>
                         <div><span className="font-medium">Type:</span> {selectedJob.jobType || 'Full-time'}</div>
-                        <div><span className="font-medium">Location:</span> {selectedJob.location || 'Remote'}</div>
+                        <div><span className="font-medium">Location:</span> {formatLocationForDisplay(selectedJob.location)}</div>
                         <div><span className="font-medium">Salary:</span> {formatSalary(selectedJob.salary)}</div>
                         <div><span className="font-medium">Experience:</span> {selectedJob.experienceLevel || 'Not specified'}</div>
                       </div>

@@ -42,7 +42,7 @@ const Navbar = () => {
         <div className='bg-white border-b fixed top-0 left-0 w-full z-50 shadow-sm'>
             <div className='flex items-center justify-between mx-auto max-w-7xl h-16 px-4'>
                 
-                {/* ✅ Logo Clickable -> Home + Scroll to Top */}
+               
                 <Link 
                   to="/" 
                   className="flex items-center"
@@ -51,12 +51,12 @@ const Navbar = () => {
                     <img src={logo} alt="logo" style={{ width: "150px",objectFit:"contain" }} />
                 </Link>
 
-                {/* Mobile Menu Button */}
+             
                 <button className="md:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
                     <Menu size={28} />
                 </button>
 
-                {/* Desktop Menu */}
+               
                 <div className='hidden md:flex items-center gap-12'>
                     <ul className='flex font-medium items-center gap-5'>
                         {
@@ -145,7 +145,7 @@ const Navbar = () => {
                     )}
                 </div>
 
-                {/* Mobile Menu */}
+
                 {mobileMenuOpen && (
                     <div className="absolute top-16 left-0 w-full bg-white shadow-md z-50 md:hidden animate-fade-in">
                         <ul className='flex flex-col font-medium items-start gap-4 p-4 border-b'>

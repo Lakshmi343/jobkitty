@@ -6,13 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
-import { 
-  Settings, 
-  Plus, 
-  Edit, 
-  Trash2,
-  X
-} from 'lucide-react';
+import {  Settings,  Plus,  Edit,  Trash2, X} from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -53,7 +47,7 @@ const AdminCategories = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+   
     try {
       const token = localStorage.getItem('adminAccessToken');
       const url = editingCategory 

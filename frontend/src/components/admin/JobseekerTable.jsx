@@ -22,7 +22,7 @@ const JobseekerTable = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [resumeFilter, setResumeFilter] = useState('all'); // all | with | without
-  const [sortBy, setSortBy] = useState('name');
+  const [sortBy, setSortBy] = useState('date');
   const [page, setPage] = useState(1);
   const [limit] = useState(25);
   // Applications dialog state
@@ -312,10 +312,13 @@ const JobseekerTable = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-IN', {
+    return new Date(dateString).toLocaleString('en-IN', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
     });
   };
 
@@ -593,6 +596,12 @@ const JobseekerTable = () => {
                         </div>
                       </TableCell>
                       <TableCell className="align-top">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-gray-500" />
+                          <span className="text-gray-700">{formatDate(user.createdAt)}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="align-top">
                         <Badge className={`${getStatusColor(user.status)} border`}>
                           {user.status.charAt(0).toUpperCase() + user.status.slice(1)}
                         </Badge>
@@ -652,7 +661,7 @@ const JobseekerTable = () => {
                     </TableRow>
                   )) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-12">
+                      <TableCell colSpan={7} className="text-center py-12">
                         <div className="flex flex-col items-center justify-center">
                           <Users className="h-16 w-16 text-gray-300 mb-4" />
                           <p className="text-lg font-medium text-gray-500 mb-2">No jobseekers found</p>
@@ -849,6 +858,7 @@ const JobseekerTable = () => {
                 <p><strong>Education:</strong> {selectedJobseeker.profile?.education ? `${selectedJobseeker.profile.education.degree}, ${selectedJobseeker.profile.education.institution}, ${selectedJobseeker.profile.education.yearOfCompletion}` : 'N/A'}</p>
                 <p><strong>Experience:</strong> {selectedJobseeker.profile?.experience ? `${selectedJobseeker.profile.experience.years} yrs, ${selectedJobseeker.profile.experience.field}` : 'N/A'}</p>
                 <p><strong>Bio:</strong> {selectedJobseeker.profile?.bio || 'N/A'}</p>
+                <p><strong>Joined:</strong> {formatDate(selectedJobseeker.createdAt)}</p>
               </div>
             )}
             <DialogFooter>

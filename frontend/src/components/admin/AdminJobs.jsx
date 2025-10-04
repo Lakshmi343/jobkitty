@@ -9,28 +9,13 @@ import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
-import { 
-  Edit, Eye, Trash2, Search, MapPin, DollarSign, Users, Calendar, Briefcase, 
-  CheckCircle, XCircle, Clock, AlertCircle, MoreHorizontal, TrendingUp, 
-  Building, Filter, RefreshCw, Download, Edit2, AlertTriangle, Star, Plus
-} from 'lucide-react';
+import {  Edit, Eye, Trash2, Search, MapPin, DollarSign, Users, Calendar, Briefcase,  CheckCircle, XCircle, Clock, AlertCircle, MoreHorizontal, TrendingUp,  Building, Filter, RefreshCw, Download, Edit2, AlertTriangle, Star, Plus} from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import { formatLocationForDisplay, getLocationSearchString } from '../../utils/locationUtils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-} from "../ui/table";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "../ui/popover";
+import { Table, TableHeader, TableBody, TableCell, TableHead, TableRow,} from "../ui/table";
+import { Popover, PopoverTrigger, PopoverContent,} from "../ui/popover";
 
 
 const AdminJobs = () => {
@@ -211,8 +196,33 @@ const AdminJobs = () => {
   };
 
   const formatSalary = (salary) => {
+    const normalizeNumber = (val) => {
+      if (val == null) return null;
+      if (typeof val === 'object') {
+        if ('$numberDecimal' in val) return parseFloat(val.$numberDecimal);
+        if ('value' in val) return Number(val.value);
+      }
+      const n = Number(val);
+      return isNaN(n) ? null : n;
+    };
+
     if (!salary) return 'Not specified';
-    return `$${salary.toLocaleString()}`;
+    if (typeof salary === 'object') {
+      const rawMin = salary.min ?? salary.minimum ?? salary.from ?? salary.start;
+      const rawMax = salary.max ?? salary.maximum ?? salary.to ?? salary.end;
+      const min = normalizeNumber(rawMin);
+      const max = normalizeNumber(rawMax);
+      const unit = salary.unit;
+      const unitStr = unit ? ` ${unit}` : '';
+      if (min != null && max != null) return `${min}-${max}${unitStr}`;
+      if (min != null) return `${min}${unitStr}`;
+      if (max != null) return `${max}${unitStr}`;
+      if (typeof salary.legacy === 'string') return salary.legacy;
+      return 'Not specified';
+    }
+    if (typeof salary === 'number') return `₹${salary.toLocaleString()}`;
+    if (typeof salary === 'string') return salary;
+    return 'Not specified';
   };
 
   if (loading) {
@@ -226,7 +236,7 @@ const AdminJobs = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
+      
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Job Management</h1>
@@ -588,7 +598,7 @@ const AdminJobs = () => {
                       <div className="space-y-2 text-sm">
                         <div><span className="font-medium">Title:</span> {selectedJob.title}</div>
                         <div><span className="font-medium">Type:</span> {selectedJob.jobType || 'Full-time'}</div>
-                        <div><span className="font-medium">Location:</span> {selectedJob.location || 'Remote'}</div>
+                        <div><span className="font-medium">Location:</span> {formatLocationForDisplay(selectedJob.location)}</div>
                         <div><span className="font-medium">Salary:</span> {formatSalary(selectedJob.salary)}</div>
                         <div><span className="font-medium">Experience:</span> {selectedJob.experienceLevel || 'Not specified'}</div>
                       </div>

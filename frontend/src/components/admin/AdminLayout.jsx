@@ -12,23 +12,67 @@ const AdminLayout = ({ children }) => {
   const admin = JSON.parse(localStorage.getItem('adminData') || '{}');
   const isSuperAdmin = admin.role === 'super_admin';
 
-  const baseNavigation = [
+
+  const groupedNavigation = [
+    {
+      title: 'Overview',
+      items: [
+        { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+      ],
+    },
+    {
+      title: 'Jobs',
+      items: [
+        { name: 'Companies', href: '/admin/companies', icon: Building2 },
+        { name: 'Jobs', href: '/admin/jobs', icon: Briefcase },
+        { name: 'Job Posting', href: '/admin/job-posting', icon: Plus },
+        { name: 'Categories', href: '/admin/categories', icon: Settings },
+        { name: 'Applications', href: '/admin/applications', icon: FileText },
+  
+      ],
+    },
+    {
+      title: 'Talent',
+      items: [
+        { name: 'CV Management', href: '/admin/cv-management', icon: FolderOpen },
+      ],
+    },
+  ];
+
+  const adminSection = isSuperAdmin
+    ? [{
+        title: 'Administration',
+        items: [
+          { name: 'Jobseeker Management', href: '/admin/jobseeker-management', icon: Users },
+          { name: 'Employer Management', href: '/admin/employer-management', icon: Building2 },
+          { name: 'User Management', href: '/admin/user-management', icon: Shield },
+        ],
+      }]
+    : [];
+
+  const fullNavigation = [...groupedNavigation, ...adminSection];
+
+
+  const flatNavigation = [
+
     { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-    { name: 'Jobseeker Management', href: '/admin/jobseeker-management', icon: Users },
-    { name: 'Employer Management', href: '/admin/employer-management', icon: Building2 },
+
     { name: 'Companies', href: '/admin/companies', icon: Building2 },
+   
     { name: 'Jobs', href: '/admin/jobs', icon: Briefcase },
+   
     { name: 'Job Posting', href: '/admin/job-posting', icon: Plus },
-    { name: 'Applications', href: '/admin/applications', icon: FileText },
-    { name: 'CV Management', href: '/admin/cv-management', icon: FolderOpen },
+
     { name: 'Categories', href: '/admin/categories', icon: Settings },
-  ];
-
-  const superAdminOnly = [
-    { name: 'User Management', href: '/admin/user-management', icon: Shield },
-  ];
-
-  const navigation = isSuperAdmin ? [...baseNavigation, ...superAdminOnly] : baseNavigation;
+  
+    { name: 'Applications', href: '/admin/applications', icon: FileText },
+ 
+    { name: 'CV Management', href: '/admin/cv-management', icon: FolderOpen },
+ 
+    { name: 'Jobseeker Management', href: '/admin/jobseeker-management', icon: Users },
+    
+  
+  ].concat(isSuperAdmin ? [{ name: 'User Management', href: '/admin/user-management', icon: Shield }] : []);
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
@@ -37,7 +81,7 @@ const AdminLayout = ({ children }) => {
     navigate('/admin/login');
   };
 
-  const isActive = (href) => location.pathname === href;
+  const isActive = (href) => location.pathname === href || location.pathname.startsWith(href + '/');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -51,13 +95,13 @@ const AdminLayout = ({ children }) => {
               <X className="h-5 w-5" />
             </Button>
           </div>
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => {
+          <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
+            {flatNavigation.map((item) => {
               const Icon = item.icon;
               return (
                 <Button
                   key={item.name}
-                  variant={isActive(item.href) ? "secondary" : "ghost"}
+                  variant={isActive(item.href) ? 'secondary' : 'ghost'}
                   className={`w-full justify-start ${isActive(item.href) ? 'bg-gray-100' : ''}`}
                   onClick={() => {
                     navigate(item.href);
@@ -79,13 +123,13 @@ const AdminLayout = ({ children }) => {
           <div className="flex h-16 items-center px-4">
             <h1 className="text-xl font-bold text-gray-900">Admin Panel</h1>
           </div>
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navigation.map((item) => {
+          <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
+            {fullNavigation.flatMap((group) => group.items).map((item) => {
               const Icon = item.icon;
               return (
                 <Button
                   key={item.name}
-                  variant={isActive(item.href) ? "secondary" : "ghost"}
+                  variant={isActive(item.href) ? 'secondary' : 'ghost'}
                   className={`w-full justify-start ${isActive(item.href) ? 'bg-gray-100' : ''}`}
                   onClick={() => navigate(item.href)}
                 >
