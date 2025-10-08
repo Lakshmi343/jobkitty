@@ -14,7 +14,6 @@ import categoryRoute from "./routes/category.route.js";
 import contactRoute from "./routes/contact.route.js";
 import adminRoute from "./routes/admin.route.js"
 
-dotenv.config({});
 const app = express();
 
 app.use(express.json());
@@ -22,26 +21,36 @@ app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
 app.use(helmet());
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:8000",
+  "https://jobkitty.in",
+  "https://www.jobkitty.in",
+  "http://jobkitty.in",
+  "http://www.jobkitty.in",
+  "https://api.jobkitty.in",
+  "http://168.231.123.129:8000",
+  "https://168.231.123.129:8000",
+];
+
 const corsOptions = {
-  origin: [
-    
-    "http://localhost:5173",       
-    "http://localhost:8000", 
-    "https://jobkitty.in",  
-    "http://jobkitty.in", 
-    "http://168.231.123.129:8000",
-    "https://168.231.123.129:8000",
-    "https://api.jobkitty.in/api/v1"
-          
-  ],
+  origin: function (origin, callback) {
+    // Allow non-browser requests or same-origin requests with no Origin header
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS: " + origin), false);
+  },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Content-Disposition"],
 };
+
 app.use(cors(corsOptions));
-
-
-app.get('/api', (req, res) => {
-    res.status(200).json({ message: 'Server is running', success: true });
-});
+// Explicitly handle preflight
+app.options("*", cors(corsOptions));
 
 const PORT = process.env.PORT || 8000;
 

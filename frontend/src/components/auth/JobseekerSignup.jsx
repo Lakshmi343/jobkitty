@@ -269,10 +269,7 @@ const JobseekerSignup = () => {
                   <Input id="yearOfCompletion" name="yearOfCompletion" type="number" value={input.yearOfCompletion} onChange={changeEventHandler} placeholder="e.g. 2023" className="py-3" required />
                 </div>
               </div>
-              <div className="space-y-2 mt-2">
-                <Label htmlFor="education">Education details </Label>
-                <Input id="education" name="education" value={input.education} onChange={changeEventHandler} placeholder="e.g. B.Tech in CSE" className="py-3" required />
-              </div>
+             
 
               <div className="space-y-2">
                 <Label htmlFor="experience">Experience</Label>
