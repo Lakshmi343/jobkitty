@@ -12,6 +12,7 @@ import AppliedJobTable from "./AppliedJobTable";
 import IframePdfViewer from "./IframePdfViewer";
 import useGetAppliedJobs from "../hooks/useGetAppliedJobs";
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 import { AlertCircle } from 'lucide-react';
 import ResumeUpload from "./jobseeker/ResumeUpload";
 
@@ -19,12 +20,19 @@ import axios from "axios";
 
 const Profile = () => {
   const [open, setOpen] = useState(false);
+  const [skillsPromptOpen, setSkillsPromptOpen] = useState(false);
+  const [initialStepOverride, setInitialStepOverride] = useState(undefined);
   const [companyData, setCompanyData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const { user } = useSelector((store) => store.auth);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const initialStepFromQuery = (() => {
+    const s = searchParams.get('step');
+    if (!s) return undefined;
+    return s.toLowerCase();
+  })();
   
   
   useGetAppliedJobs();
@@ -68,7 +76,12 @@ const Profile = () => {
 
   useEffect(() => {
     if (user?.role === "Jobseeker") {
-    
+      // Open a modal prompting to complete profile if skills are missing
+      const needsSkills = !(Array.isArray(user?.profile?.skills) && user.profile.skills.length > 0);
+      if (needsSkills) {
+        setInitialStepOverride('skills');
+        setSkillsPromptOpen(true);
+      }
 
       if (user?.profile?.resume) {
         console.log("✅ Resume URL:", user.profile.resume);
@@ -335,7 +348,23 @@ const Profile = () => {
             />
 
             {/* Update Dialog */}
-            <UpdateProfileDialog open={open} setOpen={setOpen} />
+            <UpdateProfileDialog open={open} setOpen={setOpen} initialStep={initialStepOverride || initialStepFromQuery} />
+
+            {/* Skills/Profile completion modal */}
+            <Dialog open={skillsPromptOpen} onOpenChange={setSkillsPromptOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Complete your profile</DialogTitle>
+                  <DialogDescription>
+                    Please add your skills to complete your profile. This helps employers find you faster.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button variant="outline" onClick={() => setSkillsPromptOpen(false)}>Later</Button>
+                  <Button onClick={() => { setSkillsPromptOpen(false); setInitialStepOverride('skills'); setOpen(true); }}>Update Now</Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       )}

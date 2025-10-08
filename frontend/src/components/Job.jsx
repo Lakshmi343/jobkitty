@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react'
 import { Button } from './ui/button'
 import { Bookmark, BookmarkCheck, MapPin, Clock } from 'lucide-react'
@@ -26,7 +27,7 @@ const Job = ({ job }) => {
       whileHover={{ scale: 1.02 }}
       className="p-5 lg:p-6 rounded-2xl bg-white/90 backdrop-blur-sm shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 hover:border-blue-200 h-full flex flex-col"
     >
-      {/* Header */}
+    
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Clock className="w-4 h-4" />
@@ -50,7 +51,7 @@ const Job = ({ job }) => {
         </Button>
       </div>
 
-      {/* Company Info */}
+      
       <div className="flex items-start gap-3 mb-4 ">
         <div className="flex-shrink-0">
           <Avatar className="w-14 h-14 border-2 border-gray-200">
@@ -68,7 +69,6 @@ const Job = ({ job }) => {
         </div>
       </div>
 
-      {/* Job Title & Description */}
       <div className="mb-4 flex-1">
         <h2 className="text-xl font-bold text-gray-900 mb-2 line-clamp-2">
           {job?.title}
@@ -78,7 +78,7 @@ const Job = ({ job }) => {
         </p>
       </div>
 
-      {/* Skills */}
+     
       <div className="mb-4">
         <div className="flex flex-wrap gap-2">
           {job?.skills?.slice(0, 3).map((skill, index) => (
@@ -97,12 +97,12 @@ const Job = ({ job }) => {
         </div>
       </div>
 
-      {/* Footer */}
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-auto pt-4 border-t border-gray-100">
         <div className="flex items-center gap-2">
           <span className="text-lg font-bold text-green-600">
             {typeof job?.salary === 'object'
-              ? `${job?.salary?.min}-${job?.salary?.max} LPA`
+              ? `${job?.salary?.min}-${job?.salary?.max}`
               : `₹${Number(job?.salary || 0).toLocaleString()}`}
           </span>
           <span className="text-sm text-gray-500">

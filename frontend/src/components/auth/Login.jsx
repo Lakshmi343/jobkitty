@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
@@ -14,6 +14,7 @@ import { Loader2, Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { authUtils } from '../../utils/authUtils';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import Navbar from '../shared/Navbar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 const Login = () => {
   const [input, setInput] = useState({
@@ -26,6 +27,8 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [acceptCode, setAcceptCode] = useState("");
+  const [profilePrompt, setProfilePrompt] = useState({ open: false, step: 'education', message: '' });
+  const delayedPromptTimer = useRef(null);
 
   const changeEventHandler = (e) => {
     setInput({ ...input, [e.target.name]: e.target.value });
@@ -78,6 +81,30 @@ const Login = () => {
           authUtils.setTokens(res.data.token, res.data.token);
         }
 
+        // Decide post-login destination
+        const isJobseeker = res.data?.user?.role === 'Jobseeker';
+        const profileIncomplete = !!res.data?.profileIncomplete;
+        const needsSkills = !!res.data?.needsSkills;
+        const missingFields = res.data?.missingFields || [];
+
+        if (isJobseeker && (profileIncomplete || needsSkills)) {
+          // Choose starting step
+          let step = 'education';
+          if (missingFields.includes('skills') || needsSkills) step = 'skills';
+          else if (missingFields.some(f => f.startsWith('education.'))) step = 'education';
+          else if (missingFields.includes('resume')) step = 'resume';
+
+          const msg = needsSkills ? 'Please update your skills to complete your profile.' : 'Please complete your profile.';
+          // Show the popup after a short delay (3s)
+          if (delayedPromptTimer.current) {
+            clearTimeout(delayedPromptTimer.current);
+          }
+          delayedPromptTimer.current = setTimeout(() => {
+            setProfilePrompt({ open: true, step, message: msg });
+          }, 3000);
+          return;
+        }
+
         const pendingApplication = localStorage.getItem('pendingJobApplication');
         if (pendingApplication) {
           const applicationData = JSON.parse(pendingApplication);
@@ -106,6 +133,15 @@ const Login = () => {
       navigate("/");
     }
   }, [user, navigate]);
+
+  // Cleanup any pending delayed popup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (delayedPromptTimer.current) {
+        clearTimeout(delayedPromptTimer.current);
+      }
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -219,8 +255,40 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      {/* Profile completion modal */}
+      <Dialog open={profilePrompt.open} onOpenChange={(o) => setProfilePrompt(prev => ({ ...prev, open: o }))}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Complete your profile</DialogTitle>
+            <DialogDescription>
+              {profilePrompt.message || 'Please complete your profile to continue using Jobkitty effectively.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setProfilePrompt(prev => ({ ...prev, open: false }));
+                navigate('/');
+              }}
+            >
+              Later
+            </Button>
+            <Button
+              onClick={() => {
+                const step = encodeURIComponent(profilePrompt.step || 'education');
+                setProfilePrompt(prev => ({ ...prev, open: false }));
+                navigate(`/profile?edit=1&step=${step}`);
+              }}
+            >
+              Update Now
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
-};
+}
 
 export default Login;

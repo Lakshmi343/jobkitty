@@ -1,6 +1,5 @@
-
+import React,{useEffect} from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { setUser } from './redux/authSlice';
 import './utils/axiosInterceptor';
@@ -8,6 +7,8 @@ import { authUtils } from './utils/authUtils';
 import Layout from './components/shared/Layout';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
+import JobseekerSignup from './components/auth/JobseekerSignup';
+import EmployerSignup from './components/auth/EmployerSignup';
 import Home from './components/Home';
 import Jobs from './components/Jobs';
 import Browse from './components/Browse';
@@ -76,6 +77,22 @@ const appRouter = createBrowserRouter([
     element: (
       <Layout>
         <Signup />
+      </Layout>
+    )
+  },
+  {
+    path: '/signup/jobseeker',
+    element: (
+      <Layout>
+        <JobseekerSignup />
+      </Layout>
+    )
+  },
+  {
+    path: '/signup/employer',
+    element: (
+      <Layout>
+        <EmployerSignup />
       </Layout>
     )
   },

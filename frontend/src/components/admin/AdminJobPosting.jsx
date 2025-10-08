@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
@@ -14,20 +12,17 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Briefcase, MapPin, DollarSign, Building, FileText, ArrowLeft, Plus, CheckCircle, X, Users, Upload, Image } from 'lucide-react';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import LocationSelector from '../ui/LocationSelector';
-
 const jobTypes = ["Full-time", "Part-time", "Contract", "Internship", "Temporary"];
-
 const AdminJobPosting = () => {
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState([]);
     const [categoryQuery, setCategoryQuery] = useState("");
     const [companies, setCompanies] = useState([]);
+    const [companyQuery, setCompanyQuery] = useState("");
     const [selectedCompanyId, setSelectedCompanyId] = useState("");
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-
-    // Job posting state - FIXED: Added proper location structure
     const [jobData, setJobData] = useState({
         title: "",
         description: "",
@@ -44,14 +39,14 @@ const AdminJobPosting = () => {
         openings: "1",
         category: ""
     });
-
     const [requirements, setRequirements] = useState([]);
     const [newRequirement, setNewRequirement] = useState("");
-
     const filteredCategories = categories.filter(cat =>
         cat?.name?.toLowerCase().includes(categoryQuery.toLowerCase())
     );
-
+    const filteredCompanies = companies.filter(c =>
+        c?.name?.toLowerCase().includes(companyQuery.toLowerCase())
+    );
     useEffect(() => {
         const fetchCategories = async () => {
             try {
@@ -83,7 +78,7 @@ const AdminJobPosting = () => {
         fetchCompanies();
     }, []);
 
-    // Preselect company from query param
+    
     useEffect(() => {
         const cid = searchParams.get('companyId');
         if (cid) {
@@ -96,9 +91,8 @@ const AdminJobPosting = () => {
         setJobData({ ...jobData, [e.target.name]: e.target.value });
     };
 
-    // FIXED: Enhanced location handling
+   
     const handleLocationChange = (selectedLocation) => {
-        // If selectedLocation is a string (from LocationSelector), convert to object
         if (typeof selectedLocation === 'string') {
             const parts = selectedLocation.split(',').map(s => s.trim()).filter(Boolean);
             let state = '';
@@ -121,7 +115,7 @@ const AdminJobPosting = () => {
                 }
             }));
         } else if (selectedLocation && typeof selectedLocation === 'object') {
-            // If it's already an object, normalize and use it directly
+          
             const state = selectedLocation.state || '';
             const district = selectedLocation.district || '';
             const legacy = selectedLocation.legacy || (district && state ? `${district}, ${state}` : (state || ''));
@@ -199,7 +193,7 @@ const AdminJobPosting = () => {
         try {
             setLoading(true);
             
-            // FIXED: Build proper location structure for backend
+            
             const payload = {
                 companyId: selectedCompanyId,
                 title: jobData.title,
@@ -209,7 +203,7 @@ const AdminJobPosting = () => {
                     min: Number(jobData.salaryMin),
                     max: Number(jobData.salaryMax)
                 },
-                location: jobData.location, // Now sends proper object structure
+                location: jobData.location, 
                 jobType: jobData.jobType,
                 position: jobData.position || 1,
                 openings: Number(jobData.openings),
@@ -317,11 +311,22 @@ const AdminJobPosting = () => {
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select a company" />
                                         </SelectTrigger>
-                                        <SelectContent>
+                                        <SelectContent className="max-h-64 overflow-auto">
+                                            <div className="p-2 sticky top-0 bg-white border-b">
+                                                <Input
+                                                    value={companyQuery}
+                                                    onChange={(e) => setCompanyQuery(e.target.value)}
+                                                    placeholder="Search company..."
+                                                />
+                                            </div>
                                             <SelectGroup>
-                                                {companies.map(c => (
-                                                    <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>
-                                                ))}
+                                                {filteredCompanies.length > 0 ? (
+                                                    filteredCompanies.map(c => (
+                                                        <SelectItem key={c._id} value={c._id}>{c.name}</SelectItem>
+                                                    ))
+                                                ) : (
+                                                    <SelectItem disabled value="no_company_results">No companies found</SelectItem>
+                                                )}
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>
@@ -330,7 +335,7 @@ const AdminJobPosting = () => {
                                     )}
                                 </div>
                                 
-                                {/* Company Quick Actions */}
+                             
                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                                     <div className="flex items-center justify-between">
                                         <div>
@@ -353,7 +358,7 @@ const AdminJobPosting = () => {
                         </div>
                     )}
 
-                    {/* Step 2: Job Details */}
+                    
                     {currentStep === 2 && (
                         <div className='bg-white p-8 rounded-lg shadow-md border'>
                             <CardHeader>
@@ -364,7 +369,7 @@ const AdminJobPosting = () => {
                                 <CardDescription>Provide the job posting details.</CardDescription>
                             </CardHeader>
                             <CardContent className='mt-4 space-y-6'>
-                                {/* Selected Company Info */}
+                             
                                 {selectedCompanyId && (
                                     <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                                         <div className="flex items-center gap-3">
@@ -409,7 +414,7 @@ const AdminJobPosting = () => {
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select a category" />
                                             </SelectTrigger>
-                                            <SelectContent>
+                                            <SelectContent className="max-h-64 overflow-auto">
                                                 <div className="p-2 sticky top-0 bg-white border-b">
                                                     <Input
                                                         value={categoryQuery}
@@ -445,7 +450,7 @@ const AdminJobPosting = () => {
                                 
                                 <div>
                                     <Label>Requirements * (Point-based format)</Label>
-                                    <div className="flex gap-2 mb-2">
+                                    <div className="flex flex-col sm:flex-row gap-2 mb-2">
                                         <Input 
                                             value={newRequirement}
                                             onChange={(e) => setNewRequirement(e.target.value)}
@@ -481,7 +486,7 @@ const AdminJobPosting = () => {
                                 </div>
                                 
                                 <div className="grid md:grid-cols-2 gap-6">
-                                    {/* FIXED: Enhanced Location Selector */}
+                                  
                                     <div>
                                         <Label>Job Location *</Label>
                                         <LocationSelector
@@ -525,6 +530,8 @@ const AdminJobPosting = () => {
                                         <Input
                                             name="salaryMin"
                                             type="number"
+                                            inputMode="decimal"
+                                            step="0.1"
                                             value={jobData.salaryMin}
                                             onChange={handleJobChange}
                                             placeholder="e.g., 4"
@@ -537,6 +544,8 @@ const AdminJobPosting = () => {
                                         <Input
                                             name="salaryMax"
                                             type="number"
+                                            inputMode="decimal"
+                                            step="0.1"
                                             value={jobData.salaryMax}
                                             onChange={handleJobChange}
                                             placeholder="e.g., 8"
@@ -549,6 +558,7 @@ const AdminJobPosting = () => {
                                         <Input
                                             name="openings"
                                             type="number"
+                                            inputMode="numeric"
                                             value={jobData.openings}
                                             onChange={handleJobChange}
                                             placeholder="e.g., 2"

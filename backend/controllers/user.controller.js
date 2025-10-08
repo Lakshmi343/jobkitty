@@ -1,33 +1,63 @@
-
-
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import getDataUri from "../utils/datauri.js";
-import cloudinary from "../utils/cloudinary.js";
 import { sendRegistrationReminderEmail, sendPasswordResetEmail, sendWelcomeEmail } from "../utils/emailService.js";
 import crypto from "crypto";
+import cloudinary from "../utils/cloudinary.js";
 
+// Helper: compute profile completion status for jobseekers
+const computeJobseekerProfileStatus = (userDoc) => {
+  const status = {
+    isIncomplete: false,
+    needsSkills: false,
+    missingFields: [],
+  };
+
+  try {
+    if (!userDoc || userDoc.role !== 'Jobseeker') return status;
+
+    const prof = userDoc.profile || {};
+    const edu = prof.education || {};
+    const hasDegree = !!(edu.degree && String(edu.degree).trim());
+    const hasInstitution = !!(edu.institution && String(edu.institution).trim());
+    const hasYear = Number.isFinite(Number(edu.yearOfCompletion));
+    const hasResume = !!prof.resume;
+    const hasSkills = Array.isArray(prof.skills) && prof.skills.length > 0;
+
+    if (!hasDegree) status.missingFields.push('education.degree');
+    if (!hasInstitution) status.missingFields.push('education.institution');
+    if (!hasYear) status.missingFields.push('education.yearOfCompletion');
+    if (!hasResume) status.missingFields.push('resume');
+    if (!hasSkills) {
+      status.missingFields.push('skills');
+      status.needsSkills = true;
+    }
+
+    status.isIncomplete = status.missingFields.length > 0;
+  } catch {}
+
+  return status;
+};
 
 
 export const register = async (req, res) => {
   try {
-    const { fullname, email, password, role, phoneNumber } = req.body;
+    const { fullname, email, password, role, phoneNumber, place, education, experience, acceptTerms } = req.body;
 
     console.log('Registration attempt:', { 
       fullname: fullname?.substring(0, 10) + '...', 
       email, 
       role,
-      phoneNumber 
+      phoneNumber
     });
 
-    // Validate required fields
+  
     const missing = [];
     if (!fullname || !String(fullname).trim()) missing.push('fullname');
     if (!email || !String(email).trim()) missing.push('email');
     if (!password || !String(password).trim()) missing.push('password');
     if (!role || !String(role).trim()) missing.push('role');
-    
     if (missing.length > 0) {
       return res.status(400).json({
         message: `Missing required field(s): ${missing.join(', ')}`,
@@ -36,7 +66,7 @@ export const register = async (req, res) => {
       });
     }
 
-    // Validate role
+    
     const validRoles = ['Jobseeker', 'Employer', 'admin'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({
@@ -45,7 +75,7 @@ export const register = async (req, res) => {
       });
     }
 
-    // Check if user already exists
+  
     const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
     if (existingUser) {
       return res.status(400).json({
@@ -54,38 +84,72 @@ export const register = async (req, res) => {
       });
     }
 
-    // Hash password
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user WITHOUT profile photo
+
+    let profilePayload = {
+      profilePhoto: "",
+      bio: "",
+      place: place ? String(place).trim() : "",
+    };
+
+    
+    if (education) {
+      try {
+        const edu = typeof education === 'string' ? JSON.parse(education) : education;
+        const degree = (edu.degree || '').toString().trim();
+        const institution = (edu.institution || '').toString().trim();
+        const year = edu.yearOfCompletion !== undefined && edu.yearOfCompletion !== '' ? Number(edu.yearOfCompletion) : undefined;
+        const grade = (edu.grade || '').toString().trim();
+        if (degree && institution && Number.isFinite(year)) {
+          profilePayload.education = {
+            degree,
+            institution,
+            yearOfCompletion: year,
+            grade,
+          };
+        } else if (degree) {
+          
+          profilePayload.education = { degree, institution, yearOfCompletion: year, grade };
+        }
+      } catch {}
+    }
+
+  
+    if (experience) {
+      try {
+        const exp = typeof experience === 'string' ? JSON.parse(experience) : experience;
+        profilePayload.experience = {
+          years: exp.years || 0,
+          field: exp.field || '',
+        };
+      } catch {}
+    }
+
+   
     const user = await User.create({
       fullname: fullname.trim(),
       email: email.toLowerCase().trim(),
-      phoneNumber: phoneNumber ? phoneNumber.trim() : undefined,
+      phoneNumber: phoneNumber ? String(phoneNumber).trim() : undefined,
       password: hashedPassword,
       role: role.trim(),
-      profile: {
-        // Empty profile - no profile photo required
-        profilePhoto: "",
-        bio: "",
-        place: ""
-      }
+      acceptedTerms: !!acceptTerms,
+      acceptedAt: acceptTerms ? new Date() : undefined,
+      profile: profilePayload
     });
 
-    console.log('User created successfully:', user._id);
-
-    // Send welcome email (optional)
+  
     if (process.env.ENABLE_NONCRITICAL_EMAILS === 'true') {
       try {
         await sendWelcomeEmail(user.email, user.fullname, user.role);
         console.log('Welcome email sent to', user.email);
       } catch (emailError) {
         console.error('Failed to send welcome email:', emailError);
-        // Don't fail registration if email fails
       }
     }
 
-    // Send reminder email after 4 minutes (optional)
+    
     if (process.env.ENABLE_NONCRITICAL_EMAILS === 'true') {
       setTimeout(async () => {
         try {
@@ -111,7 +175,7 @@ export const register = async (req, res) => {
   } catch (error) {
     console.error('Registration error:', error);
     
-    // Handle duplicate key errors
+   
     if (error.code === 11000) {
       return res.status(400).json({
         message: "User already exists with this email.",
@@ -119,7 +183,7 @@ export const register = async (req, res) => {
       });
     }
     
-    // Handle validation errors
+
     if (error.name === 'ValidationError') {
       const errors = Object.values(error.errors).map(err => err.message);
       return res.status(400).json({
@@ -136,100 +200,6 @@ export const register = async (req, res) => {
 };
 
 
-// export const register = async (req, res) => {
-//   try {
-//       const { fullname, email, password, role } = req.body || {};
-
-//       // Debug: log received keys to trace body parsing issues
-//       try {
-//         console.log('Register Content-Type:', req.headers['content-type']);
-//         console.log('Register body keys:', Object.keys(req.body || {}));
-//         console.log('Register raw body sample:', {
-//           fullname: typeof fullname === 'string' ? fullname : typeof fullname,
-//           email: typeof email === 'string' ? email : typeof email,
-//           password: password ? '***' : undefined,
-//           role
-//         });
-//       } catch {}
-
-//       const missing = [];
-//       if (!fullname || !String(fullname).trim()) missing.push('fullname');
-//       if (!email || !String(email).trim()) missing.push('email');
-//       if (!password || !String(password).trim()) missing.push('password');
-//       if (!role || !String(role).trim()) missing.push('role');
-//       if (missing.length) {
-//         return res.status(400).json({
-//           message: `Missing required field(s): ${missing.join(', ')}`,
-//           success: false,
-//           missing
-//         });
-//       }
-
-//       const existingUser = await User.findOne({ email });
-//       if (existingUser) {
-//           return res.status(400).json({
-//               message: "User already exists with this email.",
-//               success: false
-//           });
-//       }
-
-//       let profilePhotoUrl = undefined;
-      
-      
-//       if (req.file) {
-//           const fileUri = getDataUri(req.file);
-//           const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
-//               folder: "profile-photos"
-//           });
-//           profilePhotoUrl = cloudResponse.secure_url;
-//       }
-
-//       const hashedPassword = await bcrypt.hash(password, 10);
-
-//       const userPayload = {
-//           fullname: String(fullname).trim(),
-//           email: String(email).trim().toLowerCase(),
-//           password: hashedPassword,
-//           role: String(role).trim()
-//       };
-
-     
-//       if (profilePhotoUrl) {
-//           userPayload.profile = { profilePhoto: profilePhotoUrl };
-//       }
-
-//       const user = await User.create(userPayload);
-
-    
-//       try {
-//           await sendWelcomeEmail(user.email, user.fullname, user.role);
-//           console.log('Welcome email sent to', user.email);
-//       } catch (err) {
-//           console.error('Failed to send welcome email:', err);
-//       }
-
-//       setTimeout(async () => {
-//           try {
-//               await sendRegistrationReminderEmail(user.email, user.fullname);
-//               console.log('Reminder email sent to', user.email);
-//           } catch (err) {
-//               console.error('Failed to send reminder email:', err);
-//           }
-//       }, 4 * 60 * 1000);
-
-//       return res.status(201).json({
-//           message: "Account created successfully.",
-//           success: true
-//       });
-
-//   } catch (error) {
-//       console.error(error);
-//       res.status(500).json({ 
-//           message: "Server error", 
-//           success: false 
-//       });
-//   }
-// };
 
 
 export const updateProfilePhoto = async (req, res) => {
@@ -241,24 +211,20 @@ export const updateProfilePhoto = async (req, res) => {
                 success: true
             });
         }
-
         const userId = req.id;
         const user = await User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: "User not found.", success: false });
         }
-
         const fileUri = getDataUri(req.file);
         const cloudResponse = await cloudinary.uploader.upload(fileUri.content, {
             folder: "profile-photos"
         });
-        // Ensure profile object exists to avoid setting property on undefined
         if (!user.profile) {
             user.profile = {};
         }
         user.profile.profilePhoto = cloudResponse.secure_url;
         const updatedUser = await user.save();
-
         return res.status(200).json({
             message: "Profile photo updated successfully.",
             user: updatedUser,
@@ -341,6 +307,9 @@ export const login = async (req, res) => {
       user = await User.findById(user._id).populate('profile.company');
     }
 
+  
+    const profileStatus = computeJobseekerProfileStatus(user);
+
     user = {
       _id: user._id,
       fullname: user.fullname,
@@ -356,6 +325,9 @@ export const login = async (req, res) => {
         user,
         accessToken,
         refreshToken,
+        profileIncomplete: profileStatus.isIncomplete,
+        needsSkills: profileStatus.needsSkills,
+        missingFields: profileStatus.missingFields,
         success: true
       });
       
@@ -427,12 +399,52 @@ export const updateProfile = async (req, res) => {
 
         
         if (education) {
-			user.profile.education=JSON.parse(education);
-		}
+            try {
+                const edu = typeof education === 'string' ? JSON.parse(education) : education;
+                user.profile.education = edu;
+            } catch (e) {
+                console.warn('Invalid education payload, skipping');
+            }
+        }
 
         
         if (experience) {
-            user.profile.experience = JSON.parse(experience);
+            try {
+                const exp = typeof experience === 'string' ? JSON.parse(experience) : experience;
+                user.profile.experience = exp;
+            } catch (e) {
+                console.warn('Invalid experience payload, skipping');
+            }
+        }
+
+        
+        if (user.role === 'Jobseeker') {
+            const eduObj = user.profile.education || {};
+            const degreeVal = (eduObj.degree || '').toString().trim();
+            const institutionVal = (eduObj.institution || '').toString().trim();
+            const yearVal = eduObj.yearOfCompletion !== undefined && eduObj.yearOfCompletion !== '' ? Number(eduObj.yearOfCompletion) : undefined;
+
+            const missingEdu = [];
+            if (!degreeVal) missingEdu.push('degree');
+            if (!institutionVal) missingEdu.push('institution');
+            if (!Number.isFinite(yearVal)) missingEdu.push('yearOfCompletion');
+
+            if (missingEdu.length > 0) {
+                return res.status(400).json({
+                    message: `Education is required for jobseekers: missing ${missingEdu.join(', ')}`,
+                    success: false
+                });
+            }
+
+            // Enforce resume requirement
+            const hasExistingResume = !!(user.profile && user.profile.resume);
+            const providedThisRequest = !!resumeUrl; 
+            if (!hasExistingResume && !providedThisRequest) {
+                return res.status(400).json({
+                    message: "Resume (CV) is required for jobseekers. Please upload your resume.",
+                    success: false
+                });
+            }
         }
 
         const updatedUser = await user.save();
@@ -572,10 +584,8 @@ export const uploadResume = async (req, res) => {
 				success: false
 			});
 		}
-
 		const userId = req.id;
 		const user = await User.findById(userId);
-
 		if (!user) {
 			return res.status(404).json({
 				message: "User not found.",
@@ -592,11 +602,8 @@ export const uploadResume = async (req, res) => {
 			folder: process.env.CLOUDINARY_CV_FOLDER || 'resumes',
 			public_id: `resume_${userId}_${Date.now()}`,
 			format: isPdf ? 'pdf' : undefined
-		});
-		
+		});	
 		console.log('☁️ Resume uploaded to Cloudinary:', cloudResponse.secure_url);
-
-
 		user.profile.resume = cloudResponse.secure_url;
 		user.profile.resumeOriginalName = req.file.originalname;
 		await user.save();

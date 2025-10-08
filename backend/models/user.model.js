@@ -50,15 +50,14 @@
 import mongoose from "mongoose";
 
 const educationSchema = new mongoose.Schema({
-    degree: { type: String, required: true },      
-    institution: { type: String, required: true },  
-    yearOfCompletion: { type: Number, required: true },
-    grade: { type: String }, 
+    degree: { type: String, default: "" },
+    institution: { type: String, default: "" },
+    yearOfCompletion: { type: Number },
+    grade: { type: String, default: "" },
 });
-
 const experienceSchema = new mongoose.Schema({
-    years: { type: Number, default: 0 }, 
-    field: { type: String },             
+    years: { type: Number, default: 0 },
+    field: { type: String, default: "" },
 });
 
 const userSchema = new mongoose.Schema({
@@ -66,6 +65,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     phoneNumber: { type: String },
     password: { type: String, required: true },
+
     role: {
         type: String,
         enum: ['Jobseeker', 'Employer', 'admin'],
@@ -77,11 +77,13 @@ const userSchema = new mongoose.Schema({
         resume: { type: String, default: "" },
         resumeOriginalName: { type: String, default: "" },
         company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
-        profilePhoto: { type: String, default: "" }, // Empty string by default, not required
+        profilePhoto: { type: String, default: "" }, 
         place: { type: String, default: "" },  
         education: { type: educationSchema },
         experience: { type: experienceSchema }, 
     },
+    acceptedTerms: { type: Boolean, default: false },
+    acceptedAt: { type: Date },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
     status: {
