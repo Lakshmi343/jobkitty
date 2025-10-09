@@ -105,7 +105,7 @@ const JobseekerSignup = () => {
         headers: { 'Content-Type': 'application/json' },
       });
       if (res.data.success) {
-        // If a resume was selected (or education provided), do a quick background init by logging in and uploading
+       
         let initialized = false;
         if (resumeFile || input.degree || input.institution || input.yearOfCompletion || input.education) {
           try {
@@ -153,11 +153,11 @@ const JobseekerSignup = () => {
               initialized = true;
             }
           } catch (e) {
-            // Background init failed; proceed to login page
+   
           }
         }
 
-        // Save hints for prefill after login (optional)
+       
         try {
           const hints = {
             place: input.place?.trim() || '',

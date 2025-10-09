@@ -56,7 +56,7 @@ const Home = () => {
       <CategoryCarousel/>
       <LatestJobs/>
       <ClientShowcase/>
-      <Footer/>
+  
     </div>
   )
 }
