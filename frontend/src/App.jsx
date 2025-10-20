@@ -1,4 +1,5 @@
-import React,{useEffect} from 'react';
+import React, { useEffect } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setUser } from './redux/authSlice';
@@ -430,7 +431,11 @@ function App() {
     }
   }, [dispatch]);
 
-  return <RouterProvider router={appRouter} />;
+  return (
+    <HelmetProvider>
+      <RouterProvider router={appRouter} />
+    </HelmetProvider>
+  );
 }
 
 export default App;

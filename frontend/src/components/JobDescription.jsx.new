@@ -1,0 +1,106 @@
+import React, { useEffect, useState, useRef } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
+import { setSingleJob } from '@/redux/jobSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'sonner';
+import { 
+  Briefcase, MapPin, DollarSign, Clock, Users, Calendar, 
+  Building, CheckCircle, ArrowLeft, ExternalLink, Star, 
+  TrendingUp, FileText 
+} from 'lucide-react';
+import Navbar from './shared/Navbar';
+import { Avatar, AvatarImage } from './ui/avatar';
+import LoadingSpinner from './shared/LoadingSpinner';
+import { formatLocationForDisplay } from '../utils/locationUtils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
+import ResumeUpload from './jobseeker/ResumeUpload';
+
+const JobDescription = () => {
+  const { singleJob } = useSelector(store => store.job);
+  const { user } = useSelector(store => store.auth);
+  const isIntiallyApplied = singleJob?.applications?.some(application => application.applicant === user?._id) || false;
+  const [isApplied, setIsApplied] = useState(isIntiallyApplied);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const params = useParams();
+  const jobId = params.id;
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requirementsRef = useRef(null);
+  const jobDescriptionRef = useRef(null);
+  const headerRef = useRef(null);
+  const [isResumeDialogOpen, setIsResumeDialogOpen] = useState(false);
+  const [selectedResume, setSelectedResume] = useState(null);
+
+  // Prepare SEO metadata
+  const jobTitle = singleJob?.title || 'Job Opportunity';
+  const companyName = singleJob?.company?.name || 'Company';
+  const location = singleJob?.location ? formatLocationForDisplay(singleJob.location) : '';
+  const jobType = singleJob?.jobType || '';
+  const salary = singleJob?.salary ? 
+    `${singleJob.salary.currency || '₹'}${singleJob.salary.min || '0'} - ${singleJob.salary.max || '0'} ${singleJob.salary.period || 'year'}` : 'Negotiable';
+  
+  const metaDescription = `${jobTitle} at ${companyName} in ${location}. ${jobType} position${salary ? ` with salary ${salary}` : ''}. ${singleJob?.description?.substring(0, 150)}...`;
+  const pageTitle = `${jobTitle} at ${companyName} | JobKitty`;
+  const imageUrl = singleJob?.company?.logo || '/images/jobkitty-og.jpg';
+  const jobUrl = window.location.href;
+
+  // Rest of your component code...
+  // [Previous component logic remains the same until the return statement]
+
+  if (isLoading) return <LoadingSpinner />;
+  if (error) return <div className="min-h-screen flex items-center justify-center">Error loading job details</div>;
+
+  return (
+    <>
+      {/* SEO Meta Tags */}
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <meta name="keywords" content={`${jobTitle}, ${companyName}, ${location}, ${jobType} jobs, job vacancy, career opportunity`} />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={jobUrl} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={imageUrl} />
+        <meta property="og:site_name" content="JobKitty" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={metaDescription} />
+        <meta name="twitter:image" content={imageUrl} />
+        
+        {/* Canonical URL */}
+        <link rel="canonical" href={jobUrl} />
+        
+        {/* Additional Meta Tags */}
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content={companyName} />
+        <meta property="article:published_time" content={singleJob?.createdAt} />
+        <meta property="article:modified_time" content={singleJob?.updatedAt} />
+        <meta property="article:section" content="Jobs" />
+        <meta property="article:tag" content={jobType} />
+        <meta property="article:tag" content={location} />
+      </Helmet>
+
+      {/* Your existing JSX starts here */}
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+        <Navbar />
+        {/* Rest of your component JSX */}
+        {/* ... */}
+      </div>
+    </>
+  );
+};
+
+export default JobDescription;

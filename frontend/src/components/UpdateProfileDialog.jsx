@@ -29,14 +29,81 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
     phoneNumber: "",
     bio: "",
     place: "",
-    degree: "",
-    institution: "",
-    yearOfCompletion: "",
-    grade: "",
-    years: "",
-    field: "",
+    education: [{
+      degree: "",
+      institution: "",
+      yearOfCompletion: "",
+      grade: ""
+    }],
+    experience: [{
+      years: "",
+      field: ""
+    }],
     file: null,
   });
+
+  const [currentEduIndex, setCurrentEduIndex] = useState(0);
+  const [currentExpIndex, setCurrentExpIndex] = useState(0);
+
+  const addEducation = () => {
+    setInput(prev => ({
+      ...prev,
+      education: [...prev.education, { degree: "", institution: "", yearOfCompletion: "", grade: "" }]
+    }));
+    setCurrentEduIndex(input.education.length);
+  };
+
+  const removeEducation = (index) => {
+    if (input.education.length <= 1) return;
+    const newEducation = [...input.education];
+    newEducation.splice(index, 1);
+    setInput(prev => ({
+      ...prev,
+      education: newEducation
+    }));
+    if (currentEduIndex >= newEducation.length) {
+      setCurrentEduIndex(newEducation.length - 1);
+    }
+  };
+
+  const addExperience = () => {
+    setInput(prev => ({
+      ...prev,
+      experience: [...prev.experience, { years: "", field: "" }]
+    }));
+    setCurrentExpIndex(input.experience.length);
+  };
+
+  const removeExperience = (index) => {
+    if (input.experience.length <= 1) return;
+    const newExperience = [...input.experience];
+    newExperience.splice(index, 1);
+    setInput(prev => ({
+      ...prev,
+      experience: newExperience
+    }));
+    if (currentExpIndex >= newExperience.length) {
+      setCurrentExpIndex(newExperience.length - 1);
+    }
+  };
+
+  const updateEducation = (index, field, value) => {
+    const newEducation = [...input.education];
+    newEducation[index] = { ...newEducation[index], [field]: value };
+    setInput(prev => ({
+      ...prev,
+      education: newEducation
+    }));
+  };
+
+  const updateExperience = (index, field, value) => {
+    const newExperience = [...input.experience];
+    newExperience[index] = { ...newExperience[index], [field]: value };
+    setInput(prev => ({
+      ...prev,
+      experience: newExperience
+    }));
+  };
 
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoPreview, setPhotoPreview] = useState("");
@@ -48,42 +115,62 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
 
   useEffect(() => {
     if (user) {
-     
+      // Initialize with default empty arrays if no data exists
       let next = {
         fullname: user.fullname || "",
         email: user.email || "",
         phoneNumber: user.phoneNumber || "",
         bio: user.profile?.bio || "",
         place: user.profile?.place || "",
-        degree: user.profile?.education?.degree || "",
-        institution: user.profile?.education?.institution || "",
-        yearOfCompletion: user.profile?.education?.yearOfCompletion || "",
-        grade: user.profile?.education?.grade || "",
-        years: user.profile?.experience?.years || "",
-        field: user.profile?.experience?.field || "",
+        education: user.profile?.education?.length > 0 
+          ? user.profile.education 
+          : [{
+              degree: user.profile?.education?.degree || "",
+              institution: user.profile?.education?.institution || "",
+              yearOfCompletion: user.profile?.education?.yearOfCompletion || "",
+              grade: user.profile?.education?.grade || ""
+            }],
+        experience: user.profile?.experience?.length > 0 
+          ? user.profile.experience 
+          : [{
+              years: user.profile?.experience?.years || "",
+              field: user.profile?.experience?.field || ""
+            }],
         file: null,
       };
 
-      
+      // Apply any signup hints if available
       if (!appliedHintsRef.current) {
         try {
           const raw = localStorage.getItem('jobseekerSignupHints');
           if (raw) {
             const hints = JSON.parse(raw);
- 
-            next.place = next.place || hints.place || next.place;
-            next.degree = next.degree || hints.degree || next.degree;
-            next.institution = next.institution || hints.institution || next.institution;
-
-            next.field = next.field || hints.experience || next.field;
-          
-            if (!next.degree && hints.education) next.degree = hints.education;
+            
+            // Apply hints to the first education entry
+            if (next.education.length > 0) {
+              next.education[0] = {
+                ...next.education[0],
+                degree: next.education[0].degree || hints.degree || hints.education || "",
+                institution: next.education[0].institution || hints.institution || ""
+              };
+            }
+            
+            // Apply hints to the first experience entry
+            if (next.experience.length > 0 && hints.experience) {
+              next.experience[0] = {
+                ...next.experience[0],
+                field: next.experience[0].field || hints.experience
+              };
+            }
+            
+            // Apply place hint if available
+            next.place = next.place || hints.place || "";
+            
             appliedHintsRef.current = true;
-    
             localStorage.removeItem('jobseekerSignupHints');
           }
         } catch (e) {
-          
+          console.error("Error applying signup hints:", e);
         }
       }
 
@@ -140,10 +227,22 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
 
   const validateStep = (stepIndex) => {
     switch (stepIndex) {
-      case 0: // Education first
-        if (!input.degree?.trim() || !input.institution?.trim() || !input.yearOfCompletion) {
-          toast.error("Degree, institution, and year of completion are required");
-          return false;
+      case 0: // Education
+        // Check each education entry
+        for (let i = 0; i < input.education.length; i++) {
+          const edu = input.education[i];
+          if (!edu.degree?.trim()) {
+            toast.error(`Education #${i + 1}: Degree is required`);
+            return false;
+          }
+          if (!edu.institution?.trim()) {
+            toast.error(`Education #${i + 1}: Institution is required`);
+            return false;
+          }
+          if (!edu.yearOfCompletion) {
+            toast.error(`Education #${i + 1}: Year of completion is required`);
+            return false;
+          }
         }
         return true;
       case 1: // Resume
@@ -191,7 +290,24 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
   };
 
   const changeEventHandler = (e) => {
-    setInput({ ...input, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    // Handle education fields
+    if (name.startsWith('education.')) {
+      const [_, index, field] = name.split('.');
+      updateEducation(parseInt(index), field, value);
+      return;
+    }
+    
+    // Handle experience fields
+    if (name.startsWith('experience.')) {
+      const [_, index, field] = name.split('.');
+      updateExperience(parseInt(index), field, value);
+      return;
+    }
+    
+    // Handle regular fields
+    setInput(prev => ({ ...prev, [name]: value }));
   };
 
   const fileChangeHandler = (e) => {
@@ -304,6 +420,15 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
       return;
     }
 
+    // Validate at least one education entry is complete
+    const hasValidEducation = input.education.some(edu => 
+      edu.degree && edu.institution && edu.yearOfCompletion
+    );
+    
+    if (!hasValidEducation) {
+      toast.error("Please add at least one education entry with required fields");
+      return;
+    }
 
     if (!input.file && !user?.profile?.resume) {
       toast.error("Please upload your resume to save your profile.");
@@ -323,24 +448,14 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
       formData.append("skills", skillsString);
       formData.append("place", input.place);
 
-      formData.append(
-        "education",
-        JSON.stringify({
-          degree: input.degree,
-          institution: input.institution,
-          yearOfCompletion: input.yearOfCompletion,
-          grade: input.grade,
-        })
-      );
-
-      if (input.years || input.field) {
-        formData.append(
-          "experience",
-          JSON.stringify({
-            years: input.years,
-            field: input.field,
-          })
-        );
+      // Add first education entry (backend expects a single object, not an array)
+      if (input.education.length > 0) {
+        formData.append("education", JSON.stringify(input.education[0]));
+      }
+      
+      // Add first experience entry if it has data (backend expects a single object, not an array)
+      if (input.experience.length > 0 && (input.experience[0].years || input.experience[0].field)) {
+        formData.append("experience", JSON.stringify(input.experience[0]));
       }
 
       if (input.file) {
@@ -415,12 +530,69 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
             {currentStep === 0 && (
               <div className="space-y-6">
                 <div>
-                  <Label>Education *</Label>
-                  <div className="grid gap-3 mt-2">
-                    <Input name="degree" placeholder="Degree (e.g. B.Tech)" value={input.degree} onChange={changeEventHandler} required />
-                    <Input name="institution" placeholder="Institution" value={input.institution} onChange={changeEventHandler} required />
-                    <Input name="yearOfCompletion" type="number" placeholder="Year of Completion" value={input.yearOfCompletion} onChange={changeEventHandler} required />
-                    <Input name="grade" placeholder="Grade (optional)" value={input.grade} onChange={changeEventHandler} />
+                  <div className="space-y-4">
+                    <div className="border rounded-lg p-4">
+                      <h3 className="font-medium mb-4">Education Details</h3>
+                      <div className="grid gap-4">
+                        <div className="space-y-1">
+                          <div className="flex items-center">
+                            <Label htmlFor="education-degree">Degree</Label>
+                            <span className="text-red-500 ml-1">*</span>
+                          </div>
+                          <Input 
+                            id="education-degree"
+                            name="education.0.degree" 
+                            placeholder="e.g. B.Tech in Computer Science" 
+                            value={input.education[0]?.degree || ''} 
+                            onChange={changeEventHandler}
+                            className={!input.education[0]?.degree?.trim() ? 'border-red-300' : ''}
+                          />
+                        </div>
+                        
+                        <div className="space-y-1">
+                          <div className="flex items-center">
+                            <Label htmlFor="education-institution">Institution</Label>
+                            <span className="text-red-500 ml-1">*</span>
+                          </div>
+                          <Input 
+                            id="education-institution"
+                            name="education.0.institution" 
+                            placeholder="e.g. University of Example" 
+                            value={input.education[0]?.institution || ''} 
+                            onChange={changeEventHandler}
+                            className={!input.education[0]?.institution?.trim() ? 'border-red-300' : ''}
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center">
+                              <Label htmlFor="education-year">Year of Completion</Label>
+                              <span className="text-red-500 ml-1">*</span>
+                            </div>
+                            <Input 
+                              id="education-year"
+                              name="education.0.yearOfCompletion" 
+                              type="number" 
+                              placeholder="e.g. 2023" 
+                              value={input.education[0]?.yearOfCompletion || ''} 
+                              onChange={changeEventHandler}
+                              className={!input.education[0]?.yearOfCompletion ? 'border-red-300' : ''}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="education-grade">Grade (optional)</Label>
+                            <Input 
+                              id="education-grade"
+                              name="education.0.grade" 
+                              placeholder="e.g. 8.5/10" 
+                              value={input.education[0]?.grade || ''} 
+                              onChange={changeEventHandler} 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -471,12 +643,37 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
             )}
 
             {currentStep === 2 && (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <Label>Experience (Optional)</Label>
-                  <div className="grid gap-3 mt-2">
-                    <Input name="years" type="number" placeholder="Years of experience" value={input.years} onChange={changeEventHandler} />
-                    <Input name="field" placeholder="Field" value={input.field} onChange={changeEventHandler} />
+                  <div className="space-y-4">
+                    <div className="border rounded-lg p-4">
+                      <h3 className="font-medium mb-4">Work Experience (Optional)</h3>
+                      <div className="grid gap-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <Label htmlFor="experience-years">Years of Experience</Label>
+                            <Input 
+                              id="experience-years"
+                              name="experience.0.years" 
+                              type="number" 
+                              placeholder="e.g. 3" 
+                              value={input.experience[0]?.years || ''} 
+                              onChange={changeEventHandler}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor="experience-field">Field</Label>
+                            <Input 
+                              id="experience-field"
+                              name="experience.0.field" 
+                              placeholder="e.g. Web Development" 
+                              value={input.experience[0]?.field || ''} 
+                              onChange={changeEventHandler}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

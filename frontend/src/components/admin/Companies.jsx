@@ -16,6 +16,7 @@ const Companies = () => {
 	const [companies, setCompanies] = useState([])
 	const [loading, setLoading] = useState(true)
 	const [input, setInput] = useState("")
+	const [statusFilter, setStatusFilter] = useState("all")
 	const [stats, setStats] = useState({ total: 0, active: 0, suspended: 0, pending: 0 })
 	const navigate = useNavigate()
 
@@ -81,9 +82,24 @@ const Companies = () => {
 	}
 
 	const filteredCompanies = useMemo(() => {
-		if (!input) return companies
-		return companies.filter((c) => c?.name?.toLowerCase().includes(input.toLowerCase()))
-	}, [companies, input])
+		let result = [...companies];
+		
+		// Apply search filter
+		if (input) {
+			result = result.filter((c) => c?.name?.toLowerCase().includes(input.toLowerCase()));
+		}
+		
+		// Apply status filter
+		if (statusFilter !== 'all') {
+			if (statusFilter === 'active') {
+				result = result.filter(c => c.status === 'active' || c.status === 'approved');
+			} else {
+				result = result.filter(c => c.status === statusFilter);
+			}
+		}
+		
+		return result;
+	}, [companies, input, statusFilter])
 
 	const handleUpdateStatus = async (companyId, status) => {
 		try {
@@ -242,9 +258,16 @@ const Companies = () => {
 						<Button variant="outline" size="sm">
 							Export Data
 						</Button>
-						<Button variant="outline" size="sm">
-							Filter by Status
-						</Button>
+						<select 
+							value={statusFilter}
+							onChange={(e) => setStatusFilter(e.target.value)}
+							className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+						>
+							<option value="all">All Statuses</option>
+							<option value="active">Active</option>
+							<option value="suspended">Suspended</option>
+							<option value="pending">Pending</option>
+						</select>
 					</div>
 				</div>
 			</div>

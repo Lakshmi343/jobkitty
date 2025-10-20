@@ -1,3 +1,5 @@
+
+
 import React, { useEffect, useState, useRef } from 'react'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
@@ -14,6 +16,9 @@ import LoadingSpinner from './shared/LoadingSpinner';
 import { formatLocationForDisplay } from '../utils/locationUtils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import ResumeUpload from './jobseeker/ResumeUpload';
+
+
+
 
 const JobDescription = () => {
     const {singleJob} = useSelector(store => store.job);
@@ -72,20 +77,20 @@ const JobDescription = () => {
             return;
         }
 
-        // Profile complete -> show confirm with resume preview before submit
+   
         setShowConfirmDialog(true);
         return;
 
-        // Note: actual API call will be done after user confirms in the dialog
+      
     }
 
     const handleResumeUploaded = async () => {
         setShowResumeDialog(false);
         if (applyAfterUpload && !isApplied) {
             setApplyAfterUpload(false);
-            // Give a brief moment for auth store to refresh with resume URL
+        
             setTimeout(() => {
-                // After resume upload, show confirmation dialog instead of immediate apply
+                
                 setShowConfirmDialog(true);
             }, 500);
         }
@@ -133,25 +138,25 @@ const JobDescription = () => {
         fetchSingleJob(); 
     },[jobId,dispatch, user?._id]);
 
-    // Scroll to top on load if no specific section was requested
     useEffect(() => {
         const hasSection = Boolean(searchParams.get('section'));
         if (!hasSection) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
-        // run when jobId changes (navigating to a different job details page)
+     
+
     }, [jobId, searchParams]);
 
-    // Handle auto-apply after login
+   
     useEffect(() => {
         if (user && singleJob) {
             const pendingApplication = localStorage.getItem('pendingJobApplication');
             if (pendingApplication) {
                 const applicationData = JSON.parse(pendingApplication);
                 
-                // Check if this is the same job the user wanted to apply for
+            
                 if (applicationData.jobId === jobId) {
-                    // If profile is now complete, show confirmation dialog
+                  
                     if (isProfileComplete(user) && !isApplied) {
                         setShowConfirmDialog(true);
                     }
@@ -160,7 +165,7 @@ const JobDescription = () => {
         }
     }, [user, singleJob, jobId, isApplied]);
 
-    // Handle scrolling to specific section
+    
     useEffect(() => {
         if (singleJob && searchParams.get('section')) {
             const section = searchParams.get('section');
@@ -180,7 +185,7 @@ const JobDescription = () => {
                         behavior: 'smooth', 
                         block: 'start' 
                     });
-                }, 500); // Small delay to ensure content is rendered
+                }, 500); 
             }
         }
     }, [singleJob, searchParams]);
@@ -201,7 +206,7 @@ const JobDescription = () => {
            
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
                 <div className="max-w-6xl mx-auto px-4 py-8">
-                    {/* Back Button */}
+                
                     <div className="mb-6">
                         <button
                             onClick={() => window.history.back()}
@@ -212,9 +217,9 @@ const JobDescription = () => {
                         </button>
                     </div>
 
-                    {/* Main Job Card */}
+                    
                     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                        {/* Header Section */}
+                    
                         <div ref={headerRef} className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-8">
                             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                                 <div className="flex-1">
@@ -231,7 +236,7 @@ const JobDescription = () => {
                                         </div>
                                     </div>
                                     
-                                    {/* Job Tags */}
+                                   
                                     <div className="flex flex-wrap items-center gap-3">
                                         <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
                                             <MapPin className="w-3 h-3 mr-1" />
@@ -248,14 +253,14 @@ const JobDescription = () => {
                                         <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
                                             <DollarSign className="w-3 h-3 mr-1" />
                                             {singleJob?.salary?.min && singleJob?.salary?.max 
-                                                ? `${singleJob.salary.min}-${singleJob.salary.max} LPA`
+                                                ? `${singleJob.salary.min}-${singleJob.salary.max} `
                                                 : `${singleJob?.salary} LPA`
                                             }
                                         </Badge>
                                     </div>
                                 </div>
                                 
-                                {/* Apply Button */}
+                             
                                 <div className="flex flex-col gap-3">
                                     <Button
                                         onClick={isApplied ? null : applyJobHandler}

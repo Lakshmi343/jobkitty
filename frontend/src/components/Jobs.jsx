@@ -58,7 +58,7 @@ const Jobs = () => {
         return false;
       }
 
-      // Company Type filter
+    
       if (filters.companyType) {
         const jobCompanyType = job.company?.companyType || '';
         if (jobCompanyType.toLowerCase() !== String(filters.companyType).toLowerCase()) {
@@ -66,7 +66,7 @@ const Jobs = () => {
         }
       }
 
-      // Date Posted filter
+      
       if (filters.datePosted) {
         const createdAt = job.createdAt ? new Date(job.createdAt) : null;
         if (!createdAt || isNaN(createdAt.getTime())) return false;
