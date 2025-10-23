@@ -12,9 +12,10 @@ import JobseekerSignup from './components/auth/JobseekerSignup';
 import EmployerSignup from './components/auth/EmployerSignup';
 import Home from './components/Home';
 import Jobs from './components/Jobs';
+import Internships from './components/Internships';
 import Browse from './components/Browse';
 import Profile from './components/Profile';
-import JobDescription from './components/JobDescription';
+import JobDescription from './components/JobDescriptionNew';
 import Contact from './components/Contact';
 import BlogPage from './components/BlogPage';
 import ForgotPassword from './components/auth/ForgotPassword';
@@ -42,8 +43,6 @@ import AdminJobEdit from './components/admin/AdminJobEdit';
 import AdminForgotPassword from './components/admin/AdminForgotPassword';
 import AdminResetPassword from './components/admin/AdminResetPassword';
 import AdminCompanyCreate from './components/admin/AdminCompanyCreate';
-
-// Employer & Jobseeker
 import EmployerJobs from './components/employer/EmployerJobs';
 import EmployerApplicants from './components/employer/EmployerApplicants';
 import EmployerProfile from './components/employer/EmployerProfile';
@@ -56,7 +55,7 @@ import JobseekerManagement from './components/admin/JobseekerManagement';
 import EmployerManagement from './components/admin/EmployerManagement';
 
 const appRouter = createBrowserRouter([
-  // ✅ User-facing routes with Layout
+
   {
     path: '/',
     element: (
@@ -118,6 +117,14 @@ const appRouter = createBrowserRouter([
     element: (
       <Layout>
         <Jobs />
+      </Layout>
+    )
+  },
+  {
+    path: "/internships",
+    element: (
+      <Layout>
+        <Internships />
       </Layout>
     )
   },
@@ -236,7 +243,7 @@ const appRouter = createBrowserRouter([
     )
   },
 
-  // ✅ Admin routes (NO Navbar/Footer)
+  
   {
     path: "/admin/login",
     element: <AdminLogin />

@@ -278,6 +278,7 @@ const Navbar = () => {
                                 <>
                                     <li><Link to="/admin/companies">Companies</Link></li>
                                     <li><Link to="/jobs">Jobs</Link></li>
+                                    <li><Link to="/internships">Internships</Link></li>
                                     <li><Link to="/contact">Contact</Link></li>
                                 </>
                             ) : user && user.role === 'Employer' ? (
@@ -285,11 +286,13 @@ const Navbar = () => {
                                     <li><Link to="/employer/jobs">My Jobs</Link></li>
                                     <li><Link to="/employer/jobs/create">Post Job</Link></li>
                                     <li><Link to="/jobs">Browse Jobs</Link></li>
+                                    <li><Link to="/internships">Internships</Link></li>
                                     <li><Link to="/contact">Contact</Link></li>
                                 </>
                             ) : user && user.role === 'Jobseeker' ? (
                                 <>
                                     <li><Link to="/jobs">Jobs</Link></li>
+                                    <li><Link to="/internships">Internships</Link></li>
                                     <li><Link to="/browse">Browse</Link></li>
                                     <li><Link to="/jobseeker/applied-jobs">Applied Jobs</Link></li>
                                     <li><Link to="/contact">Contact</Link></li>
@@ -298,6 +301,7 @@ const Navbar = () => {
                                 <>
                                     <li><Link to="/">Home</Link></li>
                                     <li><Link to="/jobs">Jobs</Link></li>
+                                    <li><Link to="/internships">Internships</Link></li>
                                     <li><Link to="/browse">Browse</Link></li>
                                     <li><Link to="/contact">Contact</Link></li>
                                 </>
@@ -369,6 +373,7 @@ const Navbar = () => {
                                     <>
                                         <li><Link to="/admin/companies" onClick={() => setMobileMenuOpen(false)}>Companies</Link></li>
                                         <li><Link to="/jobs" onClick={() => setMobileMenuOpen(false)}>Jobs</Link></li>
+                                        <li><Link to="/internships" onClick={() => setMobileMenuOpen(false)}>Internships</Link></li>
                                         <li><Link to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</Link></li>
                                     </>
                                 ) : user && user.role === 'Employer' ? (
@@ -376,11 +381,13 @@ const Navbar = () => {
                                         <li><Link to="/employer/jobs" onClick={() => setMobileMenuOpen(false)}>My Jobs</Link></li>
                                         <li><Link to="/employer/jobs/create" onClick={() => setMobileMenuOpen(false)}>Post Job</Link></li>
                                         <li><Link to="/jobs" onClick={() => setMobileMenuOpen(false)}>Browse Jobs</Link></li>
+                                        <li><Link to="/internships" onClick={() => setMobileMenuOpen(false)}>Internships</Link></li>
                                         <li><Link to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</Link></li>
                                     </>
                                 ) : user && user.role === 'Jobseeker' ? (
                                     <>
                                         <li><Link to="/jobs" onClick={() => setMobileMenuOpen(false)}>Jobs</Link></li>
+                                        <li><Link to="/internships" onClick={() => setMobileMenuOpen(false)}>Internships</Link></li>
                                         <li><Link to="/browse" onClick={() => setMobileMenuOpen(false)}>Browse</Link></li>
                                         <li><Link to="/jobseeker/applied-jobs" onClick={() => setMobileMenuOpen(false)}>Applied Jobs</Link></li>
                                         <li><Link to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</Link></li>
@@ -389,6 +396,7 @@ const Navbar = () => {
                                     <>
                                         <li><Link to="/" onClick={() => setMobileMenuOpen(false)}>Home</Link></li>
                                         <li><Link to="/jobs" onClick={() => setMobileMenuOpen(false)}>Jobs</Link></li>
+                                        <li><Link to="/internships" onClick={() => setMobileMenuOpen(false)}>Internships</Link></li>
                                         <li><Link to="/browse" onClick={() => setMobileMenuOpen(false)}>Browse</Link></li>
                                         <li><Link to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</Link></li>
                                     </>

@@ -8,13 +8,7 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import {  Settings,  Plus,  Edit,  Trash2, X} from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '../ui/dialog';
+import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogTrigger,} from '../ui/dialog';
 
 const AdminCategories = () => {
   const [categories, setCategories] = useState([]);
