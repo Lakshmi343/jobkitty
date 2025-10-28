@@ -128,7 +128,7 @@ export const updateCompany = async (req, res) => {
             numberOfEmployees: numberOfEmployees ? Number(numberOfEmployees) : undefined
         };
 
-        // Validate and set companyType only when non-empty and valid per enum
+        
         if (companyType !== undefined) {
             const trimmedType = String(companyType).trim();
             if (trimmedType) {
@@ -141,7 +141,7 @@ export const updateCompany = async (req, res) => {
                 }
                 updateData.companyType = trimmedType;
             }
-            // If empty string, omit updating companyType to keep existing value
+            
         }
 
         if (file) {

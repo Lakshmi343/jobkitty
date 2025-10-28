@@ -1743,8 +1743,8 @@ const JobDescription = () => {
                                         <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 backdrop-blur-sm px-4 py-2">
                                             <DollarSign className="w-4 h-4 mr-2" />
                                             {singleJob?.salary?.min && singleJob?.salary?.max 
-                                                ? `₹${singleJob.salary.min}-${singleJob.salary.max} LPA`
-                                                : `${singleJob?.salary} LPA`
+                                                ? `₹${singleJob.salary.min}-${singleJob.salary.max} `
+                                                : `${singleJob?.salary} `
                                             }
                                         </Badge>
                                     </div>
@@ -1919,8 +1919,8 @@ const JobDescription = () => {
                                                 <span className="text-gray-600 font-medium">Salary Range</span>
                                                 <span className="font-bold text-gray-900">
                                                     {singleJob?.salary?.min && singleJob?.salary?.max 
-                                                        ? `₹${singleJob.salary.min}-${singleJob.salary.max} LPA`
-                                                        : `₹${singleJob?.salary} LPA`
+                                                        ? `₹${singleJob.salary.min}-${singleJob.salary.max} `
+                                                        : `₹${singleJob?.salary} `
                                                     }
                                                 </span>
                                             </div>

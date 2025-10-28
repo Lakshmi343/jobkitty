@@ -36,7 +36,7 @@ const CategoryCarousel = () => {
     fetchCategories();
   }, []);
 
-  // Map category name → Icon
+  
   const categoryIcons = {
     "IT": <Monitor className="w-12 h-12 text-blue-600" />,
     "Healthcare": <Stethoscope className="w-12 h-12 text-green-600" />,
@@ -48,7 +48,7 @@ const CategoryCarousel = () => {
 
   return (
     <div className="w-full py-12 bg-gradient-to-b from-gray-50 via-white to-gray-100">
-      {/* Subtitle */}
+    
       <motion.p 
         className="text-center text-xs font-semibold tracking-widest text-red-500 mb-2 uppercase"
         initial={{ opacity: 0, y: -10 }}
@@ -58,7 +58,7 @@ const CategoryCarousel = () => {
 BROWSE BY CATEGORY
       </motion.p>
 
-      {/* Title */}
+    
       <motion.h2 
         className="text-3xl font-bold text-center mb-12 text-gray-800"
         initial={{ opacity: 0 }}
@@ -68,7 +68,7 @@ BROWSE BY CATEGORY
         Browse Top Categories
       </motion.h2>
 
-      {/* Categories Grid */}
+    
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 max-w-6xl mx-auto px-4">
         {(showAll ? categories : categories.slice(0, INITIAL_DISPLAY_COUNT)).map((cat, i) => (
           <motion.div
@@ -80,7 +80,7 @@ BROWSE BY CATEGORY
             transition={{ delay: i * 0.1, duration: 0.6 }}
             whileHover={{ scale: 1.05 }}
           >
-            {/* Icon with hover animation */}
+           
             <motion.div 
               className="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-full bg-blue-50"
               whileHover={{ rotate: 10, scale: 1.1 }}
@@ -89,7 +89,7 @@ BROWSE BY CATEGORY
               {categoryIcons[cat.name] || categoryIcons["Default"]}
             </motion.div>
 
-            {/* Category Name */}
+           
             <motion.h3 
               className="text-base font-semibold text-gray-700 tracking-wide"
               whileHover={{ color: "#1d4ed8" }}
@@ -100,7 +100,7 @@ BROWSE BY CATEGORY
         ))}
       </div>
 
-      {/* Show More/Less Button */}
+    
       {categories.length > INITIAL_DISPLAY_COUNT && (
         <div className="text-center mt-8">
           <motion.button

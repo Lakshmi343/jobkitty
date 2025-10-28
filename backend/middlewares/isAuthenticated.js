@@ -3,7 +3,7 @@ import { User } from "../models/user.model.js";
 
 const isAuthenticated = async (req, res, next) => {
     try {
-        // Try to get token from cookies first, then from Authorization header
+        
         let token = req.cookies.token;
         
         if (!token) {
@@ -28,8 +28,7 @@ const isAuthenticated = async (req, res, next) => {
             })
         };
         
-        // Check if it's an access token (for new token system)
-        // Allow tokens without type (backward compatibility) or with 'access' type
+        
         if (decode.type && decode.type !== 'access') {
             return res.status(401).json({
                 message: "Invalid token type",
@@ -37,7 +36,7 @@ const isAuthenticated = async (req, res, next) => {
             });
         }
         
-        // Check if user account is blocked
+        
         const user = await User.findById(decode.userId);
         if (!user) {
             return res.status(401).json({

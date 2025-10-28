@@ -1,3 +1,6 @@
+ 
+ 
+ 
  import React, { useState } from 'react'
  import { Button } from './ui/button'
  import { Search, MapPin, Briefcase } from 'lucide-react'

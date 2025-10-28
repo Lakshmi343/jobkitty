@@ -1,22 +1,14 @@
 
-
 import React from 'react'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from './ui/table'
+import { Table,TableBody, TableCell, TableHead, TableHeader, TableRow,} from './ui/table'
 import { Badge } from './ui/badge'
 import { useSelector } from 'react-redux'
 import { CheckCircle, XCircle, Clock, Eye } from 'lucide-react'
 
 const AppliedJobTable = () => {
+
   const { allAppliedJobs } = useSelector((store) => store.job)
 
-  // Function to get status details
   const getStatusDetails = (status) => {
     switch (status) {
       case 'accepted':
@@ -50,7 +42,7 @@ const AppliedJobTable = () => {
         My Applications
       </h2>
 
-      {/* Desktop Table View */}
+    
       <div className="hidden md:block overflow-hidden border border-gray-200 rounded-lg">
         <Table>
           <TableHeader className="bg-gray-100">
@@ -111,7 +103,7 @@ const AppliedJobTable = () => {
         </Table>
       </div>
 
-      {/* Mobile Card View */}
+      
       <div className="md:hidden space-y-3">
         {allAppliedJobs.length <= 0 ? (
           <div className="text-center py-10 border border-gray-200 rounded-lg">

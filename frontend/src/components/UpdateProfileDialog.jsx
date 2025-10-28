@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect ,useRef} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
@@ -7,13 +5,11 @@ import { USER_API_END_POINT } from "../utils/constant";
 import { setUser } from "@/redux/authSlice";
 import { toast } from "sonner";
 import { authUtils } from "../utils/authUtils";
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
 import LoadingSpinner from "./shared/LoadingSpinner";
-
 import { WithContext as ReactTags } from "react-tag-input";
 import { skillSuggestions } from "../utils/skills";
 import "@/styles/reactTags.css";
@@ -115,7 +111,7 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
 
   useEffect(() => {
     if (user) {
-      // Initialize with default empty arrays if no data exists
+      
       let next = {
         fullname: user.fullname || "",
         email: user.email || "",
@@ -139,14 +135,12 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
         file: null,
       };
 
-      // Apply any signup hints if available
+     
       if (!appliedHintsRef.current) {
         try {
           const raw = localStorage.getItem('jobseekerSignupHints');
           if (raw) {
             const hints = JSON.parse(raw);
-            
-            // Apply hints to the first education entry
             if (next.education.length > 0) {
               next.education[0] = {
                 ...next.education[0],
@@ -155,7 +149,7 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
               };
             }
             
-            // Apply hints to the first experience entry
+           
             if (next.experience.length > 0 && hints.experience) {
               next.experience[0] = {
                 ...next.experience[0],
@@ -163,7 +157,7 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
               };
             }
             
-            // Apply place hint if available
+           
             next.place = next.place || hints.place || "";
             
             appliedHintsRef.current = true;
@@ -205,7 +199,7 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
     }
   }, [input.file]);
 
-  // Reordered for requested flow: Education -> Resume -> Experience -> Skills -> Profile (final submit)
+  
   const steps = ["Education", "Resume", "Experience", "Skills", "Profile"];
   const [currentStep, setCurrentStep] = useState(0);
 
@@ -227,8 +221,8 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
 
   const validateStep = (stepIndex) => {
     switch (stepIndex) {
-      case 0: // Education
-        // Check each education entry
+      case 0: 
+      
         for (let i = 0; i < input.education.length; i++) {
           const edu = input.education[i];
           if (!edu.degree?.trim()) {
@@ -245,17 +239,17 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
           }
         }
         return true;
-      case 1: // Resume
+      case 1: 
         if (!input.file && !user?.profile?.resume) {
           toast.error("Please upload your resume to proceed.");
           return false;
         }
         return true;
-      case 2: // Experience
+      case 2: 
         return true;
-      case 3: // Skills
+      case 3: 
         return true;
-      case 4: // Profile (final)
+      case 4:
         if (!input.fullname?.trim()) {
           toast.error("Full name is required");
           return false;
@@ -292,21 +286,21 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
   const changeEventHandler = (e) => {
     const { name, value } = e.target;
     
-    // Handle education fields
+    
     if (name.startsWith('education.')) {
       const [_, index, field] = name.split('.');
       updateEducation(parseInt(index), field, value);
       return;
     }
     
-    // Handle experience fields
+    
     if (name.startsWith('experience.')) {
       const [_, index, field] = name.split('.');
       updateExperience(parseInt(index), field, value);
       return;
     }
     
-    // Handle regular fields
+
     setInput(prev => ({ ...prev, [name]: value }));
   };
 
@@ -420,7 +414,7 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
       return;
     }
 
-    // Validate at least one education entry is complete
+    
     const hasValidEducation = input.education.some(edu => 
       edu.degree && edu.institution && edu.yearOfCompletion
     );
@@ -448,12 +442,12 @@ const UpdateProfileDialog = ({ open, setOpen, initialStep }) => {
       formData.append("skills", skillsString);
       formData.append("place", input.place);
 
-      // Add first education entry (backend expects a single object, not an array)
+      
       if (input.education.length > 0) {
         formData.append("education", JSON.stringify(input.education[0]));
       }
       
-      // Add first experience entry if it has data (backend expects a single object, not an array)
+      
       if (input.experience.length > 0 && (input.experience[0].years || input.experience[0].field)) {
         formData.append("experience", JSON.stringify(input.experience[0]));
       }

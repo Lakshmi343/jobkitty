@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { JOB_API_END_POINT, CATEGORY_API_END_POINT } from '../../utils/constant';
@@ -16,9 +17,11 @@ import Footer from '../shared/Footer';
 import LoadingSpinner from '../shared/LoadingSpinner';
 import { formatLocationForDisplay } from '../../utils/locationUtils';
 
+
 const EditJob = () => {
     const { id } = useParams();
     const [input, setInput] = useState({
+
         title: "",
         description: "",
         salaryMin: "",
@@ -35,6 +38,7 @@ const EditJob = () => {
         benefits: "",
         workMode: "",
         deadline: ""
+
     });
     
     const [loading, setLoading] = useState(false);
@@ -44,7 +48,6 @@ const EditJob = () => {
     const [newRequirement, setNewRequirement] = useState("");
     const [userCompany, setUserCompany] = useState(null);
     const navigate = useNavigate();
-
     const { user } = useSelector(store => store.auth);
 
     useEffect(() => {
@@ -581,6 +584,7 @@ const EditJob = () => {
                                 Additional Details
                             </CardTitle>
                         </CardHeader>
+
                         <CardContent className="px-0 pb-0">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>

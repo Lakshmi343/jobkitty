@@ -15,19 +15,42 @@ const Jobs = () => {
 
   const filterJobs = useMemo(() => {
     return allJobs.filter((job) => {
-      const q = searchedQuery?.toLowerCase();
+      const q = searchedQuery?.toLowerCase().trim();
+      
+      // If there's a search query, check all relevant fields
+      if (q) {
+        // Create a searchable string from all relevant job fields
+        const searchableText = [
+          job.title,
+          job.description,
+          job.requirements,
+          job.responsibilities,
+          job.jobType,
+          job.company?.name,
+          job.company?.industry,
+          job.company?.description,
+          job.category?.name,
+          job.skills?.join(' '),
+          job.employmentType,
+          job.workMode,
+          job.qualification,
+          job.benefits,
+          job.aboutCompany,
+          getLocationSearchString(job.location)
+        ]
+          .filter(Boolean) // Remove any undefined/null values
+          .join(' ')
+          .toLowerCase();
 
-      if (
-        q &&
-        !(
-          job.title?.toLowerCase().includes(q) ||
-          job.description?.toLowerCase().includes(q) ||
-          getLocationSearchString(job.location).includes(q) ||
-          job.company?.name?.toLowerCase().includes(q) ||
-          job.skills?.some((skill) => skill.toLowerCase().includes(q))
-        )
-      ) {
-        return false;
+        // Check if any word in the query matches the searchable text
+        const searchTerms = q.split(/\s+/);
+        const hasMatch = searchTerms.every(term => 
+          searchableText.includes(term)
+        );
+
+        if (!hasMatch) {
+          return false;
+        }
       }
 
       if (filters.location) {

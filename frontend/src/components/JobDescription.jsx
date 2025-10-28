@@ -622,15 +622,12 @@ import { formatLocationForDisplay } from '../utils/locationUtils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
 import ResumeUpload from './jobseeker/ResumeUpload';
 
-
-
-
 const JobDescription = () => {
+
     const {singleJob} = useSelector(store => store.job);
     const {user} = useSelector(store=>store.auth);
     const isIntiallyApplied = singleJob?.applications?.some(application => application.applicant === user?._id) || false;
     const [isApplied, setIsApplied] = useState(isIntiallyApplied);
-
     const params = useParams();
     const jobId = params.id;
     const dispatch = useDispatch();
@@ -639,23 +636,22 @@ const JobDescription = () => {
     const requirementsRef = useRef(null);
     const jobDescriptionRef = useRef(null);
     const headerRef = useRef(null);
-
     const [showResumeDialog, setShowResumeDialog] = useState(false);
     const [applyAfterUpload, setApplyAfterUpload] = useState(false);
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
     const isProfileComplete = (u) => {
         if (!u) return false;
-        // Define your completeness criteria here (adjust as needed)
+      
         const hasPhone = Boolean(u.phoneNumber);
         const hasResume = Boolean(u.profile?.resume);
-        return hasPhone && hasResume; // extend with more fields if required
+        return hasPhone && hasResume; 
     };
 
     const applyJobHandler = async () => {
-        // Check if user is logged in
+        
         if (!user) {
-            // Store job info for after login
+            
             localStorage.setItem('pendingJobApplication', JSON.stringify({
                 jobId: jobId,
                 jobTitle: singleJob?.title,
@@ -667,9 +663,9 @@ const JobDescription = () => {
             return;
         }
 
-        // Check profile completeness first
+        
         if (!isProfileComplete(user)) {
-            // Save intent and send to profile editor
+           
             localStorage.setItem('pendingJobApplication', JSON.stringify({
                 jobId,
                 jobTitle: singleJob?.title,
@@ -859,7 +855,7 @@ const JobDescription = () => {
                                             <DollarSign className="w-3 h-3 mr-1" />
                                             {singleJob?.salary?.min && singleJob?.salary?.max 
                                                 ? `${singleJob.salary.min}-${singleJob.salary.max} `
-                                                : `${singleJob?.salary} LPA`
+                                                : `${singleJob?.salary}`
                                             }
                                         </Badge>
                                     </div>
@@ -893,12 +889,12 @@ const JobDescription = () => {
                             </div>
                         </div>
 
-                        {/* Content Section */}
+                
                         <div className="p-8">
                             <div className="grid lg:grid-cols-3 gap-8">
-                                {/* Main Content */}
+                      
                                 <div className="lg:col-span-2 space-y-8">
-                                    {/* Job Description */}
+                               
                                     <div ref={jobDescriptionRef} className="bg-gray-50 rounded-xl p-6">
                                         <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                                             <FileText className="w-5 h-5 text-blue-600" />
@@ -909,7 +905,7 @@ const JobDescription = () => {
                                         </p>
                                     </div>
 
-                                    {/* Requirements */}
+                               
                                     {singleJob?.requirements && singleJob.requirements.length > 0 && (
                                         <div ref={requirementsRef} className="bg-gray-50 rounded-xl p-6">
                                             <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
@@ -928,9 +924,8 @@ const JobDescription = () => {
                                     )}
                                 </div>
 
-                                {/* Sidebar */}
                                 <div className="space-y-6">
-                                    {/* Job Details Card */}
+                                  
                                     <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Job Details</h3>
                                         <div className="space-y-4">
@@ -969,28 +964,12 @@ const JobDescription = () => {
                                         </div>
                                     </div>
 
-                                    {/* Company Info */}
+                                    
                                     {singleJob?.company && (
                                         <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                                             <h3 className="text-lg font-semibold text-gray-900 mb-4">Company</h3>
 
-                                            {/* <div className="flex items-center gap-3 mb-4">
-                                                {singleJob.company.logo ? (
-                                                    <img 
-                                                        src={singleJob.company.logo} 
-                                                        alt={singleJob.company.name}
-                                                        className="w-12 h-12 rounded-lg object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                                        <Building className="w-6 h-6 text-blue-600" />
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <h4 className="font-semibold text-gray-900">{singleJob.company.name}</h4>
-                                                    <p className="text-sm text-gray-600">{singleJob.company.location}</p>
-                                                </div>
-                                            </div> */}
+                                            
 
                                              <div className="flex-1 min-w-0">
                                              <div className="flex-shrink-0">
@@ -1012,7 +991,7 @@ const JobDescription = () => {
                                         </div>
                                     )}
 
-                                    {/* Posted Date */}
+                             
                                     <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                                         <div className="flex items-center gap-3">
                                             <Calendar className="w-5 h-5 text-gray-500" />
@@ -1036,7 +1015,7 @@ const JobDescription = () => {
                 </div>
             </div>
 
-            {/* Resume required dialog */}
+           
             <Dialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
                 <DialogContent className="max-w-xl">
                     <DialogHeader>
@@ -1051,7 +1030,7 @@ const JobDescription = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* Confirmation dialog with resume preview */}
+         
             <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
                 <DialogContent className="max-w-2xl">
                     <DialogHeader>
