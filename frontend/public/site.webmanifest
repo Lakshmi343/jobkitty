@@ -1,0 +1,23 @@
+{
+  "name": "JobKitty",
+  "short_name": "JobKitty",
+  "description": "Find your dream job in Kerala",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/jobkitty-01-06ddde0.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/jobkitty-01-06ddde0.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

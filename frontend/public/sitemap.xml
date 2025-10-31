@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Homepage -->
   <url>
-    <loc>https://yourdomain.com/</loc>
+    <loc>https://jobkitty.in/</loc>
     <lastmod>2025-10-27</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
@@ -10,67 +10,51 @@
 
   <!-- Public Pages -->
   <url>
-    <loc>https://yourdomain.com/jobs</loc>
+    <loc>https://jobkitty.in/jobs</loc>
     <lastmod>2025-10-27</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/internships</loc>
+    <loc>https://jobkitty.in/internships</loc>
     <lastmod>2025-10-27</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/browse</loc>
+    <loc>https://jobkitty.in/browse</loc>
     <lastmod>2025-10-27</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/contact</loc>
+    <loc>https://jobkitty.in/contact</loc>
     <lastmod>2025-10-27</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
-  <url>
-    <loc>https://yourdomain.com/blog</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  
 
   <!-- Authentication Pages -->
   <url>
-    <loc>https://yourdomain.com/login</loc>
+    <loc>https://jobkitty.in/login</loc>
     <lastmod>2025-10-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/signup</loc>
+    <loc>https://jobkitty.in/signup/jobseeker</loc>
     <lastmod>2025-10-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://yourdomain.com/signup/jobseeker</loc>
+    <loc>https://jobkitty.in/signup/employer</loc>
     <lastmod>2025-10-27</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
-  <url>
-    <loc>https://yourdomain.com/signup/employer</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/forgot-password</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
-  </url>
+
 
   <!-- Jobseeker Protected Pages -->
   <url>
@@ -86,87 +70,7 @@
     <priority>0.7</priority>
   </url>
 
-  <!-- Employer Protected Pages -->
-  <url>
-    <loc>https://yourdomain.com/employer/profile</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/employer/jobs</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/employer/company/setup</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-
-  <!-- Admin Pages -->
-  <url>
-    <loc>https://yourdomain.com/admin/dashboard</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/admin/jobs</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/admin/companies</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/admin/categories</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/admin/analytics</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/admin/applications</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>hourly</changefreq>
-    <priority>0.9</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/admin/cv-management</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/admin/user-management</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/admin/jobseeker-management</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/admin/employer-management</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
+  
 
   <!-- Dynamic Job Pages (Example pattern, should be generated dynamically in production) -->
   <!-- 

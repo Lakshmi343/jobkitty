@@ -35,7 +35,7 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow non-browser requests or same-origin requests with no Origin header
+   
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
@@ -49,11 +49,10 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// Explicitly handle preflight
+
 app.options("*", cors(corsOptions));
 
 const PORT = process.env.PORT || 8000;
-
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/company", companyRoute);
 app.use("/api/v1/job", jobRoute);
@@ -62,19 +61,6 @@ app.use("/api/v1/category",categoryRoute);
 app.use("/api/v1/contact", contactRoute);
 app.use("/api/v1/admin",adminRoute)
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
-// const frontendDistPath = path.join(__dirname, "../frontend/dist");
-// app.use(express.static(frontendDistPath));
-
-
-// app.get("*", (req, res) => {
-//     if (req.originalUrl.startsWith("/api/")) {
-//         res.status(404).json({ message: "API route not found" });
-//     } else {
-//         res.sendFile(path.join(frontendDistPath, "index.html"));
-//     }
-// });
 
 app.listen(PORT,()=>{
     connectDB();

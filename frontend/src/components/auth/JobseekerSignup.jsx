@@ -41,10 +41,32 @@ const JobseekerSignup = () => {
   };
   const onResumeChange = (e) => {
     const file = e.target.files?.[0] || null;
+    if (!file) return;
+    
+    // Validate file type
+    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    if (!validTypes.includes(file.type)) {
+      toast.error('Please upload a PDF or Word document');
+      e.target.value = ''; // Reset file input
+      return;
+    }
+    
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size should be less than 5MB');
+      e.target.value = ''; // Reset file input
+      return;
+    }
+    
     setResumeFile(file);
   };
 
   const validateInput = () => {
+    // Validate name
+    if (!input.fullname || !input.fullname.trim()) {
+      toast.error('Full name is required');
+      return false;
+    }
     if (!/^[A-Za-z ]{2,30}$/.test(input.fullname)) {
       toast.error('Full name should be 2-30 letters and spaces only.');
       return false;
@@ -78,7 +100,16 @@ const JobseekerSignup = () => {
 
   const submitHandler = async (e) => {
     e.preventDefault();
+    
+    // Basic validation
     if (!validateInput()) return;
+    
+    // Check if resume is required but not provided
+    const isResumeRequired = false; // Set to true if resume is mandatory
+    if (isResumeRequired && !resumeFile) {
+      toast.error('Please upload your resume');
+      return;
+    }
 
     const payload = {
       fullname: input.fullname,
@@ -140,7 +171,23 @@ const JobseekerSignup = () => {
               }
 
               if (resumeFile) {
-                fd.append('file', resumeFile);
+                try {
+                  // First upload the resume file
+                  const resumeFormData = new FormData();
+                  resumeFormData.append('resume', resumeFile);
+                  
+                  await axios.post(`${USER_API_END_POINT}/upload-resume`, resumeFormData, {
+                    headers: {
+                      'Content-Type': 'multipart/form-data',
+                      'Authorization': `Bearer ${accessToken}`
+                    },
+                    withCredentials: true
+                  });
+                } catch (uploadError) {
+                  console.error('Resume upload error:', uploadError);
+                  // Continue with profile update even if resume upload fails
+                  toast.warning('Profile saved, but there was an issue uploading your resume. You can upload it later.');
+                }
               }
 
               await axios.post(`${USER_API_END_POINT}/profile/update`, fd, {

@@ -53,6 +53,7 @@ import AppliedJobs from './components/jobseeker/AppliedJobs';
 import ProtectedRoute from './components/admin/ProtectedRoute';
 import JobseekerManagement from './components/admin/JobseekerManagement';
 import EmployerManagement from './components/admin/EmployerManagement';
+import JobListings from './components/JobListings';
 
 const appRouter = createBrowserRouter([
 
@@ -113,10 +114,50 @@ const appRouter = createBrowserRouter([
     )
   },
   {
-    path: "/jobs",
+    path: '/jobs',
     element: (
       <Layout>
         <Jobs />
+      </Layout>
+    )
+  },
+  {
+    path: '/jobs/category/:category',
+    element: (
+      <Layout>
+        <Jobs />
+      </Layout>
+    )
+  },
+  {
+    path: '/jobs/location/:location',
+    element: (
+      <Layout>
+        <Jobs />
+      </Layout>
+    )
+  },
+  {
+    path: '/jobs/:category',
+    element: (
+      <Layout>
+        <JobListings />
+      </Layout>
+    )
+  },
+  {
+    path: '/jobs/:category/:location',
+    element: (
+      <Layout>
+        <JobListings />
+      </Layout>
+    )
+  },
+  {
+    path: '/jobs-in-:location',
+    element: (
+      <Layout>
+        <JobListings />
       </Layout>
     )
   },

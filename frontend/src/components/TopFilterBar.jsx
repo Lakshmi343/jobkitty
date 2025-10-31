@@ -1,240 +1,322 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { setSearchedQuery, setJobFilters } from '@/redux/jobSlice'
-import { Search, MapPin, Building, DollarSign, Clock, Briefcase, X } from 'lucide-react'
-import axios from 'axios'
-import { CATEGORY_API_END_POINT } from '@/utils/constant'
 
-const LOCATIONS = ["Thiruvananthapuram","Kollam","Pathanamthitta","Alappuzha","Kottayam","Idukki","Ernakulam","Thrissur","Palakkad","Malappuram","Kozhikode","Wayanad","Kannur","Kasaragod","Remote"]
-const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Internship", "Temporary"]
-const SALARY = ["0-40k","42-1lakh","1lakh to 5lakh","5lakh+"]
-const EXPERIENCE = ["0-1 years","1-3 years","3-5 years","5+ years"]
 
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { useDispatch } from 'react-redux';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { setSearchedQuery, setJobFilters } from '@/redux/jobSlice';
+import { Search, MapPin, Building, DollarSign, Clock, Briefcase, X } from 'lucide-react';
+import axios from 'axios';
+import { CATEGORY_API_END_POINT } from '@/utils/constant';
+
+
+const LOCATIONS = [
+  "Thiruvananthapuram", "Kollam", "Pathanamthitta", "Alappuzha", "Kottayam",
+  "Idukki", "Ernakulam", "Thrissur", "Palakkad", "Malappuram", "Kozhikode",
+  "Wayanad", "Kannur", "Kasaragod", "Remote"
+];
+
+const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Internship", "Temporary"];
+const SALARY = ["0-40k", "42-1lakh", "1lakh to 5lakh", "5lakh+"];
+const EXPERIENCE = ["Fresher", "0-1 years", "1-3 years", "3-5 years", "5+ years"];
 const DATE_POSTED = [
-  { label: 'Any time', value: '' },
-  { label: 'Last 24 hours', value: '24h' },
-  { label: 'Last 7 days', value: '7d' },
-  { label: 'Last 14 days', value: '14d' },
-  { label: 'Last 30 days', value: '30d' }
-]
+  { value: '', label: 'All Time' },
+  { value: 'today', label: 'Today' },
+  { value: 'yesterday', label: 'Yesterday' },
+  { value: 'week', label: 'This Week' },
+  { value: 'month', label: 'This Month' },
+];
 
 const TopFilterBar = ({ variant = 'top', locationInputMode = 'select' }) => {
-    const dispatch = useDispatch();
-    const { filters, searchedQuery } = useSelector(state => state.job);
-    const [location, setLocation] = useState('')
-    const [role, setRole] = useState('')
-    const [salary, setSalary] = useState('')
-    const [jobType, setJobType] = useState('')
-    const [experience, setExperience] = useState('')
-    const [categories, setCategories] = useState([])
-    const [categoryId, setCategoryId] = useState('')
-    const [companyType, setCompanyType] = useState('')
-    const [datePosted, setDatePosted] = useState('')
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const params = useParams();
 
-    useEffect(()=>{
-        const fetchCategories = async ()=>{
-            try{
-                const res = await axios.get(`${CATEGORY_API_END_POINT}/get`)
-                if(res.data.success) setCategories(res.data.categories)
-            }catch(err){
-              
-            }
+
+  const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
+
+
+  const [locationFilter, setLocation] = useState(params.location?.replace(/-/g, ' ') || '');
+  const [role, setRole] = useState(searchParams.get('q') || '');
+  const [salary, setSalary] = useState(searchParams.get('salary') || '');
+  const [jobType, setJobType] = useState(searchParams.get('jobType') || '');
+  const [experience, setExperience] = useState(searchParams.get('experience') || '');
+  const [categories, setCategories] = useState([]);
+  const [categoryId, setCategoryId] = useState(searchParams.get('category') || '');
+  const [companyType, setCompanyType] = useState(searchParams.get('companyType') || '');
+  const [datePosted, setDatePosted] = useState(searchParams.get('datePosted') || '');
+
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchCategories = async () => {
+      try {
+        const res = await axios.get(`${CATEGORY_API_END_POINT}/get`);
+        if (res.data.success && isMounted) {
+          setCategories(res.data.categories || []);
         }
-        fetchCategories()
-    },[])
+      } catch (err) {
+        console.error('❌ Failed to fetch categories:', err.message);
+      }
+    };
+    fetchCategories();
+    return () => { isMounted = false; };
+  }, []);
 
-    const query = useMemo(() => {
-       
-        return role || ''
-    }, [role])
-    
-
-    useEffect(() => {
-        dispatch(setSearchedQuery(query))
-        dispatch(setJobFilters({ location, jobType, salaryRange: salary, experienceRange: experience, categoryId, companyType, datePosted }))
-    }, [query, location, jobType, salary, experience, categoryId, companyType, datePosted, dispatch]);
-
+ 
+  const updateURL = useCallback((updates) => {
    
-    useEffect(() => {
-        setLocation(filters.location || '')
-        setRole(searchedQuery || '')
-        setSalary(filters.salaryRange || '')
-        setJobType(filters.jobType || '')
-        setExperience(filters.experienceRange || '')
-        setCategoryId(filters.categoryId || '')
-        setCompanyType(filters.companyType || '')
-        setDatePosted(filters.datePosted || '')
-    }, [filters.location, filters.salaryRange, filters.jobType, filters.experienceRange, filters.categoryId, filters.companyType, filters.datePosted, searchedQuery])
+    const currentState = {
+      q: role,
+      location: locationFilter,
+      jobType,
+      salary,
+      experience,
+      category: categoryId, 
+      companyType,
+      datePosted,
+    };
 
-    const clearAll = ()=>{
-        setLocation(''); setRole(''); setSalary(''); setJobType(''); setExperience(''); setCategoryId(''); setCompanyType(''); setDatePosted('')
+
+    if (updates.role !== undefined) {
+      currentState.q = updates.role;
+      setRole(updates.role);
+    }
+    if (updates.location !== undefined) {
+      currentState.location = updates.location;
+      setLocation(updates.location);
+    }
+    if (updates.jobType !== undefined) {
+      currentState.jobType = updates.jobType;
+      setJobType(updates.jobType);
+    }
+    if (updates.salary !== undefined) {
+      currentState.salary = updates.salary;
+      setSalary(updates.salary);
+    }
+    if (updates.experience !== undefined) {
+      currentState.experience = updates.experience;
+      setExperience(updates.experience);
+    }
+    if (updates.categoryId !== undefined) {
+      currentState.category = updates.categoryId; // Map to 'category' in URL
+      setCategoryId(updates.categoryId);
+    }
+    if (updates.companyType !== undefined) {
+      currentState.companyType = updates.companyType;
+      setCompanyType(updates.companyType);
+    }
+    if (updates.datePosted !== undefined) {
+      currentState.datePosted = updates.datePosted;
+      setDatePosted(updates.datePosted);
     }
 
-    const hasActiveFilters = location || role || salary || jobType || experience || categoryId || companyType || datePosted;
+    // Build URL with non-empty parameters
+    const newSearchParams = new URLSearchParams();
+    Object.entries(currentState).forEach(([key, value]) => {
+      if (value) newSearchParams.set(key, value);
+    });
 
+    // Update URL without adding to history
+    navigate({ 
+      pathname: location.pathname, // Keep current path
+      search: newSearchParams.toString() 
+    }, { replace: true });
+  }, [navigate, role, locationFilter, jobType, salary, experience, categoryId, companyType, datePosted, location.pathname]);
+
+  // ✅ Sync Redux Store with filters
+  useEffect(() => {
+    // Update search query in Redux
+    dispatch(setSearchedQuery(role || ''));
     
-    const containerClasses = variant === 'top'
-        ? 'w-full bg-white shadow-lg border-b border-gray-200 sticky top-0 z-20'
-        : 'w-full';
+    // Update filters in Redux
+    const filters = {
+      location: locationFilter || '',
+      jobType: jobType || '',
+      salaryRange: salary || '',
+      experienceRange: experience || '',
+      categoryId: categoryId || '', // Make sure this matches your jobSlice
+      companyType: companyType || '',
+      datePosted: datePosted || ''
+    };
+    
+    dispatch(setJobFilters(filters));
+    
+    // Debug log to verify filters are being set correctly
+    console.log('Updating Redux filters:', filters);
+  }, [role, locationFilter, jobType, salary, experience, categoryId, companyType, datePosted, dispatch]);
 
-    const innerClasses = variant === 'top'
-        ? 'max-w-7xl mx-auto px-4 py-6'
-        : '';
+  // ✅ Clear all filters
+  const clearAll = () => {
+    setRole('');
+    setLocation('');
+    setJobType('');
+    setSalary('');
+    setExperience('');
+    setCategoryId('');
+    setCompanyType('');
+    setDatePosted('');
+    navigate('/jobs');
+  };
 
-    return (
-        <div className={containerClasses}>
-            <div className={innerClasses}>
-               
-                <div className={variant === 'top' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-4" : "grid grid-cols-1 gap-4 mb-4"}>
-                    
-                    <div className="relative xl:col-span-2">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                            type="text"
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            placeholder="Search jobs, companies..."
-                            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-                        />
-                    </div>
+  // ✅ UI logic
+  const hasActiveFilters = [role, locationFilter, salary, jobType, experience, categoryId, companyType, datePosted].some(Boolean);
+  const activeFiltersCount = [role, locationFilter, salary, jobType, experience, categoryId, companyType, datePosted].filter(Boolean).length;
 
-               
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <MapPin className="h-5 w-5 text-gray-400" />
-                        </div>
-                        {locationInputMode === 'text' ? (
-                            <input
-                                type="text"
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
-                                placeholder="City, District or Remote"
-                                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
-                            />
-                        ) : (
-                            <select
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
-                                className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white appearance-none cursor-pointer"
-                            >
-                                <option value=''>All Locations</option>
-                                {LOCATIONS.map((l) => (
-                                    <option key={l} value={l}>{l}</option>
-                                ))}
-                            </select>
-                        )}
-                    </div>
+  const containerClasses = variant === 'top'
+    ? "w-full bg-white shadow-sm border-b border-gray-200"
+    : "w-full bg-white rounded-lg border border-gray-200";
 
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Briefcase className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <select
-                            value={jobType}
-                            onChange={(e) => setJobType(e.target.value)}
-                            className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white appearance-none cursor-pointer"
-                        >
-                            <option value=''>All Types</option>
-                            {JOB_TYPES.map((t) => (
-                                <option key={t} value={t}>{t}</option>
-                            ))}
-                        </select>
-                    </div>
+  const innerClasses = variant === 'top'
+    ? "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4"
+    : "p-4";
 
-                 
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Clock className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <select
-                            value={experience}
-                            onChange={(e) => setExperience(e.target.value)}
-                            className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white appearance-none cursor-pointer"
-                        >
-                            <option value=''>Any Experience</option>
-                            {EXPERIENCE.map((eR) => (
-                                <option key={eR} value={eR}>{eR}</option>
-                            ))}
-                        </select>
-                    </div>
+  return (
+    <div className={containerClasses}>
+      <div className={innerClasses}>
+        {/* Grid of filters */}
+        <div className={variant === 'top' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid grid-cols-1 gap-4"}>
 
-                    
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <DollarSign className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <select
-                            value={salary}
-                            onChange={(e) => setSalary(e.target.value)}
-                            className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white appearance-none cursor-pointer"
-                        >
-                            <option value=''>Any Salary</option>
-                            {SALARY.map((s) => (
-                                <option key={s} value={s}>{s}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
+          {/* 🔍 Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              value={role}
+              onChange={(e) => updateURL({ role: e.target.value })}
+              placeholder="Job title, company, or keywords"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg 
+              focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+              transition-all duration-200 bg-gray-50 hover:bg-white"
+            />
+          </div>
 
-           
-                <div className={variant === 'top' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid grid-cols-1 gap-4"}>
-                   
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Building className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <select
-                            value={categoryId}
-                            onChange={(e) => setCategoryId(e.target.value)}
-                            className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white appearance-none cursor-pointer"
-                        >
-                            <option value=''>All Categories</option>
-                            {categories.map((c) => (
-                                <option key={c._id} value={c._id}>{c.name}</option>
-                            ))}
-                        </select>
-                    </div>
+          {/* 🏢 Category Filter */}
+          <div className="relative">
+            <Building className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <select
+              value={categoryId}
+              onChange={(e) => updateURL({ categoryId: e.target.value })}
+              className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg 
+              focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-white"
+            >
+              <option value="">All Categories</option>
+              {categories.map((c) => (
+                <option key={c._id} value={c._id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
 
-                 
-                   
+          {/* 📍 Location Filter */}
+          <div className="relative">
+            <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            {locationInputMode === 'text' ? (
+              <input
+                type="text"
+                value={locationFilter}
+                onChange={(e) => updateURL({ location: e.target.value })}
+                placeholder="City, District or Remote"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg 
+                focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-white"
+              />
+            ) : (
+              <select
+                value={locationFilter}
+                onChange={(e) => updateURL({ location: e.target.value })}
+                className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg 
+                focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-white"
+              >
+                <option value="">All Locations</option>
+                {LOCATIONS.map((loc) => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+            )}
+          </div>
 
-                
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Clock className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <select
-                            value={datePosted}
-                            onChange={(e) => setDatePosted(e.target.value)}
-                            className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white appearance-none cursor-pointer"
-                        >
-                            {DATE_POSTED.map(opt => (
-                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                            ))}
-                        </select>
-                    </div>
-                </div>
+          {/* 💼 Job Type */}
+          <div className="relative">
+            <Briefcase className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <select
+              value={jobType}
+              onChange={(e) => updateURL({ jobType: e.target.value })}
+              className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg 
+              focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-white"
+            >
+              <option value="">All Job Types</option>
+              {JOB_TYPES.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
 
-               
-                {hasActiveFilters && (
-                    <div className={variant === 'top' ? "mt-2 flex items-center gap-4" : "mt-2 flex items-center gap-4"}>
-                        <button
-                            onClick={clearAll}
-                            className="flex items-center gap-2 px-4 py-3 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-gray-300"
-                        >
-                            <X className="h-4 w-4" />
-                            Clear All
-                        </button>
-                        <span className="text-sm text-gray-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
-                            {[location, role, salary, jobType, experience, categoryId, companyType, datePosted].filter(Boolean).length} filter(s) active
-                        </span>
-                    </div>
-                )}
-            </div>
+          {/* 🧭 Experience */}
+          <div className="relative">
+            <Clock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <select
+              value={experience}
+              onChange={(e) => updateURL({ experience: e.target.value })}
+              className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg 
+              focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-white"
+            >
+              <option value="">Any Experience</option>
+              {EXPERIENCE.map((exp) => (
+                <option key={exp} value={exp}>{exp}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 💰 Salary */}
+          <div className="relative">
+            <DollarSign className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <select
+              value={salary}
+              onChange={(e) => updateURL({ salary: e.target.value })}
+              className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg 
+              focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-white"
+            >
+              <option value="">Any Salary</option>
+              {SALARY.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 🕓 Date Posted */}
+          <div className="relative">
+            <Clock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <select
+              value={datePosted}
+              onChange={(e) => updateURL({ datePosted: e.target.value })}
+              className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg 
+              focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-white"
+            >
+              {DATE_POSTED.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
-    )
-}
 
-export default TopFilterBar
+        {/* ❌ Clear Filters */}
+        {hasActiveFilters && (
+          <div className="mt-4 flex items-center gap-4">
+            <button
+              onClick={clearAll}
+              className="flex items-center gap-2 px-4 py-3 text-gray-600 
+              hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all duration-200 border border-gray-300"
+            >
+              <X className="h-4 w-4" />
+              Clear All
+            </button>
+            <span className="text-sm text-gray-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
+              {activeFiltersCount} filter(s) active
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default TopFilterBar;

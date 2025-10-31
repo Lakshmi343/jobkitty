@@ -9,7 +9,7 @@ const jobSlice = createSlice({
         searchJobByText:"",
         allAppliedJobs:[],
         searchedQuery:"",
-        filters:{
+        filters: {
             // Hydrate preferred location from localStorage if available
             location: (() => {
                 try {
@@ -18,12 +18,12 @@ const jobSlice = createSlice({
                     return "";
                 }
             })(),
-            jobType:"",
-            salaryRange:"",
-            experienceRange:"",
-            categoryId:"",
-            companyType:"",
-            datePosted:"" // e.g., '24h', '7d', '14d', '30d'
+            jobType: "",
+            salaryRange: "",
+            experienceRange: "",
+            categoryId: "",  // This should match what's used in your components
+            companyType: "",
+            datePosted: ""   // e.g., 'today', 'yesterday', 'week', 'month'
         }
     },
     reducers:{
@@ -46,8 +46,14 @@ const jobSlice = createSlice({
         setSearchedQuery:(state,action) => {
             state.searchedQuery = action.payload;
         },
-        setJobFilters:(state,action) => {
-            state.filters = { ...state.filters, ...action.payload };
+        setJobFilters: (state, action) => {
+            // Only update filters that exist in the initial state
+            Object.keys(action.payload).forEach(key => {
+                if (state.filters.hasOwnProperty(key)) {
+                    state.filters[key] = action.payload[key];
+                }
+            });
+            console.log('Updated filters in Redux:', state.filters);
         }
     }
 });

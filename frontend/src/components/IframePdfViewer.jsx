@@ -1,22 +1,19 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { X, Download, ZoomIn, ZoomOut, ExternalLink, FileText } from "lucide-react";
 
 const IframePdfViewer = ({ pdfUrl, isOpen, onClose, fileName }) => {
+    
   const [zoom, setZoom] = useState(100);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [previewError, setPreviewError] = useState(false);
-
-  // Reset zoom when opening modal
   useEffect(() => {
     if (isOpen) setZoom(100);
   }, [isOpen]);
-
   useEffect(() => {
     if (!pdfUrl) return;
     setPreviewError(false);
-
-    // Prefer Google Docs Viewer for better browser support
     const googleDocsUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(
       pdfUrl
     )}&embedded=true`;
@@ -35,14 +32,11 @@ const IframePdfViewer = ({ pdfUrl, isOpen, onClose, fileName }) => {
     link.click();
     document.body.removeChild(link);
   };
-
   const handleZoomIn = () => setZoom((z) => Math.min(z + 25, 200));
   const handleZoomOut = () => setZoom((z) => Math.max(z - 25, 50));
-
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col">
-        {/* Header */}
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col">   
         <div className="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-lg">
           <div className="flex items-center gap-4">
             <h3 className="text-lg font-semibold text-gray-800">
@@ -70,8 +64,6 @@ const IframePdfViewer = ({ pdfUrl, isOpen, onClose, fileName }) => {
             </Button>
           </div>
         </div>
-
-        {/* PDF Viewer */}
         <div className="flex-1 bg-gray-100 p-4">
           {previewError ? (
             <div className="w-full h-full flex flex-col items-center justify-center bg-white rounded shadow-inner">
@@ -102,9 +94,7 @@ const IframePdfViewer = ({ pdfUrl, isOpen, onClose, fileName }) => {
               />
             </div>
           )}
-        </div>
-
-        {/* Footer */}
+        </div>  
         <div className="p-3 border-t bg-gray-50 rounded-b-lg text-center">
           <p className="text-xs text-gray-500">
             Use zoom controls or open in a new tab for a better viewing experience.
@@ -114,5 +104,4 @@ const IframePdfViewer = ({ pdfUrl, isOpen, onClose, fileName }) => {
     </div>
   );
 };
-
 export default IframePdfViewer;

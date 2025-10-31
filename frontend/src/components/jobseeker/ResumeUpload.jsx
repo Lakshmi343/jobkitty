@@ -120,111 +120,7 @@
 //                             >
 //                                 {showPreview ? 'Hide Preview' : 'Preview'}
 //                             </button>
-//                         )}
-//                     </div>
-//                 )}
-//             </div>
-            
-//             <div className="space-y-4">
-//                 <div className="relative">
-//                     <input
-//                         type="file"
-//                         id="resume-upload"
-//                         onChange={handleFileChange}
-//                         className="hidden"
-//                         accept=".pdf,.doc,.docx"
-//                     />
-//                     <Label 
-//                         htmlFor="resume-upload"
-//                         className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all duration-200"
-//                     >
-//                         <Upload className="w-8 h-8 text-gray-400 mb-2" />
-//                         <span className="text-sm text-gray-600">
-//                             {file ? `${file.name} ${(file.size/1024/1024).toFixed(2)}MB` : 'Click to upload your resume/CV'}
-//                         </span>
-//                         <span className="text-xs text-gray-500 mt-1">PDF, DOC, DOCX up to 5MB</span>
-//                         <span className="text-xs text-gray-500">Tip: Prefer PDF for best preview and compatibility</span>
-//                     </Label>
-//                 </div>
-                
-//                 <Button 
-//                     onClick={handleUpload} 
-//                     disabled={!file || loading}
-//                     className="w-full"
-//                 >
-//                     {loading ? (
-//                         <>
-//                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-//                             Uploading...
-//                         </>
-//                     ) : (
-//                         <>
-//                             <Upload className="mr-2 h-4 w-4" />
-//                             Upload Resume
-//                         </>
-//                     )}
-//                 </Button>
-//             </div>
-
-//             {/* Inline PDF preview */}
-//             {showPreview && user?.profile?.resume && user.profile.resume.toLowerCase().endsWith('.pdf') && (
-//                 <div className="mt-4 border rounded-md overflow-hidden">
-//                     <PdfViewer file={user.profile.resume} />
-//                 </div>
-//             )}
-//         </div>
-//     );
-// };
-
-// export default ResumeUpload;
-
-// import React, { useState } from 'react';
-// import axios from 'axios';
-// import { USER_API_END_POINT } from '../../utils/constant';
-// import { Button } from '../ui/button';
-// import { Label } from '../ui/label';
-// import { toast } from 'sonner';
-// import { FileText, Upload, Loader2, X, Eye, Download } from 'lucide-react';
-// import { useSelector, useDispatch } from 'react-redux';
-// import { useNavigate } from 'react-router-dom';
-// import { setUser } from '@/redux/authSlice';
-// import { authUtils } from '../../utils/authUtils';
-
-// const ResumeUpload = ({ onSuccess }) => {
-//     const [file, setFile] = useState(null);
-//     const [loading, setLoading] = useState(false);
-//     const [showPreview, setShowPreview] = useState(false);
-//     const { user } = useSelector(store => store.auth);
-//     const dispatch = useDispatch();
-//     const navigate = useNavigate();
-    
-//     const handleFileChange = (e) => {
-//         const selectedFile = e.target.files[0];
-//         if (selectedFile) {
-//             const fileType = selectedFile.type;
-//             if (fileType !== 'application/pdf' && 
-//                 fileType !== 'application/msword' && 
-//                 fileType !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-//                 toast.error('Please upload a PDF or Word document');
-//                 return;
-//             }
-            
-//             if (selectedFile.size > 5 * 1024 * 1024) {
-//                 toast.error('File size should be less than 5MB');
-//                 return;
-//             }
-            
-//             setFile(selectedFile);
-//         }
-//     };
-    
-//     const clearFile = () => {
-//         setFile(null);
-//         // Reset the file input
-//         const fileInput = document.getElementById('resume-upload');
-//         if (fileInput) fileInput.value = '';
-
-import React, { useState } from 'react';
+import React, { useState,useRef } from 'react';
 import axios from 'axios';
 import { USER_API_END_POINT } from '../../utils/constant';
 import { Button } from '../ui/button';
@@ -238,38 +134,62 @@ import { setUser } from '@/redux/authSlice';
 import { authUtils } from '../../utils/authUtils';
 import PdfViewer from '../PdfViewer';
 
-const  ResumeUpload = ({ onSuccess }) => {
+const ResumeUpload = ({ onSuccess }) => {
     const [file, setFile] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [error, setError] = useState(null);
     const [showPreview, setShowPreview] = useState(false);
     const { user } = useSelector(store => store.auth);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const fileInputRef = useRef(null);
+    
+    const validateFile = (file) => {
+        if (!file) return { valid: false, error: 'No file selected' };
+        
+        // Check file type
+        const validTypes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        ];
+        
+        if (!validTypes.includes(file.type)) {
+            return { valid: false, error: 'Please upload a PDF or Word document (PDF, DOC, DOCX)' };
+        }
+        
+        // Check file size (5MB max)
+        const maxSize = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxSize) {
+            return { valid: false, error: 'File size should be less than 5MB' };
+        }
+        
+        return { valid: true };
+    };
     
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
-        if (selectedFile) {
-            const fileType = selectedFile.type;
-            if (fileType !== 'application/pdf' && 
-                fileType !== 'application/msword' && 
-                fileType !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-                toast.error('Please upload a PDF or Word document');
-                return;
+        setError(null);
+        
+        const { valid, error } = validateFile(selectedFile);
+        if (!valid) {
+            setError(error);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''; // Reset file input
             }
-            
-            if (selectedFile.size > 5 * 1024 * 1024) {
-                toast.error('File size should be less than 5MB');
-                return;
-            }
-            
-            setFile(selectedFile);
+            return;
         }
+        
+        setFile(selectedFile);
     };
     
     const clearFile = () => {
         setFile(null);
-        const fileInput = document.getElementById('resume-section-upload');
-        if (fileInput) fileInput.value = '';
+        setError(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = ''; // Reset file input
+        }
     };
     
     const refreshUser = async () => {
@@ -282,17 +202,26 @@ const  ResumeUpload = ({ onSuccess }) => {
     
     const handleUpload = async () => {
         if (!file) {
-            toast.error('Please select a file to upload');
+            setError('Please select a file to upload');
             return;
         }
         
+        // Re-validate file before upload
+        const { valid, error: validationError } = validateFile(file);
+        if (!valid) {
+            setError(validationError);
+            return;
+        }
+        
+        // Ensure authenticated
         if (!user) {
             toast.info('Please login to upload your resume');
-            navigate('/login');
+            navigate('/login', { state: { from: window.location.pathname } });
             return;
         }
 
         setLoading(true);
+        setError(null);
         
         const formData = new FormData();
         formData.append('resume', file);
@@ -300,27 +229,49 @@ const  ResumeUpload = ({ onSuccess }) => {
         try {
             const response = await axios.post(`${USER_API_END_POINT}/upload-resume`, formData, {
                 headers: {
-                    'Content-Type': 'multipart/form-data'
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
-                withCredentials: true
+                withCredentials: true,
+                onUploadProgress: (progressEvent) => {
+                    const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    setUploadProgress(percentCompleted);
+                }
             });
             
             if (response.data.success) {
                 toast.success('Resume uploaded successfully');
-                clearFile();
+                setFile(null);
+                setUploadProgress(0);
+                if (fileInputRef.current) {
+                    fileInputRef.current.value = ''; // Reset file input
+                }
+                
+                // Refresh user data
                 await refreshUser();
+                
+                // Call success callback if provided
                 if (typeof onSuccess === 'function') {
-                    onSuccess();
+                    onSuccess(response.data);
                 }
             }
         } catch (error) {
             console.error('Resume upload error:', error);
-            if (error.response?.status === 401) {
-                toast.error('Your session expired. Please login again.');
-                navigate('/login');
-            } else {
-                toast.error(error.response?.data?.message || 'Failed to upload resume');
+            let errorMessage = 'Failed to upload resume';
+            
+            if (error.response) {
+                if (error.response.status === 401) {
+                    errorMessage = 'Your session has expired. Please login again.';
+                    navigate('/login', { state: { from: window.location.pathname } });
+                } else if (error.response.data?.message) {
+                    errorMessage = error.response.data.message;
+                }
+            } else if (error.request) {
+                errorMessage = 'Network error. Please check your connection and try again.';
             }
+            
+            setError(errorMessage);
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }

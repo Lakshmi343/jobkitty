@@ -1,5 +1,4 @@
-
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import Navbar from "./shared/Navbar";
 import TopFilterBar from "./TopFilterBar";
 import Job from "./Job";
@@ -7,19 +6,111 @@ import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { getLocationSearchString, formatLocationForDisplay } from "../utils/locationUtils";
 import Footer from "./shared/Footer";
-import { setJobFilters, setSearchedQuery } from "@/redux/jobSlice";
+import { setJobFilters, setSearchedQuery, setAllJobs } from "@/redux/jobSlice";
+import { JOB_API_END_POINT } from "@/utils/constant";
+import axios from "axios";
+import { useLocation, useParams } from 'react-router-dom';
 
 const Jobs = () => {
   const dispatch = useDispatch();
-  const { allJobs, searchedQuery, filters } = useSelector((store) => store.job);
+  const location = useLocation();
+  const params = useParams();
+  const [error, setError] = useState(null);
+
+  const { allJobs = [], searchedQuery = "", filters = {} } = useSelector((store) => ({
+    allJobs: store.job.allJobs || [],
+    searchedQuery: store.job.searchedQuery || "",
+    filters: store.job.filters || {}
+  }));
+
+  // Initialize filters from URL on mount and when URL changes
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const filtersFromUrl = {};
+
+    // Get role from search query or URL params
+    const roleFromUrl = searchParams.get('q') || '';
+    
+    // Get category from URL params (e.g., /jobs/category/it-jobs)
+    if (params.category) {
+      // Handle both /category/ID and ?category=ID formats
+      const categoryParam = params.category.replace(/-/g, ' ');
+      // Extract just the ID part if it contains a slash
+      filtersFromUrl.categoryId = categoryParam.split('/')[0];
+      console.log('Extracted category ID from URL:', filtersFromUrl.categoryId);
+    }
+    
+    // Get location from URL params (e.g., /jobs/location/kochi)
+    if (params.location) {
+      filtersFromUrl.location = params.location.replace(/-/g, ' ');
+    }
+
+    // Get other filters from search params
+    if (searchParams.has('jobType')) filtersFromUrl.jobType = searchParams.get('jobType');
+    if (searchParams.has('salary')) filtersFromUrl.salaryRange = searchParams.get('salary');
+    if (searchParams.has('experience')) filtersFromUrl.experienceRange = searchParams.get('experience');
+    if (searchParams.has('companyType')) filtersFromUrl.companyType = searchParams.get('companyType');
+    if (searchParams.has('datePosted')) filtersFromUrl.datePosted = searchParams.get('datePosted');
+
+    // Update Redux store with filters from URL
+    dispatch(setSearchedQuery(roleFromUrl));
+    dispatch(setJobFilters(filtersFromUrl));
+  }, [dispatch, location.search, params]);
+
+  // Fetch jobs on component mount and when filters change
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setError(null);
+        
+        // Build query parameters from filters
+        const params = new URLSearchParams();
+        if (searchedQuery) params.append('keyword', searchedQuery);
+        if (filters.location) params.append('location', filters.location);
+        if (filters.jobType) params.append('jobType', filters.jobType);
+        if (filters.salaryRange) params.append('salary', filters.salaryRange);
+        if (filters.experienceRange) params.append('experience', filters.experienceRange);
+        if (filters.categoryId) params.append('category', filters.categoryId);
+        if (filters.companyType) params.append('companyType', filters.companyType);
+        if (filters.datePosted) params.append('datePosted', filters.datePosted);
+
+        const response = await axios.get(`${JOB_API_END_POINT}/get?${params.toString()}`);
+        
+        if (response.data.success) {
+          dispatch(setAllJobs(response.data.jobs || []));
+        } else {
+          setError("Failed to load jobs. Please try again later.");
+        }
+      } catch (err) {
+        console.error("Error fetching jobs:", err);
+        setError("Failed to load jobs. Please check your connection and try again.");
+      }
+    };
+
+    fetchJobs();
+  }, [dispatch, searchedQuery, filters]);
 
   const filterJobs = useMemo(() => {
+    console.log('Filtering jobs with filters:', filters);
+    
     return allJobs.filter((job) => {
+      // Debug info for each job being filtered
+      const jobDebugInfo = {
+        id: job._id,
+        title: job.title,
+        location: job.location,
+        jobType: job.jobType,
+        category: job.category,
+        companyType: job.company?.companyType,
+        salary: job.salary,
+        experience: job.experience,
+        createdAt: job.createdAt
+      };
+      console.log('Checking job:', jobDebugInfo);
+
+      // 1. Search Query Filter
       const q = searchedQuery?.toLowerCase().trim();
-      
-      // If there's a search query, check all relevant fields
       if (q) {
-        // Create a searchable string from all relevant job fields
         const searchableText = [
           job.title,
           job.description,
@@ -38,69 +129,112 @@ const Jobs = () => {
           job.aboutCompany,
           getLocationSearchString(job.location)
         ]
-          .filter(Boolean) // Remove any undefined/null values
+          .filter(Boolean)
           .join(' ')
           .toLowerCase();
 
-        // Check if any word in the query matches the searchable text
         const searchTerms = q.split(/\s+/);
-        const hasMatch = searchTerms.every(term => 
-          searchableText.includes(term)
-        );
-
+        const hasMatch = searchTerms.every(term => searchableText.includes(term));
         if (!hasMatch) {
+          console.log('Job filtered out by search query');
           return false;
         }
       }
 
+      // 2. Location Filter
       if (filters.location) {
-        const locationQuery = String(filters.location).toLowerCase();
-        const jobLocation = getLocationSearchString(job.location).toLowerCase();
-        const jobState = job.location?.state?.toLowerCase() || "";
-        const jobDistrict = job.location?.district?.toLowerCase() || "";
-        const jobLegacy = job.location?.legacy?.toLowerCase() || "";
-        if (
-          !jobLocation.includes(locationQuery) &&
-          !jobState.includes(locationQuery) &&
-          !jobDistrict.includes(locationQuery) &&
-          !jobLegacy.includes(locationQuery)
-        ) {
+        const jobLocation = getLocationSearchString(job.location)?.toLowerCase() || '';
+        const filterLocation = filters.location.toLowerCase();
+        if (!jobLocation.includes(filterLocation) && 
+            job.location?.city?.toLowerCase() !== filterLocation &&
+            job.location?.state?.toLowerCase() !== filterLocation) {
+          console.log('Job filtered out by location');
           return false;
         }
       }
 
-      if (filters.jobType && job.jobType?.toLowerCase() !== filters.jobType.toLowerCase()) {
+      // 3. Job Type Filter
+      if (filters.jobType && job.jobType !== filters.jobType) {
+        console.log('Job filtered out by job type');
         return false;
       }
 
-      if (
-        filters.categoryId &&
-        job.category?._id !== filters.categoryId &&
-        job.category !== filters.categoryId
-      ) {
-        return false;
-      }
-
-    
-      if (filters.companyType) {
-        const jobCompanyType = job.company?.companyType || '';
-        if (jobCompanyType.toLowerCase() !== String(filters.companyType).toLowerCase()) {
+      // 4. Category Filter
+      if (filters.categoryId) {
+        // Handle cases where categoryId might be in format 'categoryId/' or just 'categoryId'
+        const cleanCategoryId = String(filters.categoryId).split('/')[0];
+        const categoryMatches = 
+          job.category?._id === cleanCategoryId || 
+          job.category?._id?.includes(cleanCategoryId) ||
+          job.category?.name?.toLowerCase() === cleanCategoryId.toLowerCase();
+          
+        if (!categoryMatches) {
+          console.log('Job filtered out by category. Expected:', cleanCategoryId, 'Got:', job.category?._id);
           return false;
         }
       }
 
-      
+      // 5. Company Type Filter
+      if (filters.companyType && job.company?.companyType !== filters.companyType) {
+        console.log('Job filtered out by company type');
+        return false;
+      }
+
+      // 6. Date Posted Filter
       if (filters.datePosted) {
-        const createdAt = job.createdAt ? new Date(job.createdAt) : null;
-        if (!createdAt || isNaN(createdAt.getTime())) return false;
-        const now = new Date();
-        const ms = {
-          '24h': 24 * 60 * 60 * 1000,
-          '7d': 7 * 24 * 60 * 60 * 1000,
-          '14d': 14 * 24 * 60 * 60 * 1000,
-          '30d': 30 * 24 * 60 * 60 * 1000,
-        }[filters.datePosted] || 0;
-        if (ms && (now.getTime() - createdAt.getTime()) > ms) {
+        const jobDate = new Date(job.createdAt);
+        const today = new Date();
+        const diffTime = Math.abs(today - jobDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        let shouldExclude = false;
+        switch (filters.datePosted) {
+          case 'today':
+            shouldExclude = diffDays > 1;
+            break;
+          case 'yesterday':
+            shouldExclude = diffDays > 2;
+            break;
+          case 'week':
+            shouldExclude = diffDays > 7;
+            break;
+          case 'month':
+            shouldExclude = diffDays > 30;
+            break;
+          default:
+            break;
+        }
+        if (shouldExclude) {
+          console.log('Job filtered out by date posted');
+          return false;
+        }
+      }
+
+      // 7. Salary Range Filter
+      if (filters.salaryRange) {
+        const jobMinSalary = job.salary?.min || 0;
+        const jobMaxSalary = job.salary?.max || jobMinSalary;
+        let shouldExclude = false;
+
+        switch (filters.salaryRange) {
+          case '0-40k':
+            shouldExclude = jobMaxSalary > 40000;
+            break;
+          case '42-1lakh':
+            shouldExclude = jobMaxSalary < 42000 || jobMaxSalary > 100000;
+            break;
+          case '1lakh to 5lakh':
+            shouldExclude = jobMaxSalary < 100000 || jobMaxSalary > 500000;
+            break;
+          case '5lakh+':
+            shouldExclude = jobMaxSalary < 500000;
+            break;
+          default:
+            break;
+        }
+        
+        if (shouldExclude) {
+          console.log('Job filtered out by salary range');
           return false;
         }
       }
@@ -148,6 +282,21 @@ const Jobs = () => {
       return true;
     });
   }, [allJobs, searchedQuery, filters]);
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <p className="text-red-500 text-lg font-medium">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
