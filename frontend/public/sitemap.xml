@@ -57,18 +57,7 @@
 
 
   <!-- Jobseeker Protected Pages -->
-  <url>
-    <loc>https://yourdomain.com/profile</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://yourdomain.com/jobseeker/applied-jobs</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.7</priority>
-  </url>
+ 
 
   
 

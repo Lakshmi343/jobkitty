@@ -2212,6 +2212,93 @@ export const forgotPassword = async (req, res) => {
 };
 
 // Reset Password
+// Send resume notifications to candidates
+export const sendResumeNotifications = async (req, res) => {
+    try {
+        // Get all jobseeker users
+        const jobseekers = await User.find({ role: 'jobseeker' })
+            .select('email fullName profile.resume')
+            .lean();
+
+        if (!jobseekers || jobseekers.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'No jobseekers found'
+            });
+        }
+
+        let successCount = 0;
+        let failCount = 0;
+        const results = [];
+
+        // Process each jobseeker
+        for (const jobseeker of jobseekers) {
+            try {
+                const hasResume = !!(jobseeker.profile?.resume);
+                const result = await sendResumeNotificationEmail(
+                    jobseeker.email,
+                    jobseeker.fullName,
+                    hasResume
+                );
+
+                if (result.success) {
+                    successCount++;
+                    results.push({
+                        email: jobseeker.email,
+                        status: 'success',
+                        hasResume,
+                        messageId: result.messageId
+                    });
+                } else {
+                    failCount++;
+                    results.push({
+                        email: jobseeker.email,
+                        status: 'failed',
+                        hasResume,
+                        error: result.error
+                    });
+                }
+            } catch (error) {
+                console.error(`Error processing ${jobseeker.email}:`, error);
+                failCount++;
+                results.push({
+                    email: jobseeker.email,
+                    status: 'error',
+                    error: error.message
+                });
+            }
+        }
+
+        // Log the activity
+        await logActivity(
+            req.user._id,
+            'send_resume_notifications',
+            'jobseekers',
+            null,
+            `Sent resume notifications to ${successCount} jobseekers (${failCount} failed)`
+        );
+
+        res.status(200).json({
+            success: true,
+            message: `Resume notifications sent to ${successCount} jobseekers`,
+            stats: {
+                total: jobseekers.length,
+                success: successCount,
+                failed: failCount
+            },
+            results
+        });
+
+    } catch (error) {
+        console.error('Error sending resume notifications:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to send resume notifications',
+            error: error.message
+        });
+    }
+};
+
 export const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;

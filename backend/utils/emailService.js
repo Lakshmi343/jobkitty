@@ -495,6 +495,68 @@ export const sendWelcomeEmail = async (userEmail, userName, userRole) => {
 };
 
 // Job alert email for matching jobs
+export const sendResumeNotificationEmail = async (userEmail, userName, hasResume) => {
+    try {
+        const subject = hasResume 
+            ? 'Your Resume is Ready for Employers to See!'
+            : 'Complete Your Profile: Upload Your Resume Today';
+            
+        const mailOptions = {
+            from: process.env.EMAIL_USER || 'jobkitty.in@gmail.com',
+            to: userEmail,
+            subject: subject,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                    <div style="background: linear-gradient(90deg, #6A38C2 0%, #F83002 100%); padding: 20px; border-radius: 10px 10px 0 0; text-align: center;">
+                        <h1 style="color: white; margin: 0;">${hasResume ? '🎉 Your Resume is Live!' : '📝 Complete Your Profile'}</h1>
+                    </div>
+                    
+                    <div style="background-color: white; padding: 25px; border-radius: 0 0 10px 10px; border: 1px solid #e9ecef;">
+                        <p>Dear <strong>${userName || 'Job Seeker'}</strong>,</p>
+                        
+                        ${hasResume ? `
+                            <p>Great news! Your resume is now visible to top employers looking for candidates like you.</p>
+                            <p style="background-color: #e8f5e9; padding: 15px; border-radius: 5px; border-left: 4px solid #4caf50;">
+                                <strong>Tip:</strong> Keep your profile updated to increase your chances of getting noticed by recruiters.
+                            </p>
+                            <div style="text-align: center; margin: 25px 0;">
+                                <a href="https://jobkitty.in/profile" style="background: #4caf50; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">View My Profile</a>
+                            </div>
+                        ` : `
+                            <p>We noticed that your profile is missing a resume. Adding your resume will make your profile 5x more likely to be viewed by employers.</p>
+                            <div style="background-color: #fff3e0; padding: 15px; border-radius: 5px; border-left: 4px solid #ff9800; margin: 20px 0;">
+                                <h3 style="margin-top: 0; color: #e65100;">Why upload your resume?</h3>
+                                <ul style="padding-left: 20px;">
+                                    <li>Get discovered by top employers</li>
+                                    <li>Increase your chances of interview calls</li>
+                                    <li>Showcase your skills and experience</li>
+                                </ul>
+                            </div>
+                            <div style="text-align: center; margin: 25px 0;">
+                                <a href="https://jobkitty.in/upload-resume" style="background: #ff9800; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block;">Upload Resume Now</a>
+                            </div>
+                        `}
+                        
+                        <p>Best regards,<br>
+                        <strong>The JobKitty Team</strong></p>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 20px; color: #6c757d; font-size: 12px;">
+                        <p>This is an automated message. Please do not reply to this email.</p>
+                    </div>
+                </div>
+            `
+        };
+
+        const result = await transporter.sendMail(mailOptions);
+        console.log(`Resume notification email sent to ${userEmail}`);
+        return { success: true, messageId: result.messageId };
+    } catch (error) {
+        console.error('Error sending resume notification email:', error);
+        return { success: false, error: error.message };
+    }
+};
+
 export const sendJobAlertEmail = async (userEmail, userName, jobs) => {
     try {
         const jobListHtml = jobs.map(job => `

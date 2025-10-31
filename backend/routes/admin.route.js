@@ -20,13 +20,14 @@ updateJobDetailsAdmin, postJobAdmin, getJobForEdit, updateJobAdmin, getAllCompan
     suspendUser,
     getAdminActivity,
     enforceCompliance,
+    sendResumeNotifications,
+    forgotPassword,
+    resetPassword,
     getAllApplications,
+    getApplicationStats,
     getApplicationById,
     updateApplicationStatus,
     deleteApplication,
-    getApplicationStats,
-    forgotPassword,
-    resetPassword
 } from "../controllers/admin.Controller.js";
 
 import { singleUpload } from "../middlewares/mutler.js";
@@ -34,25 +35,22 @@ import { adminAuth } from "../middlewares/adminAuth.js";
 
 const router = express.Router();
 
-
 router.post('/login', loginAdmin);
 router.post('/register', registerAdmin); 
 router.post('/create-admin', adminAuth, createAdmin);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 
-
 router.get('/dashboard', adminAuth, getDashboardStats);
 router.get('/analytics', adminAuth, getAnalytics);
-
 
 router.get('/users', adminAuth, getAllUsers);
 router.patch('/users/:userId/status', adminAuth, updateUserStatus);
 router.delete('/users/:userId', adminAuth, deleteUser);
 router.get('/users/:userId/resume', adminAuth, getUserResume);
 router.get("/jobseekers", adminAuth, getAllJobseekers);
+router.post('/jobseekers/send-resume-notifications', adminAuth, sendResumeNotifications);
 router.get("/employers", adminAuth, getAllEmployers);
-
 
 router.get('/users/:userId/activity', adminAuth, getUserActivity);
 router.post('/users/:userId/warn', adminAuth, warnUser);

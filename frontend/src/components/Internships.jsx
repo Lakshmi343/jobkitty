@@ -265,38 +265,39 @@ const Internships = () => {
     filters: store.job.filters || {}
   }));
 
-  // Initialize filters from URL on mount and when URL changes
+
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const filtersFromUrl = {
-      jobType: 'Internship' // Always set jobType to 'Internship' for this page
+      jobType: 'Internship' 
+   
     };
 
-    // Get role from search query or URL params
+
     const roleFromUrl = searchParams.get('q') || '';
     
-    // Get category from URL params
+ 
     if (params.category) {
       filtersFromUrl.categoryId = params.category.replace(/-/g, ' ');
     }
     
-    // Get location from URL params
+    
     if (params.location) {
       filtersFromUrl.location = params.location.replace(/-/g, ' ');
     }
 
-    // Get other filters from search params
+   
     if (searchParams.has('salary')) filtersFromUrl.salaryRange = searchParams.get('salary');
     if (searchParams.has('experience')) filtersFromUrl.experienceRange = searchParams.get('experience');
     if (searchParams.has('companyType')) filtersFromUrl.companyType = searchParams.get('companyType');
     if (searchParams.has('datePosted')) filtersFromUrl.datePosted = searchParams.get('datePosted');
 
-    // Update Redux store with filters from URL
+
     dispatch(setSearchedQuery(roleFromUrl));
     dispatch(setJobFilters(filtersFromUrl));
   }, [dispatch, location.search, params]);
 
-  // Fetch jobs on component mount and when filters change
+
   useEffect(() => {
     const fetchJobs = async () => {
       try {
@@ -336,7 +337,7 @@ const Internships = () => {
     console.log('Filtering internships with filters:', filters);
     
     return allJobs.filter((job) => {
-      // Debug info for each job being filtered
+   
       console.log('Checking job:', {
         id: job._id,
         title: job.title,
@@ -596,7 +597,7 @@ const Internships = () => {
           </div>
         </div>
       </div>
-      <Footer />
+     
     </>
   );
 };
