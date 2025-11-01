@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Homepage -->
+
   <url>
     <loc>https://jobkitty.in/</loc>
     <lastmod>2025-10-27</lastmod>
@@ -8,7 +8,7 @@
     <priority>1.0</priority>
   </url>
 
-  <!-- Public Pages -->
+ 
   <url>
     <loc>https://jobkitty.in/jobs</loc>
     <lastmod>2025-10-27</lastmod>
@@ -35,7 +35,7 @@
   </url>
   
 
-  <!-- Authentication Pages -->
+  
   <url>
     <loc>https://jobkitty.in/login</loc>
     <lastmod>2025-10-27</lastmod>
@@ -56,19 +56,6 @@
   </url>
 
 
-  <!-- Jobseeker Protected Pages -->
  
-
-  
-
-  <!-- Dynamic Job Pages (Example pattern, should be generated dynamically in production) -->
-  <!-- 
-  <url>
-    <loc>https://yourdomain.com/job/123</loc>
-    <lastmod>2025-10-27</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  -->
 
 </urlset>
