@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { ADMIN_API_END_POINT } from '../../utils/constant';
+import { ADMIN_API_END_POINT, BASE_URL } from '../../utils/constant';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -22,13 +22,53 @@ const AdminForgotPassword = () => {
       return;
     }
 
-    setLoading(true);
-    try {
-      const response = await axios.post(`${ADMIN_API_END_POINT}/forgot-password`, {
-        email
-      });
+    // Simple email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
 
-      if (response.data.success) {
+    setLoading(true);
+    
+    try {
+      // First, check if we can reach the backend
+      try {
+        // Try to ping the base URL first
+        await axios.get(BASE_URL, { timeout: 3000 });
+        
+        // Then check the health endpoint if available
+        try {
+          const healthCheck = await axios.get(`${ADMIN_API_END_POINT.replace('/admin', '')}/health`, {
+            timeout: 3000
+          });
+          
+          if (healthCheck.data?.status !== 'ok') {
+            throw new Error('Backend is not responding properly');
+          }
+        } catch (healthError) {
+          console.warn('Health check failed but continuing with password reset attempt:', healthError);
+          // Continue with password reset even if health check fails
+        }
+      } catch (networkError) {
+        console.error('Network connectivity error:', networkError);
+        throw new Error('Cannot connect to the server. Please check your internet connection and ensure the backend is running.');
+      }
+      
+      // Proceed with forgot password
+      const response = await axios.post(
+        `${ADMIN_API_END_POINT}/forgot-password`,
+        { email },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
+          timeout: 10000, // 10 seconds timeout
+        }
+      );
+
+      if (response.data?.success) {
         setEmailSent(true);
         toast.success('Password reset instructions have been sent to your email');
         
@@ -39,13 +79,22 @@ const AdminForgotPassword = () => {
             autoClose: 10000
           });
         }
+      } else {
+        throw new Error(response.data?.message || 'Failed to process your request');
       }
     } catch (error) {
       console.error('Forgot password error:', error);
-      if (error.response?.data?.message) {
+      
+      if (error.code === 'ERR_NETWORK' || error.message.includes('Network Error')) {
+        toast.error('Cannot connect to the server. Please check your internet connection and try again.');
+      } else if (error.response?.status === 404) {
+        toast.error('No admin account found with this email address');
+      } else if (error.response?.data?.message) {
         toast.error(error.response.data.message);
+      } else if (error.message.includes('timeout') || error.code === 'ECONNABORTED') {
+        toast.error('Request timed out. Please check your connection and try again.');
       } else {
-        toast.error('Could not send reset instructions. Please try again.');
+        toast.error(error.message || 'An unexpected error occurred. Please try again later.');
       }
     } finally {
       setLoading(false);

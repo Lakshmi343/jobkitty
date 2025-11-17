@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://api.jobkitty.in/api/v1';
+export const BASE_URL = import.meta.env.VITE_API_URL || 'https://api.jobkitty.in/api/v1';
 console.log("Loaded BASE_URL:", BASE_URL); 
 
 
@@ -9,4 +9,5 @@ export const COMPANY_API_END_POINT = `${BASE_URL}/company`;
 export const CATEGORY_API_END_POINT = `${BASE_URL}/category`;
 export const ADMIN_API_END_POINT = `${BASE_URL}/admin`;
 export const CONTACT_API_END_POINT = `${BASE_URL}/contact`;
+export const JOBFAIR_API_END_POINT = `${BASE_URL}/jobfair`;
 

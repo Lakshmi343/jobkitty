@@ -125,7 +125,7 @@
 
 import React, { useState } from 'react'
 import { Button } from './ui/button'
-import { Bookmark, BookmarkCheck, MapPin, Clock } from 'lucide-react'
+import { Bookmark, BookmarkCheck, MapPin, Clock, Briefcase } from 'lucide-react'
 import { Avatar, AvatarImage } from './ui/avatar'
 import { Badge } from './ui/badge'
 import { useNavigate } from 'react-router-dom'
@@ -141,6 +141,35 @@ const Job = ({ job }) => {
     const currentTime = new Date()
     const timeDifference = currentTime - createdAt
     return Math.floor(timeDifference / (1000 * 60 * 60 * 24))
+  }
+
+  // Format experience for display
+  const formatExperience = (experience, experienceLevel) => {
+    if (experienceLevel) {
+      // Use experienceLevel if available
+      if (experienceLevel === 'Fresher') return 'Fresher (0 years)'
+      if (experienceLevel === 'Entry Level') return '0-1 years'
+      if (experienceLevel === 'Mid Level') return '2-5 years'
+      if (experienceLevel === 'Senior Level') return '5+ years'
+      return experienceLevel
+    }
+    
+    if (experience?.min !== undefined && experience?.max !== undefined) {
+      const min = experience.min
+      const max = experience.max
+      
+      // Format based on values
+      if (min === 0 && max === 0) return 'Fresher (0 years)'
+      if (min === 0 && max === 1) return '0-1 years'
+      if (min >= 1 && max <= 3) return '1-3 years'
+      if (min >= 3 && max <= 5) return '3-5 years'
+      if (min >= 5) return '5+ years'
+      
+      // Default format
+      return `${min}-${max} years`
+    }
+    
+    return 'Not specified'
   }
 
   return (
@@ -221,6 +250,20 @@ const Job = ({ job }) => {
         </div>
       </div>
 
+      {/* Experience and Job Type */}
+      <div className="mb-4 flex flex-wrap gap-2">
+        {job?.experience && (
+          <Badge className="bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 text-xs px-2 py-1 rounded-lg flex items-center gap-1">
+            <Briefcase className="w-3 h-3" />
+            {formatExperience(job.experience, job.experienceLevel)}
+          </Badge>
+        )}
+        {job?.jobType && (
+          <Badge className="bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 text-xs px-2 py-1 rounded-lg">
+            {job.jobType}
+          </Badge>
+        )}
+      </div>
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-auto pt-4 border-t border-gray-100">
         <div className="flex items-center gap-2">
@@ -230,7 +273,7 @@ const Job = ({ job }) => {
               : `₹${Number(job?.salary || 0).toLocaleString()}`}
           </span>
           <span className="text-sm text-gray-500">
-            {typeof job?.salary === 'object' ? '' : '/year'}
+            {typeof job?.salary === 'object' ? ' LPA' : '/year'}
           </span>
         </div>
         <Button

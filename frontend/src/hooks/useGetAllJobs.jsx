@@ -33,7 +33,7 @@ const useGetAllJobs = () => {
                     if (ok) {
                         const token2 = authUtils.getAccessToken?.() || localStorage.getItem('accessToken') || '';
                         const res2 = await axios.get(
-                            `${JOB_API_END_POINT}/get?keyword=${encodeURIComponent(searchedQuery || '')}`,
+                            `${JOB_API_END_POINT}/get${searchedQuery ? `?keyword=${encodeURIComponent(searchedQuery)}` : ''}`,
                             {
                                 withCredentials: true,
                                 headers: token2 ? { Authorization: `Bearer ${token2}` } : {}
@@ -48,7 +48,9 @@ const useGetAllJobs = () => {
                     console.error('Error in token refresh:', innerError);
                 }
                 console.error('Error fetching jobs:', error);
-                setError(error.message || 'Failed to fetch jobs');
+                console.error('Error response:', error.response?.data);
+                console.error('Error status:', error.response?.status);
+                setError(error.response?.data?.message || error.message || 'Failed to fetch jobs');
             } finally {
                 setIsLoading(false);
             }

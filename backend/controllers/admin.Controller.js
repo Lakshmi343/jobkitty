@@ -13,6 +13,9 @@ import getDataUri from '../utils/datauri.js';
 import cloudinary from '../utils/cloudinary.js';
 import axios from 'axios';
 import { sendAdminPasswordResetEmail } from '../utils/emailService.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 
 const logActivity = async (adminId, action, target, targetId, details) => {
@@ -997,6 +1000,8 @@ export const postJobAdmin = async (req, res) => {
       description, 
       requirements, 
       salary, 
+      experience,
+      experienceLevel,
       location, 
       locationMulti,
       jobType, 
@@ -1093,6 +1098,8 @@ export const postJobAdmin = async (req, res) => {
     // Set default values for missing fields
     const defaultRequirements = requirements && requirements.length > 0 ? requirements : ["No specific requirements"];
     const defaultSalary = salary || { min: 0, max: 0 };
+    const defaultExperience = experience || { min: 0, max: 5 };
+    const defaultExperienceLevel = experienceLevel || "Entry Level";
    // Itha nammal kandath - problem ulla code
 const defaultLocation = location ? {
   state: location.state || "Tamil Nadu",  // ← Itho problem! Always "Tamil Nadu" varum
@@ -1127,6 +1134,11 @@ const defaultLocation = location ? {
         min: defaultSalary.min ? Number(defaultSalary.min) : 0,
         max: defaultSalary.max ? Number(defaultSalary.max) : 0
       },
+      experience: {
+        min: defaultExperience.min !== undefined ? Number(defaultExperience.min) : 0,
+        max: defaultExperience.max !== undefined ? Number(defaultExperience.max) : 5
+      },
+      experienceLevel: defaultExperienceLevel,
       location: defaultLocation,
       locationMulti: normalizedLocationMulti,
       jobType: defaultJobType,
@@ -2171,16 +2183,17 @@ export const forgotPassword = async (req, res) => {
     await admin.save();
 
     // Construct reset link with proper environment handling
-    let frontendUrl;
-    if (process.env.NODE_ENV === 'production') {
-      // In production, use FRONTEND_URL or fallback to jobkitty.in
-      frontendUrl = process.env.FRONTEND_URL || 
-                   process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` :
-                   process.env.NETLIFY_URL || 
-                   'https://jobkitty.in'; // Updated to use jobkitty.in
-    } else {
-      // Development environment
-      frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    let frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    
+    // Handle Vercel and Netlify URLs if FRONTEND_URL is not set
+    if (!process.env.FRONTEND_URL) {
+      if (process.env.VERCEL_URL) {
+        frontendUrl = `https://${process.env.VERCEL_URL}`;
+      } else if (process.env.NETLIFY) {
+        frontendUrl = `https://${process.env.URL || 'jobkitty.in'}`;
+      } else if (process.env.NODE_ENV === 'production') {
+        frontendUrl = 'https://jobkitty.in';
+      }
     }
     
     const resetLink = `${frontendUrl}/admin/reset-password?token=${resetToken}`;
@@ -2204,101 +2217,23 @@ export const forgotPassword = async (req, res) => {
 
   } catch (error) {
     console.error('Forgot password error:', error);
+    
+    let errorMessage = 'Internal server error';
+    if (error.name === 'ValidationError') {
+      errorMessage = 'Validation error occurred';
+    } else if (error.name === 'MongoError') {
+      errorMessage = 'Database error occurred';
+    }
+    
     res.status(500).json({
-      message: "Internal server error",
-      success: false
+      message: errorMessage,
+      success: false,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
 // Reset Password
-// Send resume notifications to candidates
-export const sendResumeNotifications = async (req, res) => {
-    try {
-        // Get all jobseeker users
-        const jobseekers = await User.find({ role: 'jobseeker' })
-            .select('email fullName profile.resume')
-            .lean();
-
-        if (!jobseekers || jobseekers.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: 'No jobseekers found'
-            });
-        }
-
-        let successCount = 0;
-        let failCount = 0;
-        const results = [];
-
-        // Process each jobseeker
-        for (const jobseeker of jobseekers) {
-            try {
-                const hasResume = !!(jobseeker.profile?.resume);
-                const result = await sendResumeNotificationEmail(
-                    jobseeker.email,
-                    jobseeker.fullName,
-                    hasResume
-                );
-
-                if (result.success) {
-                    successCount++;
-                    results.push({
-                        email: jobseeker.email,
-                        status: 'success',
-                        hasResume,
-                        messageId: result.messageId
-                    });
-                } else {
-                    failCount++;
-                    results.push({
-                        email: jobseeker.email,
-                        status: 'failed',
-                        hasResume,
-                        error: result.error
-                    });
-                }
-            } catch (error) {
-                console.error(`Error processing ${jobseeker.email}:`, error);
-                failCount++;
-                results.push({
-                    email: jobseeker.email,
-                    status: 'error',
-                    error: error.message
-                });
-            }
-        }
-
-        // Log the activity
-        await logActivity(
-            req.user._id,
-            'send_resume_notifications',
-            'jobseekers',
-            null,
-            `Sent resume notifications to ${successCount} jobseekers (${failCount} failed)`
-        );
-
-        res.status(200).json({
-            success: true,
-            message: `Resume notifications sent to ${successCount} jobseekers`,
-            stats: {
-                total: jobseekers.length,
-                success: successCount,
-                failed: failCount
-            },
-            results
-        });
-
-    } catch (error) {
-        console.error('Error sending resume notifications:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to send resume notifications',
-            error: error.message
-        });
-    }
-};
-
 export const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
@@ -2347,9 +2282,20 @@ export const resetPassword = async (req, res) => {
 
   } catch (error) {
     console.error('Reset password error:', error);
+    
+    let errorMessage = 'Internal server error';
+    if (error.name === 'ValidationError') {
+      errorMessage = 'Validation error occurred';
+    } else if (error.name === 'MongoError') {
+      errorMessage = 'Database error occurred';
+    } else if (error.name === 'CastError') {
+      errorMessage = 'Invalid data format';
+    }
+    
     res.status(500).json({
-      message: "Internal server error",
-      success: false
+      message: errorMessage,
+      success: false,
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

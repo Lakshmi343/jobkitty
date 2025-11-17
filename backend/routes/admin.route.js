@@ -20,7 +20,6 @@ updateJobDetailsAdmin, postJobAdmin, getJobForEdit, updateJobAdmin, getAllCompan
     suspendUser,
     getAdminActivity,
     enforceCompliance,
-    sendResumeNotifications,
     forgotPassword,
     resetPassword,
     getAllApplications,
@@ -49,7 +48,6 @@ router.patch('/users/:userId/status', adminAuth, updateUserStatus);
 router.delete('/users/:userId', adminAuth, deleteUser);
 router.get('/users/:userId/resume', adminAuth, getUserResume);
 router.get("/jobseekers", adminAuth, getAllJobseekers);
-router.post('/jobseekers/send-resume-notifications', adminAuth, sendResumeNotifications);
 router.get("/employers", adminAuth, getAllEmployers);
 
 router.get('/users/:userId/activity', adminAuth, getUserActivity);

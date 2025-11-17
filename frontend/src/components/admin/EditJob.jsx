@@ -350,7 +350,7 @@ const EditJob = () => {
                         requirements: job.requirements ? job.requirements.join(", ") : "",
                         salaryMin: job.salary?.min?.toString() || "",
                         salaryMax: job.salary?.max?.toString() || "",
-                        experienceLevel: job.experienceLevel?.toString() || "",
+                        experienceLevel: job.experienceLevel || "",
                         expMin: job.experience?.min?.toString() || "",
                         expMax: job.experience?.max?.toString() || "",
                         location: job.location || "",
@@ -390,7 +390,7 @@ const EditJob = () => {
                 experience: { min: Number(input.expMin), max: Number(input.expMax) },
                 location: input.location,
                 jobType: input.jobType,
-                experienceLevel: Number(input.experienceLevel),
+                experienceLevel: input.experienceLevel,
                 position: Number(input.position),
                 openings: input.openings ? Number(input.openings) : undefined,
                 category: input.category
@@ -455,16 +455,29 @@ const EditJob = () => {
                             <Input type="number" name="salaryMax" value={input.salaryMax} onChange={changeEventHandler} min={input.salaryMin || 0} className="mt-1" />
                         </div>
                         <div>
-                            <Label>Experience Level (years)*</Label>
-                            <Input type="number" name="experienceLevel" value={input.experienceLevel} onChange={changeEventHandler} min="0" className="mt-1" />
+                            <Label>Experience Level*</Label>
+                            <Select 
+                                value={input.experienceLevel} 
+                                onValueChange={(value) => selectChangeHandler("experienceLevel", value)}
+                            >
+                                <SelectTrigger className="mt-1">
+                                    <SelectValue placeholder="Select experience level" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Fresher">Fresher (0 years)</SelectItem>
+                                    <SelectItem value="Entry Level">Entry Level (0-1 years)</SelectItem>
+                                    <SelectItem value="Mid Level">Mid Level (2-5 years)</SelectItem>
+                                    <SelectItem value="Senior Level">Senior Level (5+ years)</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                         <div>
-                            <Label>Experience Min*</Label>
-                            <Input type="number" name="expMin" value={input.expMin} onChange={changeEventHandler} min="0" className="mt-1" />
+                            <Label>Experience Min (years)*</Label>
+                            <Input type="number" name="expMin" value={input.expMin} onChange={changeEventHandler} min="0" placeholder="e.g., 0" className="mt-1" />
                         </div>
                         <div>
-                            <Label>Experience Max*</Label>
-                            <Input type="number" name="expMax" value={input.expMax} onChange={changeEventHandler} min={input.expMin || 0} className="mt-1" />
+                            <Label>Experience Max (years)*</Label>
+                            <Input type="number" name="expMax" value={input.expMax} onChange={changeEventHandler} min={input.expMin || 0} placeholder="e.g., 1" className="mt-1" />
                         </div>
                         <div>
                             <Label>Location*</Label>

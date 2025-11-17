@@ -260,19 +260,29 @@ const Jobs = () => {
       }
 
       if (filters.experienceRange) {
+        const jobMinExp = job.experience?.min || 0;
         const jobMaxExp = job.experience?.max || job.experience?.min || 0;
         switch (filters.experienceRange) {
+          case "Fresher (0 years)":
+          case "Fresher":
+            // Fresher means 0 years experience
+            if (jobMinExp > 0 || jobMaxExp > 0) return false;
+            break;
           case "0-1 years":
+            // 0-1 years means max should be <= 1
             if (jobMaxExp > 1) return false;
             break;
           case "1-3 years":
-            if (jobMaxExp < 1 || jobMaxExp > 3) return false;
+            // 1-3 years means min should be >= 1 and max <= 3
+            if (jobMinExp < 1 || jobMaxExp > 3) return false;
             break;
           case "3-5 years":
-            if (jobMaxExp < 3 || jobMaxExp > 5) return false;
+            // 3-5 years means min should be >= 3 and max <= 5
+            if (jobMinExp < 3 || jobMaxExp > 5) return false;
             break;
           case "5+ years":
-            if (jobMaxExp < 5) return false;
+            // 5+ years means min should be >= 5
+            if (jobMinExp < 5) return false;
             break;
           default:
             break;

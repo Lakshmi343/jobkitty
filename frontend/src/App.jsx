@@ -34,6 +34,10 @@ import AdminCategories from './components/admin/AdminCategories';
 import AdminAnalytics from './components/admin/AdminAnalytics';
 import AdminApplications from './components/admin/AdminApplications';
 import AdminCVManagement from './components/admin/AdminCVManagement';
+import AdminJobFairs from './components/admin/AdminJobFairs';
+import AdminJobFairForm from './components/admin/AdminJobFairForm';
+import JobFairs from './components/jobfair/JobFairs';
+import JobFairDetail from './components/jobfair/JobFairDetail';
 import JobseekerTable from './components/admin/JobseekerTable';
 import EmployerTable from './components/admin/EmployerTable';
 import AdminManagement from './components/admin/AdminManagement';
@@ -298,11 +302,57 @@ const appRouter = createBrowserRouter([
     element: <AdminResetPassword />
   },
   {
+    path: '/job-fair',
+    element: (
+      <Layout>
+        <JobFairs />
+      </Layout>
+    )
+  },
+  {
+    path: '/job-fair/:id',
+    element: (
+      <Layout>
+        <JobFairDetail />
+      </Layout>
+    )
+  },
+  {
     path: "/admin/dashboard",
     element: (
       <AdminProtectedRoute>
         <AdminLayout>
           <AdminDashboard />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/jobfairs",
+    element: (
+      <AdminProtectedRoute allowedRoles={['super_admin', 'superadmin']}>
+        <AdminLayout>
+          <AdminJobFairs />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/jobfairs/new",
+    element: (
+      <AdminProtectedRoute allowedRoles={['super_admin', 'superadmin']}>
+        <AdminLayout>
+          <AdminJobFairForm />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/jobfairs/:id/edit",
+    element: (
+      <AdminProtectedRoute allowedRoles={['super_admin', 'superadmin']}>
+        <AdminLayout>
+          <AdminJobFairForm />
         </AdminLayout>
       </AdminProtectedRoute>
     )

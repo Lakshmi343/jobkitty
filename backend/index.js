@@ -13,7 +13,9 @@ import applicationRoute from "./routes/application.route.js";
 import categoryRoute from "./routes/category.route.js";
 import contactRoute from "./routes/contact.route.js";
 import adminRoute from "./routes/admin.route.js"
+import jobFairRoute from "./routes/jobfair.route.js";
 
+dotenv.config();
 const app = express();
 
 app.use(express.json());
@@ -23,6 +25,7 @@ app.use(helmet());
 
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:5174",
   "http://localhost:8000",
   "https://jobkitty.in",
   "https://www.jobkitty.in",
@@ -35,17 +38,20 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-   
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `CORS policy: ${origin} not allowed`;
+      console.error(msg);
+      return callback(new Error(msg), false);
     }
-    return callback(new Error("Not allowed by CORS: " + origin), false);
+    return callback(null, true);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-Forwarded-For", "X-Forwarded-Proto"],
   exposedHeaders: ["Content-Disposition"],
+  optionsSuccessStatus: 200, 
+  preflightContinue: false
 };
 
 app.use(cors(corsOptions));
@@ -60,6 +66,7 @@ app.use("/api/v1/application", applicationRoute);
 app.use("/api/v1/category",categoryRoute);
 app.use("/api/v1/contact", contactRoute);
 app.use("/api/v1/admin",adminRoute)
+app.use("/api/v1/jobfair", jobFairRoute);
 
 
 app.listen(PORT,()=>{

@@ -223,7 +223,7 @@ const EditJob = () => {
     
     const workModes = ["On-site", "Remote", "Hybrid"];
 
-    const experienceLevels = ["Entry Level", "Junior", "Mid-Level", "Senior", "Lead", "Manager", "Executive"];
+    const experienceLevels = ["Fresher", "Entry Level", "Mid Level", "Senior Level"];
 
     if (fetching) {
         return (
@@ -490,7 +490,7 @@ const EditJob = () => {
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="px-0 pb-0">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <Label>Experience Level*</Label>
                                     <Select
@@ -502,32 +502,33 @@ const EditJob = () => {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectGroup>
-                                                {experienceLevels.map(level => (
-                                                    <SelectItem key={level} value={level}>{level}</SelectItem>
-                                                ))}
+                                                <SelectItem value="Fresher">Fresher (0 years)</SelectItem>
+                                                <SelectItem value="Entry Level">Entry Level (0-1 years)</SelectItem>
+                                                <SelectItem value="Mid Level">Mid Level (2-5 years)</SelectItem>
+                                                <SelectItem value="Senior Level">Senior Level (5+ years)</SelectItem>
                                             </SelectGroup>
                                         </SelectContent>
                                     </Select>
                                 </div>
                                 <div>
-                                    <Label>Minimum Experience (years)*</Label>
+                                    <Label>Experience Min (years)*</Label>
                                     <Input 
                                         type="number" 
                                         name="experienceMin" 
                                         value={input.experienceMin} 
                                         onChange={changeEventHandler} 
-                                        placeholder="e.g., 2"
+                                        placeholder="e.g., 0"
                                         min="0"
                                     />
                                 </div>
                                 <div>
-                                    <Label>Maximum Experience (years)*</Label>
+                                    <Label>Experience Max (years)*</Label>
                                     <Input 
                                         type="number" 
                                         name="experienceMax" 
                                         value={input.experienceMax} 
                                         onChange={changeEventHandler} 
-                                        placeholder="e.g., 5"
+                                        placeholder="e.g., 1"
                                         min={input.experienceMin || 0}
                                     />
                                 </div>

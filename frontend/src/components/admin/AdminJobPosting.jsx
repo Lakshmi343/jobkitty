@@ -29,6 +29,9 @@ const AdminJobPosting = () => {
         requirements: [],
         salaryMin: "",
         salaryMax: "",
+        experienceMin: "",
+        experienceMax: "",
+        experienceLevel: "",
         location: {
             state: "",
             district: "",
@@ -167,7 +170,9 @@ const AdminJobPosting = () => {
                jobData.jobType &&
                jobData.salaryMin && 
                jobData.salaryMax && 
-               jobData.openings;
+               jobData.openings &&
+               (jobData.experienceMin !== "" || jobData.experienceMin === "0") &&
+               (jobData.experienceMax !== "" || jobData.experienceMax === "0");
     };
 
     const nextStep = () => {
@@ -203,6 +208,11 @@ const AdminJobPosting = () => {
                     min: Number(jobData.salaryMin),
                     max: Number(jobData.salaryMax)
                 },
+                experience: {
+                    min: Number(jobData.experienceMin || 0),
+                    max: Number(jobData.experienceMax || 5)
+                },
+                experienceLevel: jobData.experienceLevel || "Entry Level",
                 location: jobData.location, 
                 jobType: jobData.jobType,
                 position: jobData.position || 1,
@@ -564,6 +574,55 @@ const AdminJobPosting = () => {
                                             placeholder="e.g., 2"
                                             required
                                             min="1"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="grid md:grid-cols-3 gap-6">
+                                    <div>
+                                        <Label>Experience Level *</Label>
+                                        <Select
+                                            name="experienceLevel"
+                                            value={jobData.experienceLevel}
+                                            onValueChange={(value) => selectChangeHandler("experienceLevel", value)}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select experience level" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    <SelectItem value="Fresher">Fresher (0 years)</SelectItem>
+                                                    <SelectItem value="Entry Level">Entry Level (0-1 years)</SelectItem>
+                                                    <SelectItem value="Mid Level">Mid Level (2-5 years)</SelectItem>
+                                                    <SelectItem value="Senior Level">Senior Level (5+ years)</SelectItem>
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label>Experience Min (years) *</Label>
+                                        <Input
+                                            name="experienceMin"
+                                            type="number"
+                                            inputMode="numeric"
+                                            value={jobData.experienceMin}
+                                            onChange={handleJobChange}
+                                            placeholder="e.g., 0"
+                                            required
+                                            min="0"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>Experience Max (years) *</Label>
+                                        <Input
+                                            name="experienceMax"
+                                            type="number"
+                                            inputMode="numeric"
+                                            value={jobData.experienceMax}
+                                            onChange={handleJobChange}
+                                            placeholder="e.g., 1"
+                                            required
+                                            min="0"
                                         />
                                     </div>
                                 </div>

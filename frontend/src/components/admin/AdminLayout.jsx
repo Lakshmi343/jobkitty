@@ -45,6 +45,7 @@ const AdminLayout = ({ children }) => {
           { name: 'Jobseeker Management', href: '/admin/jobseeker-management', icon: Users },
           { name: 'Employer Management', href: '/admin/employer-management', icon: Building2 },
           { name: 'User Management', href: '/admin/user-management', icon: Shield },
+          { name: 'Job Fairs', href: '/admin/jobfairs', icon: Flag },
         ],
       }]
     : [];

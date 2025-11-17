@@ -17,7 +17,7 @@ const LOCATIONS = [
 
 const JOB_TYPES = ["Full-time", "Part-time", "Contract", "Internship", "Temporary"];
 const SALARY = ["0-40k", "42-1lakh", "1lakh to 5lakh", "5lakh+"];
-const EXPERIENCE = ["Fresher", "0-1 years", "1-3 years", "3-5 years", "5+ years"];
+const EXPERIENCE = ["Fresher (0 years)", "0-1 years", "1-3 years", "3-5 years", "5+ years"];
 const DATE_POSTED = [
   { value: '', label: 'All Time' },
   { value: 'today', label: 'Today' },

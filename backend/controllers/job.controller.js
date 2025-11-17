@@ -165,7 +165,8 @@ export const getAllJobs = async (req, res) => {
             salaryMin = 0,
             salaryMax = 0,
             experienceMin = 0,
-            experienceMax = 0
+            experienceMax = 0,
+            experience = "" // Support experience string like "Fresher (0 years)", "0-1 years", etc.
         } = req.query;
 
         // Build dynamic query
@@ -214,12 +215,76 @@ export const getAllJobs = async (req, res) => {
             conditions.push(salaryCondition);
         }
 
-        // Experience range filter
-        if (experienceMin >= 0 || experienceMax > 0) {
+        // Experience range filter - parse experience string if provided
+        let parsedExpMin = null;
+        let parsedExpMax = null;
+        let hasExperienceFilter = false;
+        
+        // Check if experience filter is provided via string
+        if (experience) {
+            hasExperienceFilter = true;
+            // Parse experience string from frontend
+            const expStr = experience.toLowerCase().trim();
+            if (expStr.includes("fresher") || expStr === "0 years" || expStr === "fresher (0 years)") {
+                parsedExpMin = 0;
+                parsedExpMax = 0;
+            } else if (expStr === "0-1 years") {
+                parsedExpMin = 0;
+                parsedExpMax = 1;
+            } else if (expStr === "1-3 years") {
+                parsedExpMin = 1;
+                parsedExpMax = 3;
+            } else if (expStr === "3-5 years") {
+                parsedExpMin = 3;
+                parsedExpMax = 5;
+            } else if (expStr.includes("5+") || expStr.includes("5+ years")) {
+                parsedExpMin = 5;
+                parsedExpMax = 999; // No upper limit
+            }
+        } else if (experienceMin || experienceMax) {
+            // Check if experience filter is provided via numeric values
+            hasExperienceFilter = true;
+            parsedExpMin = experienceMin ? parseInt(experienceMin) : 0;
+            parsedExpMax = experienceMax ? parseInt(experienceMax) : null;
+        }
+
+        // Apply experience filter only if one was provided
+        if (hasExperienceFilter && (parsedExpMin !== null || parsedExpMax !== null)) {
             let expCondition = {};
-            if (experienceMin >= 0) expCondition['experience.min'] = { $gte: parseInt(experienceMin) };
-            if (experienceMax > 0) expCondition['experience.max'] = { $lte: parseInt(experienceMax) };
-            conditions.push(expCondition);
+            
+            // Special case for Fresher (0 years)
+            if (parsedExpMin === 0 && parsedExpMax === 0) {
+                expCondition = {
+                    'experience.min': { $eq: 0 },
+                    'experience.max': { $eq: 0 }
+                };
+            } else if (parsedExpMax === 999) {
+                // 5+ years: job's min experience should be >= 5
+                expCondition = {
+                    'experience.min': { $gte: parsedExpMin }
+                };
+            } else {
+                // For ranges like 0-1, 1-3, 3-5: job should overlap with the range
+                // Job's min should be <= max requirement and job's max should be >= min requirement
+                if (parsedExpMin !== null && parsedExpMax !== null) {
+                    expCondition = {
+                        'experience.min': { $lte: parsedExpMax },
+                        'experience.max': { $gte: parsedExpMin }
+                    };
+                } else if (parsedExpMin !== null) {
+                    expCondition = {
+                        'experience.min': { $gte: parsedExpMin }
+                    };
+                } else if (parsedExpMax !== null) {
+                    expCondition = {
+                        'experience.max': { $lte: parsedExpMax }
+                    };
+                }
+            }
+            
+            if (Object.keys(expCondition).length > 0) {
+                conditions.push(expCondition);
+            }
         }
 
         // Combine all conditions
