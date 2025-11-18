@@ -1,8 +1,8 @@
 /**
  * Generates JSON-LD structured data for job postings
- * @param {Object} job - The job object
- * @param {string} baseUrl - The base URL of the website
- * @returns {Object} JSON-LD structured data
+ * @param {Object} job 
+ * @param {string} baseUrl 
+ * @returns {Object} 
  */
 export const generateJobPostingSchema = (job, baseUrl) => {
   if (!job) return null;
@@ -70,7 +70,7 @@ export const generateJobPostingSchema = (job, baseUrl) => {
  * @param {string} baseUrl - The base URL of the website
  */
 export const addJobPostingSchema = (job, baseUrl) => {
-  // Remove any existing job posting schema
+
   const existingSchema = document.querySelector('script[type="application/ld+json"]');
   if (existingSchema) {
     existingSchema.remove();

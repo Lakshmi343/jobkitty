@@ -1,6 +1,6 @@
 import { toast } from 'react-toastify';
 
-// Success toast notification
+
 export const showSuccessToast = (message) => {
   toast.success(message, {
     position: "top-right",
@@ -12,7 +12,7 @@ export const showSuccessToast = (message) => {
   });
 };
 
-// Error toast notification
+
 export const showErrorToast = (message) => {
   toast.error(message, {
     position: "top-right",
@@ -24,7 +24,7 @@ export const showErrorToast = (message) => {
   });
 };
 
-// Info toast notification
+
 export const showInfoToast = (message) => {
   toast.info(message, {
     position: "top-right",
@@ -36,7 +36,7 @@ export const showInfoToast = (message) => {
   });
 };
 
-// Warning toast notification
+
 export const showWarningToast = (message) => {
   toast.warning(message, {
     position: "top-right",

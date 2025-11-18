@@ -10,12 +10,15 @@ import { setJobFilters, setSearchedQuery, setAllJobs } from "@/redux/jobSlice";
 import { JOB_API_END_POINT } from "@/utils/constant";
 import axios from "axios";
 import { useLocation, useParams } from 'react-router-dom';
+import useGetAllJobs from "@/hooks/useGetAllJobs";
 
 const Jobs = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const params = useParams();
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoadMore, setIsLoadMore] = useState(false);
 
   const { allJobs = [], searchedQuery = "", filters = {} } = useSelector((store) => ({
     allJobs: store.job.allJobs || [],
@@ -57,38 +60,31 @@ const Jobs = () => {
     dispatch(setJobFilters(filtersFromUrl));
   }, [dispatch, location.search, params]);
 
-  // Fetch jobs on component mount and when filters change
+  // Use the useGetAllJobs hook for initial load and pagination
+  const { isLoading, isLoadingMore, error: hookError, pagination } = useGetAllJobs({ 
+    page: isLoadMore ? currentPage : 1, 
+    limit: 20, 
+    append: isLoadMore 
+  });
+
+  // Update error state from hook
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        setError(null);
-        
-        // Build query parameters from filters
-        const params = new URLSearchParams();
-        if (searchedQuery) params.append('keyword', searchedQuery);
-        if (filters.location) params.append('location', filters.location);
-        if (filters.jobType) params.append('jobType', filters.jobType);
-        if (filters.salaryRange) params.append('salary', filters.salaryRange);
-        if (filters.experienceRange) params.append('experience', filters.experienceRange);
-        if (filters.categoryId) params.append('category', filters.categoryId);
-        if (filters.companyType) params.append('companyType', filters.companyType);
-        if (filters.datePosted) params.append('datePosted', filters.datePosted);
+    if (hookError) {
+      setError(hookError);
+    }
+  }, [hookError]);
 
-        const response = await axios.get(`${JOB_API_END_POINT}/get?${params.toString()}`);
-        
-        if (response.data.success) {
-          dispatch(setAllJobs(response.data.jobs || []));
-        } else {
-          setError("Failed to load jobs. Please try again later.");
-        }
-      } catch (err) {
-        console.error("Error fetching jobs:", err);
-        setError("Failed to load jobs. Please check your connection and try again.");
-      }
-    };
+  // Handle load more functionality
+  const handleLoadMore = () => {
+    setCurrentPage(prev => prev + 1);
+    setIsLoadMore(true);
+  };
 
-    fetchJobs();
-  }, [dispatch, searchedQuery, filters]);
+  // Reset pagination when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+    setIsLoadMore(false);
+  }, [searchedQuery, filters]);
 
   const filterJobs = useMemo(() => {
     console.log('Filtering jobs with filters:', filters);
@@ -292,6 +288,17 @@ const Jobs = () => {
       return true;
     });
   }, [allJobs, searchedQuery, filters]);
+  if (isLoading && !isLoadMore) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading jobs...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -406,10 +413,23 @@ const Jobs = () => {
                   </AnimatePresence>
                 </div>
 
-                {filterJobs.length > 9 && (
+                {pagination?.hasNext && (
                   <div className="mt-8 text-center">
-                    <button className="px-6 py-2 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 transition-colors">
-                      Load More Jobs
+                    <button 
+                      onClick={handleLoadMore}
+                      disabled={isLoadingMore}
+                      className="px-6 py-2 border border-blue-500 text-blue-500 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+                    >
+                      {isLoadingMore ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          Load More Jobs ({allJobs.length} of {pagination?.total || 0})
+                        </>
+                      )}
                     </button>
                   </div>
                 )}
