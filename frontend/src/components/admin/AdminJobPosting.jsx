@@ -66,13 +66,42 @@ const AdminJobPosting = () => {
             try {
                 const token = localStorage.getItem('adminToken');
                 if (!token) throw new Error('Missing admin token');
-                const res = await axios.get(`${ADMIN_API_END_POINT}/companies`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                if (res.data.success) {
-                    setCompanies(res.data.companies || []);
+
+                const fetchPage = async (page = 1) => {
+                    const params = new URLSearchParams({
+                        page: page.toString(),
+                        limit: '200',
+                        status: 'all'
+                    });
+                    return axios.get(`${ADMIN_API_END_POINT}/companies?${params.toString()}`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                };
+
+                const firstResponse = await fetchPage(1);
+                if (!firstResponse.data.success) {
+                    throw new Error('Failed to load companies');
                 }
+
+                let aggregatedCompanies = firstResponse.data.companies || [];
+                const totalPages = firstResponse.data.pagination?.totalPages || 1;
+
+                if (totalPages > 1) {
+                    const remainingRequests = [];
+                    for (let page = 2; page <= totalPages; page++) {
+                        remainingRequests.push(fetchPage(page));
+                    }
+                    const remainingResponses = await Promise.all(remainingRequests);
+                    remainingResponses.forEach((response) => {
+                        if (response.data.success && Array.isArray(response.data.companies)) {
+                            aggregatedCompanies = aggregatedCompanies.concat(response.data.companies);
+                        }
+                    });
+                }
+
+                setCompanies(aggregatedCompanies);
             } catch (error) {
+                console.error('Failed to load companies:', error);
                 toast.error('Failed to load companies');
             }
         };
