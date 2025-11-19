@@ -54,7 +54,7 @@ const CategoryCarousel = () => {
           <p className="text-sm uppercase tracking-[0.3em] text-blue-500 mb-2">
             Explore Categories
           </p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
+          <h2 className="text-3xl sm:text-4xl font-bold text-blue-900 mb-3">
             Find Opportunities by Career Track
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
