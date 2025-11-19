@@ -50,7 +50,17 @@ const CategoryCarousel = () => {
     <div className="w-full py-16 bg-gradient-to-b from-gray-50 via-white to-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Category Heading */}
-        
+        <div className="text-center mb-10">
+          <p className="text-sm uppercase tracking-[0.3em] text-blue-500 mb-2">
+            Explore Categories
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">
+            Find Opportunities by Career Track
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Browse curated job categories and jump straight into the openings that match your skillset.
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           
