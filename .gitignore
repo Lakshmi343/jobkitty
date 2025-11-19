@@ -1,0 +1,16 @@
+# Ignore environment files
+.env
+.env.local
+.env.development
+.env.production
+.env.*   
+
+# Node modules
+node_modules/
+
+# Build / dist
+build/
+dist/
+
+# VS Code
+.vscode/
