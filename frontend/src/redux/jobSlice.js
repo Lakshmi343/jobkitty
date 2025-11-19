@@ -4,6 +4,7 @@ const jobSlice = createSlice({
     name:"job",
     initialState:{
         allJobs:[],
+        pagination: null,
         allAdminJobs:[],
         singleJob:null, 
         searchJobByText:"",
@@ -29,7 +30,36 @@ const jobSlice = createSlice({
     reducers:{
         // actions
         setAllJobs:(state,action) => {
-            state.allJobs = action.payload;
+            const payload = action.payload;
+
+            // Backward compatibility for legacy dispatches
+            if (Array.isArray(payload)) {
+                state.allJobs = payload;
+                return;
+            }
+
+            const { jobs = [], append = false } = payload || {};
+
+            if (!append) {
+                state.allJobs = jobs;
+                return;
+            }
+
+            const existingIds = new Set(state.allJobs.map(job => job?._id?.toString()));
+            const merged = [...state.allJobs];
+
+            jobs.forEach(job => {
+                const id = job?._id?.toString();
+                if (id && !existingIds.has(id)) {
+                    merged.push(job);
+                    existingIds.add(id);
+                }
+            });
+
+            state.allJobs = merged;
+        },
+        setJobPagination:(state, action) => {
+            state.pagination = action.payload || null;
         },
         setSingleJob:(state,action) => {
             state.singleJob = action.payload;
@@ -59,6 +89,7 @@ const jobSlice = createSlice({
 });
 export const {
     setAllJobs, 
+    setJobPagination,
     setSingleJob, 
     setAllAdminJobs,
     setSearchJobByText, 

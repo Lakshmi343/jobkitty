@@ -526,8 +526,169 @@ export const getUserResume = async (req, res) => {
 
 export const getAllJobs = async (req, res) => {
   try {
-    const jobs = await Job.find().populate('company').sort({ createdAt: -1 });
-    res.status(200).json({ success: true, jobs });
+    const {
+      page = 1,
+      limit = 20,
+      status = '',
+      jobType = '',
+      categoryId = '',
+      companyId = '',
+      companyType = '',
+      search = '',
+      dateFrom = '',
+      dateTo = '',
+      postedWithin = '',
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
+    const skip = (pageNum - 1) * limitNum;
+
+    const filter = {};
+
+    if (status && status !== 'all') {
+      filter.status = status;
+    }
+
+    if (jobType) {
+      filter.jobType = { $regex: new RegExp(`^${jobType}$`, 'i') };
+    }
+
+    if (categoryId) {
+      filter.category = categoryId;
+    }
+
+    if (companyId) {
+      filter.company = companyId;
+    }
+
+    if (search) {
+      filter.$or = [
+        { title: { $regex: new RegExp(search, 'i') } },
+        { description: { $regex: new RegExp(search, 'i') } },
+        { 'location.legacy': { $regex: new RegExp(search, 'i') } }
+      ];
+    }
+
+    if (dateFrom || dateTo || postedWithin) {
+      const createdAtCondition = {};
+      if (dateFrom) createdAtCondition.$gte = new Date(dateFrom);
+      if (dateTo) createdAtCondition.$lte = new Date(dateTo);
+
+      if (postedWithin) {
+        const now = new Date();
+        if (postedWithin === 'today') {
+          createdAtCondition.$gte = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        } else if (postedWithin === 'week') {
+          createdAtCondition.$gte = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        } else if (postedWithin === 'month') {
+          createdAtCondition.$gte = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        }
+      }
+
+      if (Object.keys(createdAtCondition).length) {
+        filter.createdAt = createdAtCondition;
+      }
+    }
+
+    if (companyType) {
+      const matchingCompanies = await Company.find({
+        companyType: { $regex: new RegExp(`^${companyType}$`, 'i') }
+      }).select('_id');
+
+      if (!matchingCompanies.length) {
+        return res.status(200).json({
+          success: true,
+          jobs: [],
+          pagination: {
+            total: 0,
+            currentPage: pageNum,
+            limit: limitNum,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: pageNum > 1
+          },
+          stats: {
+            total: 0,
+            status: { pending: 0, approved: 0, rejected: 0 }
+          }
+        });
+      }
+
+      const companyIds = matchingCompanies.map((c) => c._id);
+      filter.company = filter.company
+        ? { $in: companyIds.filter((id) => id.equals(filter.company)) }
+        : { $in: companyIds };
+
+      if (filter.company.$in && !filter.company.$in.length) {
+        return res.status(200).json({
+          success: true,
+          jobs: [],
+          pagination: {
+            total: 0,
+            currentPage: pageNum,
+            limit: limitNum,
+            totalPages: 0,
+            hasNext: false,
+            hasPrev: pageNum > 1
+          },
+          stats: {
+            total: 0,
+            status: { pending: 0, approved: 0, rejected: 0 }
+          }
+        });
+      }
+    }
+
+    const allowedSortFields = ['createdAt', 'title', 'salary.min', 'salary.max'];
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+
+    const [jobs, totalJobs, statusCounts] = await Promise.all([
+      Job.find(filter)
+        .populate('company')
+        .populate('category')
+        .sort({ [sortField]: sortDirection })
+        .skip(skip)
+        .limit(limitNum),
+      Job.countDocuments(filter),
+      Job.aggregate([
+        { $match: filter },
+        { $group: { _id: '$status', count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const statusSummary = statusCounts.reduce((acc, curr) => {
+      if (curr?._id) {
+        acc[curr._id] = curr.count;
+      }
+      return acc;
+    }, {});
+
+    const totalPages = Math.ceil(totalJobs / limitNum) || 0;
+
+    res.status(200).json({
+      success: true,
+      jobs,
+      pagination: {
+        total: totalJobs,
+        currentPage: pageNum,
+        limit: limitNum,
+        totalPages,
+        hasNext: pageNum < totalPages,
+        hasPrev: pageNum > 1
+      },
+      stats: {
+        total: totalJobs,
+        status: {
+          pending: statusSummary.pending || 0,
+          approved: statusSummary.approved || 0,
+          rejected: statusSummary.rejected || 0
+        }
+      }
+    });
   } catch (error) {
     console.error('Get jobs error:', error);
     res.status(500).json({ message: 'Server error', success: false });
@@ -693,8 +854,89 @@ export const updateJobDetailsAdmin = async (req, res) => {
 
 export const getAllCompanies = async (req, res) => {
   try {
-    const companies = await Company.find().sort({ createdAt: -1 });
-    res.status(200).json({ success: true, companies });
+    const {
+      page = 1,
+      limit = 20,
+      status = '',
+      search = '',
+      dateFrom = '',
+      dateTo = '',
+      sortBy = 'createdAt',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
+    const skip = (pageNum - 1) * limitNum;
+
+    const filter = {};
+
+    if (status && status !== 'all') {
+      if (status === 'active') {
+        filter.status = { $in: ['active', 'approved'] };
+      } else {
+        filter.status = status;
+      }
+    }
+
+    if (search) {
+      filter.$or = [
+        { name: { $regex: new RegExp(search, 'i') } },
+        { website: { $regex: new RegExp(search, 'i') } },
+        { location: { $regex: new RegExp(search, 'i') } }
+      ];
+    }
+
+    if (dateFrom || dateTo) {
+      filter.createdAt = {};
+      if (dateFrom) filter.createdAt.$gte = new Date(dateFrom);
+      if (dateTo) filter.createdAt.$lte = new Date(dateTo);
+    }
+
+    const allowedSortFields = ['createdAt', 'name', 'status'];
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+
+    const [companies, totalCompanies, statusCounts] = await Promise.all([
+      Company.find(filter)
+        .sort({ [sortField]: sortDirection })
+        .skip(skip)
+        .limit(limitNum),
+      Company.countDocuments(filter),
+      Company.aggregate([
+        { $match: filter },
+        { $group: { _id: '$status', count: { $sum: 1 } } }
+      ])
+    ]);
+
+    const statusSummary = statusCounts.reduce((acc, curr) => {
+      if (curr?._id) {
+        acc[curr._id] = curr.count;
+      }
+      return acc;
+    }, {});
+
+    const totalPages = Math.ceil(totalCompanies / limitNum) || 0;
+
+    res.status(200).json({
+      success: true,
+      companies,
+      pagination: {
+        total: totalCompanies,
+        currentPage: pageNum,
+        limit: limitNum,
+        totalPages,
+        hasNext: pageNum < totalPages,
+        hasPrev: pageNum > 1
+      },
+      stats: {
+        total: totalCompanies,
+        active: (statusSummary.active || 0) + (statusSummary.approved || 0),
+        pending: statusSummary.pending || 0,
+        suspended: statusSummary.suspended || statusSummary.inactive || 0,
+        byStatus: statusSummary
+      }
+    });
   } catch (error) {
     console.error('Get companies error:', error);
     res.status(500).json({ message: 'Server error', success: false });

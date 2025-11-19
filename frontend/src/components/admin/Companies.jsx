@@ -3,107 +3,82 @@ import { Button } from '../ui/button'
 import { Badge } from '../ui/badge'
 import CompaniesTable from './CompaniesTable'
 import { useNavigate } from 'react-router-dom'
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
-import { COMPANY_API_END_POINT } from '../../utils/constant'
 import { ADMIN_API_END_POINT } from '../../utils/constant'
 import { Building2, Search, TrendingUp, Users, Briefcase } from 'lucide-react'
 import { toast } from 'sonner'
-import { useSelector } from 'react-redux'
+ 
+const PAGE_SIZE = 20
 
 const Companies = () => {
-	const { user } = useSelector(store => store.auth)
 	const [companies, setCompanies] = useState([])
 	const [loading, setLoading] = useState(true)
 	const [input, setInput] = useState("")
+	const [appliedSearch, setAppliedSearch] = useState("")
 	const [statusFilter, setStatusFilter] = useState("all")
 	const [stats, setStats] = useState({ total: 0, active: 0, suspended: 0, pending: 0 })
+	const [page, setPage] = useState(1)
+	const [pagination, setPagination] = useState(null)
 	const navigate = useNavigate()
 
-	useEffect(() => {
-		// Add a small delay to prevent immediate loading state flash
-		const timer = setTimeout(() => {
-			fetchCompanies()
-		}, 100)
-		
-		return () => clearTimeout(timer)
-	}, [])
-
-	const fetchCompanies = async () => {
+	const fetchCompanies = useCallback(async (targetPage = 1) => {
 		try {
 			setLoading(true)
-			// Try different API endpoints
-			let res;
-			try {
-				// First try with admin token (correct token key)
-				const token = localStorage.getItem('adminToken')
-				if (token) {
-					res = await axios.get(`${ADMIN_API_END_POINT}/companies`, {
-						headers: { Authorization: `Bearer ${token}` },
-						timeout: 10000 // 10 second timeout
-					})
-				} else {
-					throw new Error('No admin token found')
-				}
-			} catch (adminError) {
-				console.log('Admin API failed, trying user API:', adminError.message)
-				// Fallback to user API
-				res = await axios.get(`${COMPANY_API_END_POINT}/get`, {
-					withCredentials: true,
-					timeout: 10000
-				})
+			const token = localStorage.getItem('adminToken')
+			if (!token) {
+				toast.error('Authentication required. Please login again.')
+				navigate('/admin/login')
+				return
 			}
-			
+
+			const params = new URLSearchParams()
+			params.set('page', targetPage)
+			params.set('limit', PAGE_SIZE)
+			if (statusFilter !== 'all') params.set('status', statusFilter)
+			if (appliedSearch) params.set('search', appliedSearch.trim())
+
+			const res = await axios.get(`${ADMIN_API_END_POINT}/companies?${params.toString()}`, {
+				headers: { Authorization: `Bearer ${token}` },
+				timeout: 10000
+			})
+
 			if (res.data.success) {
 				const companiesData = res.data.companies || []
 				setCompanies(companiesData)
-				
-				// Calculate stats
-				const statsData = {
-					total: companiesData.length,
-					active: companiesData.filter(c => c.status === 'active' || c.status === 'approved').length,
-					suspended: companiesData.filter(c => c.status === 'suspended').length,
-					pending: companiesData.filter(c => c.status === 'pending').length
-				}
-				setStats(statsData)
-				toast.success(`Loaded ${companiesData.length} companies`)
+				setStats({
+					total: res.data.stats?.total || 0,
+					active: res.data.stats?.active || 0,
+					suspended: res.data.stats?.suspended || 0,
+					pending: res.data.stats?.pending || 0
+				})
+				setPagination(res.data.pagination || null)
 			} else {
-				console.error('API returned unsuccessful response')
 				setCompanies([])
-				toast.error('Unable to load companies. Please try again.')
+				toast.error(res.data.message || 'Unable to load companies. Please try again.')
 			}
 		} catch (error) {
 			console.error('Failed to fetch companies:', error)
+			if (error.response?.status === 401) {
+				toast.error('Session expired. Please login again.')
+				localStorage.removeItem('adminToken')
+				navigate('/admin/login')
+			} else {
+				toast.error('Unable to load companies. Please try again.')
+			}
 			setCompanies([])
-			toast.error('Unable to load companies. Please try again.')
 		} finally {
 			setLoading(false)
 		}
-	}
+	}, [appliedSearch, statusFilter, navigate])
 
-	const filteredCompanies = useMemo(() => {
-		let result = [...companies];
-		
-		// Apply search filter
-		if (input) {
-			result = result.filter((c) => c?.name?.toLowerCase().includes(input.toLowerCase()));
-		}
-		
-		// Apply status filter
-		if (statusFilter !== 'all') {
-			if (statusFilter === 'active') {
-				result = result.filter(c => c.status === 'active' || c.status === 'approved');
-			} else {
-				result = result.filter(c => c.status === statusFilter);
-			}
-		}
-		
-		return result;
-	}, [companies, input, statusFilter])
+	useEffect(() => {
+		fetchCompanies(page)
+	}, [fetchCompanies, page])
 
 	const handleUpdateStatus = async (companyId, status) => {
 		try {
-			const token = localStorage.getItem('adminAccessToken')
+			const token = localStorage.getItem('adminToken')
 			if (!token) {
 				console.error('No admin token available')
 				return
@@ -118,24 +93,12 @@ const Companies = () => {
 				}
 			)
 			if (res.data.success) {
-				// Update local state immediately for better UX
-				setCompanies((prev) => prev.map((c) => 
-					c._id === companyId ? { ...c, status: status } : c
-				))
-				// Update stats
-				const updatedCompanies = companies.map(c => 
-					c._id === companyId ? { ...c, status: status } : c
-				)
-				const statsData = {
-					total: updatedCompanies.length,
-					active: updatedCompanies.filter(c => c.status === 'active' || c.status === 'approved').length,
-					suspended: updatedCompanies.filter(c => c.status === 'suspended').length,
-					pending: updatedCompanies.filter(c => c.status === 'pending').length
-				}
-				setStats(statsData)
+				toast.success('Company status updated')
+				fetchCompanies(page)
 			}
 		} catch (error) {
 			console.error('Failed to update company status:', error)
+			toast.error('Failed to update company status')
 		}
 	}
 
@@ -143,7 +106,7 @@ const Companies = () => {
 		// Show confirmation toast instead of window.confirm
 		if (!window.confirm('Are you sure you want to delete this company? This action cannot be undone.')) return
 		try {
-			const token = localStorage.getItem('adminAccessToken')
+			const token = localStorage.getItem('adminToken')
 			if (!token) {
 				console.error('No admin token available')
 				return
@@ -154,21 +117,31 @@ const Companies = () => {
 				timeout: 5000
 			})
 			if (res.data.success) {
-				// Update local state immediately
-				const updatedCompanies = companies.filter((c) => c._id !== companyId)
-				setCompanies(updatedCompanies)
-				// Update stats
-				const statsData = {
-					total: updatedCompanies.length,
-					active: updatedCompanies.filter(c => c.status === 'active' || c.status === 'approved').length,
-					suspended: updatedCompanies.filter(c => c.status === 'suspended').length,
-					pending: updatedCompanies.filter(c => c.status === 'pending').length
-				}
-				setStats(statsData)
+				toast.success('Company deleted successfully')
+				fetchCompanies(page)
 			}
 		} catch (error) {
 			console.error('Failed to delete company:', error)
+			toast.error('Failed to delete company')
 		}
+	}
+
+	const handleSearchSubmit = (e) => {
+		e.preventDefault()
+		setAppliedSearch(input.trim())
+		setPage(1)
+	}
+
+	const handleStatusChange = (value) => {
+		setStatusFilter(value)
+		setPage(1)
+	}
+
+	const handleResetFilters = () => {
+		setInput("")
+		setAppliedSearch("")
+		setStatusFilter("all")
+		setPage(1)
 	}
 
 	const StatCard = ({ title, value, icon: Icon, color, description }) => (
@@ -185,6 +158,68 @@ const Companies = () => {
 			</div>
 		</div>
 	)
+
+	const renderPagination = () => {
+		if (!pagination?.totalPages || pagination.totalPages <= 1) return null
+
+		const current = pagination.currentPage || page
+		const totalPages = pagination.totalPages
+		const pages = []
+		const maxButtons = 5
+		let start = Math.max(1, current - 2)
+		let end = Math.min(totalPages, start + maxButtons - 1)
+
+		if (end - start < maxButtons - 1) {
+			start = Math.max(1, end - maxButtons + 1)
+		}
+
+		for (let i = start; i <= end; i++) {
+			pages.push(i)
+		}
+
+		const startRecord = (current - 1) * PAGE_SIZE + 1
+		const endRecord = Math.min(current * PAGE_SIZE, pagination.total)
+
+		return (
+			<div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 border-t">
+				<p className="text-sm text-gray-600">
+					Showing {Math.min(startRecord, pagination.total)}-
+					{Math.min(endRecord, pagination.total)} of {pagination.total} companies
+				</p>
+				<div className="flex items-center gap-2 flex-wrap">
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={!pagination.hasPrev}
+						onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+					>
+						Previous
+					</Button>
+					{pages.map((pageNumber) => (
+						<button
+							key={pageNumber}
+							onClick={() => setPage(pageNumber)}
+							className={`px-3 py-1 text-sm rounded-md border ${
+								pageNumber === current
+									? 'bg-blue-600 text-white border-blue-600'
+									: 'border-gray-300 text-gray-600 hover:bg-gray-100'
+							}`}
+						>
+							{pageNumber}
+						</button>
+					))}
+					<Button
+						variant="outline"
+						size="sm"
+						disabled={!pagination.hasNext}
+						onClick={() => setPage((prev) => prev + 1)}
+					>
+						Next
+					</Button>
+				</div>
+			</div>
+		)
+	}
 
 	return (
 		<div className='p-6 space-y-6'>
@@ -244,8 +279,8 @@ const Companies = () => {
 
 			{/* Search and Filters */}
 			<div className="bg-white rounded-lg shadow-md p-4">
-				<div className="flex flex-col sm:flex-row gap-4 items-center">
-					<div className="relative flex-1">
+				<div className="flex flex-col lg:flex-row gap-4 items-center">
+					<form className="relative flex-1 w-full" onSubmit={handleSearchSubmit}>
 						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
 						<Input
 							placeholder="Search companies by name..."
@@ -253,14 +288,15 @@ const Companies = () => {
 							onChange={(e) => setInput(e.target.value)}
 							className="pl-10"
 						/>
-					</div>
-					<div className="flex gap-2">
+						<button type="submit" className="hidden">Search</button>
+					</form>
+					<div className="flex flex-wrap gap-2 w-full lg:w-auto">
 						<Button variant="outline" size="sm">
 							Export Data
 						</Button>
 						<select 
 							value={statusFilter}
-							onChange={(e) => setStatusFilter(e.target.value)}
+							onChange={(e) => handleStatusChange(e.target.value)}
 							className="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
 						>
 							<option value="all">All Statuses</option>
@@ -268,6 +304,9 @@ const Companies = () => {
 							<option value="suspended">Suspended</option>
 							<option value="pending">Pending</option>
 						</select>
+						<Button variant="outline" size="sm" onClick={handleResetFilters}>
+							Reset
+						</Button>
 					</div>
 				</div>
 			</div>
@@ -279,13 +318,14 @@ const Companies = () => {
 					<p className="text-sm text-gray-600">Manage company profiles, view job postings, and control access</p>
 				</div>
 				<CompaniesTable
-					companies={filteredCompanies}
+					companies={companies}
 					loading={loading}
 					onEdit={(id) => navigate(`/admin/companies/${id}`)}
 					onUpdateStatus={handleUpdateStatus}
 					onDelete={handleDelete}
 				/>
 			</div>
+			{renderPagination()}
 		</div>
 	)
 }

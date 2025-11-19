@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "./shared/Navbar";
 import TopFilterBar from "./TopFilterBar";
 import Job from "./Job";
@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { getLocationSearchString, formatLocationForDisplay } from "../utils/locationUtils";
 import Footer from "./shared/Footer";
-import { setJobFilters, setSearchedQuery, setAllJobs } from "@/redux/jobSlice";
+import { setJobFilters, setSearchedQuery } from "@/redux/jobSlice";
 import { JOB_API_END_POINT } from "@/utils/constant";
 import axios from "axios";
 import { useLocation, useParams } from 'react-router-dom';
@@ -18,12 +18,12 @@ const Jobs = () => {
   const params = useParams();
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoadMore, setIsLoadMore] = useState(false);
 
-  const { allJobs = [], searchedQuery = "", filters = {} } = useSelector((store) => ({
+  const { allJobs = [], searchedQuery = "", filters = {}, pagination: jobPagination } = useSelector((store) => ({
     allJobs: store.job.allJobs || [],
     searchedQuery: store.job.searchedQuery || "",
-    filters: store.job.filters || {}
+    filters: store.job.filters || {},
+    pagination: store.job.pagination || null
   }));
 
   // Initialize filters from URL on mount and when URL changes
@@ -61,10 +61,9 @@ const Jobs = () => {
   }, [dispatch, location.search, params]);
 
   // Use the useGetAllJobs hook for initial load and pagination
-  const { isLoading, isLoadingMore, error: hookError, pagination } = useGetAllJobs({ 
-    page: isLoadMore ? currentPage : 1, 
-    limit: 20, 
-    append: isLoadMore 
+  const { isLoading, isLoadingMore, error: hookError, pagination } = useGetAllJobs({
+    page: currentPage,
+    limit: 20
   });
 
   // Update error state from hook
@@ -76,219 +75,14 @@ const Jobs = () => {
 
   // Handle load more functionality
   const handleLoadMore = () => {
-    setCurrentPage(prev => prev + 1);
-    setIsLoadMore(true);
+    setCurrentPage((prev) => prev + 1);
   };
 
   // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-    setIsLoadMore(false);
   }, [searchedQuery, filters]);
-
-  const filterJobs = useMemo(() => {
-    console.log('Filtering jobs with filters:', filters);
-    
-    return allJobs.filter((job) => {
-      // Debug info for each job being filtered
-      const jobDebugInfo = {
-        id: job._id,
-        title: job.title,
-        location: job.location,
-        jobType: job.jobType,
-        category: job.category,
-        companyType: job.company?.companyType,
-        salary: job.salary,
-        experience: job.experience,
-        createdAt: job.createdAt
-      };
-      console.log('Checking job:', jobDebugInfo);
-
-      // 1. Search Query Filter
-      const q = searchedQuery?.toLowerCase().trim();
-      if (q) {
-        const searchableText = [
-          job.title,
-          job.description,
-          job.requirements,
-          job.responsibilities,
-          job.jobType,
-          job.company?.name,
-          job.company?.industry,
-          job.company?.description,
-          job.category?.name,
-          job.skills?.join(' '),
-          job.employmentType,
-          job.workMode,
-          job.qualification,
-          job.benefits,
-          job.aboutCompany,
-          getLocationSearchString(job.location)
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-
-        const searchTerms = q.split(/\s+/);
-        const hasMatch = searchTerms.every(term => searchableText.includes(term));
-        if (!hasMatch) {
-          console.log('Job filtered out by search query');
-          return false;
-        }
-      }
-
-      // 2. Location Filter
-      if (filters.location) {
-        const jobLocation = getLocationSearchString(job.location)?.toLowerCase() || '';
-        const filterLocation = filters.location.toLowerCase();
-        if (!jobLocation.includes(filterLocation) && 
-            job.location?.city?.toLowerCase() !== filterLocation &&
-            job.location?.state?.toLowerCase() !== filterLocation) {
-          console.log('Job filtered out by location');
-          return false;
-        }
-      }
-
-      // 3. Job Type Filter
-      if (filters.jobType && job.jobType !== filters.jobType) {
-        console.log('Job filtered out by job type');
-        return false;
-      }
-
-      // 4. Category Filter
-      if (filters.categoryId) {
-        // Handle cases where categoryId might be in format 'categoryId/' or just 'categoryId'
-        const cleanCategoryId = String(filters.categoryId).split('/')[0];
-        const categoryMatches = 
-          job.category?._id === cleanCategoryId || 
-          job.category?._id?.includes(cleanCategoryId) ||
-          job.category?.name?.toLowerCase() === cleanCategoryId.toLowerCase();
-          
-        if (!categoryMatches) {
-          console.log('Job filtered out by category. Expected:', cleanCategoryId, 'Got:', job.category?._id);
-          return false;
-        }
-      }
-
-      // 5. Company Type Filter
-      if (filters.companyType && job.company?.companyType !== filters.companyType) {
-        console.log('Job filtered out by company type');
-        return false;
-      }
-
-      // 6. Date Posted Filter
-      if (filters.datePosted) {
-        const jobDate = new Date(job.createdAt);
-        const today = new Date();
-        const diffTime = Math.abs(today - jobDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        let shouldExclude = false;
-        switch (filters.datePosted) {
-          case 'today':
-            shouldExclude = diffDays > 1;
-            break;
-          case 'yesterday':
-            shouldExclude = diffDays > 2;
-            break;
-          case 'week':
-            shouldExclude = diffDays > 7;
-            break;
-          case 'month':
-            shouldExclude = diffDays > 30;
-            break;
-          default:
-            break;
-        }
-        if (shouldExclude) {
-          console.log('Job filtered out by date posted');
-          return false;
-        }
-      }
-
-      // 7. Salary Range Filter
-      if (filters.salaryRange) {
-        const jobMinSalary = job.salary?.min || 0;
-        const jobMaxSalary = job.salary?.max || jobMinSalary;
-        let shouldExclude = false;
-
-        switch (filters.salaryRange) {
-          case '0-40k':
-            shouldExclude = jobMaxSalary > 40000;
-            break;
-          case '42-1lakh':
-            shouldExclude = jobMaxSalary < 42000 || jobMaxSalary > 100000;
-            break;
-          case '1lakh to 5lakh':
-            shouldExclude = jobMaxSalary < 100000 || jobMaxSalary > 500000;
-            break;
-          case '5lakh+':
-            shouldExclude = jobMaxSalary < 500000;
-            break;
-          default:
-            break;
-        }
-        
-        if (shouldExclude) {
-          console.log('Job filtered out by salary range');
-          return false;
-        }
-      }
-
-      if (filters.salaryRange) {
-        const jobMaxSalary = job.salary?.max || job.salary?.min || 0;
-        switch (filters.salaryRange) {
-          case "0-40k":
-            if (jobMaxSalary > 40000) return false;
-            break;
-          case "42-1lakh":
-            if (jobMaxSalary < 42000 || jobMaxSalary > 100000) return false;
-            break;
-          case "1lakh to 5lakh":
-            if (jobMaxSalary < 100000 || jobMaxSalary > 500000) return false;
-            break;
-          case "5lakh+":
-            if (jobMaxSalary < 500000) return false;
-            break;
-          default:
-            break;
-        }
-      }
-
-      if (filters.experienceRange) {
-        const jobMinExp = job.experience?.min || 0;
-        const jobMaxExp = job.experience?.max || job.experience?.min || 0;
-        switch (filters.experienceRange) {
-          case "Fresher (0 years)":
-          case "Fresher":
-            // Fresher means 0 years experience
-            if (jobMinExp > 0 || jobMaxExp > 0) return false;
-            break;
-          case "0-1 years":
-            // 0-1 years means max should be <= 1
-            if (jobMaxExp > 1) return false;
-            break;
-          case "1-3 years":
-            // 1-3 years means min should be >= 1 and max <= 3
-            if (jobMinExp < 1 || jobMaxExp > 3) return false;
-            break;
-          case "3-5 years":
-            // 3-5 years means min should be >= 3 and max <= 5
-            if (jobMinExp < 3 || jobMaxExp > 5) return false;
-            break;
-          case "5+ years":
-            // 5+ years means min should be >= 5
-            if (jobMinExp < 5) return false;
-            break;
-          default:
-            break;
-        }
-      }
-
-      return true;
-    });
-  }, [allJobs, searchedQuery, filters]);
-  if (isLoading && !isLoadMore) {
+  if (isLoading && currentPage === 1) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-center">
@@ -341,7 +135,8 @@ const Jobs = () => {
             <div className="bg-white rounded-lg shadow p-4 mb-6 flex justify-between items-center">
               <div>
                 <h3 className="font-medium text-gray-700">
-                  {filterJobs.length} {filterJobs.length === 1 ? "job" : "jobs"} found
+                  {pagination?.total || jobPagination?.total || 0}{" "}
+                  {(pagination?.total || jobPagination?.total || 0) === 1 ? "job" : "jobs"} found
                   {filters.location && ` in ${formatLocationForDisplay(filters.location)}`}
                 </h3>
                 {searchedQuery && (
@@ -367,7 +162,7 @@ const Jobs = () => {
               </div>
             </div>
 
-            {filterJobs.length <= 0 ? (
+            {(pagination?.total ?? 0) === 0 ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -398,7 +193,7 @@ const Jobs = () => {
               <div className="pb-5">
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-6">
                   <AnimatePresence>
-                    {filterJobs.map((job) => (
+                    {allJobs.map((job) => (
                       <motion.div
                         key={job?._id}
                         initial={{ opacity: 0, scale: 0.95 }}

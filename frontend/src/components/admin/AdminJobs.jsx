@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { ADMIN_API_END_POINT } from '../../utils/constant';
@@ -12,54 +11,91 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import {  Edit, Eye, Trash2, Search, MapPin, DollarSign, Users, Calendar, Briefcase,  CheckCircle, XCircle, Clock, AlertCircle, MoreHorizontal, TrendingUp,  Building, Filter, RefreshCw, Download, Edit2, AlertTriangle, Star, Plus} from 'lucide-react';
 import AdminLayout from './AdminLayout';
 import LoadingSpinner from '../shared/LoadingSpinner';
-import { formatLocationForDisplay, getLocationSearchString } from '../../utils/locationUtils';
+import { formatLocationForDisplay } from '../../utils/locationUtils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
 import { Table, TableHeader, TableBody, TableCell, TableHead, TableRow,} from "../ui/table";
 import { Popover, PopoverTrigger, PopoverContent,} from "../ui/popover";
 
+const PAGE_SIZE = 20;
 
 const AdminJobs = () => {
   const navigate = useNavigate();
   const [jobs, setJobs] = useState([]);
-  const [filteredJobs, setFilteredJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [appliedSearch, setAppliedSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [jobTypeFilter, setJobTypeFilter] = useState('all');
+  const [dateFilter, setDateFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [paginationData, setPaginationData] = useState(null);
+  const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
   const [selectedJob, setSelectedJob] = useState(null);
   const [showJobModal, setShowJobModal] = useState(false);
   const [applications, setApplications] = useState([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
 
- 
-  const stats = {
-    total: jobs.length,
-    pending: jobs.filter(job => job.status === 'pending').length,
-    approved: jobs.filter(job => job.status === 'approved').length,
-    rejected: jobs.filter(job => job.status === 'rejected').length
+  const handleStatusChange = (value) => {
+    setStatusFilter(value);
+    setPage(1);
   };
 
-  useEffect(() => {
-    fetchJobs();
-  }, []);
+  const handleJobTypeChange = (value) => {
+    setJobTypeFilter(value);
+    setPage(1);
+  };
 
-  useEffect(() => {
-    filterJobs();
-  }, [jobs, searchTerm, statusFilter]);
+  const handleDateFilterChange = (value) => {
+    setDateFilter(value);
+    setPage(1);
+  };
 
-  const fetchJobs = async () => {
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+    setAppliedSearch(searchTerm.trim());
+    setPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setAppliedSearch('');
+    setStatusFilter('all');
+    setJobTypeFilter('all');
+    setDateFilter('');
+    setPage(1);
+  };
+
+  const fetchJobs = useCallback(async (targetPage = 1) => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('adminToken');
       if (!token) {
-        console.error('No admin token found');
         toast.error('Authentication required. Please login again.');
+        navigate('/admin/login');
         return;
       }
-      const response = await axios.get(`${ADMIN_API_END_POINT}/jobs`, {
+
+      const params = new URLSearchParams();
+      params.set('page', targetPage);
+      params.set('limit', PAGE_SIZE);
+      if (appliedSearch) params.set('search', appliedSearch.trim());
+      if (statusFilter !== 'all') params.set('status', statusFilter);
+      if (jobTypeFilter !== 'all') params.set('jobType', jobTypeFilter);
+      if (dateFilter) params.set('postedWithin', dateFilter);
+
+      const response = await axios.get(`${ADMIN_API_END_POINT}/jobs?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
       if (response.data.success) {
-        setJobs(response.data.jobs);
-        setFilteredJobs(response.data.jobs);
+        setJobs(response.data.jobs || []);
+        setPaginationData(response.data.pagination || null);
+        setStats({
+          total: response.data.stats?.total || 0,
+          pending: response.data.stats?.status?.pending || 0,
+          approved: response.data.stats?.status?.approved || 0,
+          rejected: response.data.stats?.status?.rejected || 0
+        });
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -73,25 +109,11 @@ const AdminJobs = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [appliedSearch, statusFilter, jobTypeFilter, dateFilter, navigate]);
 
-  const filterJobs = () => {
-    let filtered = jobs;
-
-    if (searchTerm) {
-      filtered = filtered.filter(job =>
-        job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.company?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        getLocationSearchString(job.location).includes(searchTerm.toLowerCase())
-      );
-    }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(job => job.status === statusFilter);
-    }
-
-    setFilteredJobs(filtered);
-  };
+  useEffect(() => {
+    fetchJobs(page);
+  }, [fetchJobs, page]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -130,13 +152,8 @@ const AdminJobs = () => {
       });
 
       if (response.data.success) {
-        setJobs(jobs.map(job => 
-          job._id === jobId ? { ...job, status: newStatus, rejectionReason: reason } : job
-        ));
-        setFilteredJobs(filteredJobs.map(job => 
-          job._id === jobId ? { ...job, status: newStatus, rejectionReason: reason } : job
-        ));
         toast.success(`Job ${newStatus} successfully`);
+        fetchJobs(page);
       }
     } catch (error) {
       console.error('Error updating job status:', error);
@@ -154,9 +171,8 @@ const AdminJobs = () => {
       });
 
       if (response.data.success) {
-        setJobs(jobs.filter(job => job._id !== jobId));
-        setFilteredJobs(filteredJobs.filter(job => job._id !== jobId));
         toast.success('Job removed successfully');
+        fetchJobs(page);
       }
     } catch (error) {
       console.error('Error deleting job:', error);
@@ -225,6 +241,70 @@ const AdminJobs = () => {
     return 'Not specified';
   };
 
+  const renderPagination = () => {
+    if (!paginationData?.totalPages || paginationData.totalPages <= 1) {
+      return null;
+    }
+
+    const totalPages = paginationData.totalPages;
+    const current = paginationData.currentPage || page;
+    const pages = [];
+    const maxButtons = 5;
+    let start = Math.max(1, current - 2);
+    let end = Math.min(totalPages, start + maxButtons - 1);
+
+    if (end - start < maxButtons - 1) {
+      start = Math.max(1, end - maxButtons + 1);
+    }
+
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+
+    const startRecord = (current - 1) * PAGE_SIZE + 1;
+    const endRecord = Math.min(current * PAGE_SIZE, paginationData.total);
+
+    return (
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-4 border-t">
+        <p className="text-sm text-gray-600">
+          Showing {Math.min(startRecord, paginationData.total)}-
+          {Math.min(endRecord, paginationData.total)} of {paginationData.total} jobs
+        </p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!paginationData.hasPrev}
+            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+          >
+            Previous
+          </Button>
+          {pages.map((pageNumber) => (
+            <button
+              key={pageNumber}
+              onClick={() => setPage(pageNumber)}
+              className={`px-3 py-1 text-sm rounded-md border ${
+                pageNumber === current
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              {pageNumber}
+            </button>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!paginationData.hasNext}
+            onClick={() => setPage((prev) => prev + 1)}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -247,7 +327,7 @@ const AdminJobs = () => {
               <Plus className="h-4 w-4 mr-2" />
               Create Job
             </Button>
-            <Button onClick={fetchJobs} variant="outline" size="sm">
+            <Button onClick={() => fetchJobs(page)} variant="outline" size="sm">
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
@@ -311,11 +391,11 @@ const AdminJobs = () => {
             <div className="flex items-center justify-between">
               <CardTitle className="text-xl font-semibold">Job Listings</CardTitle>
               <Badge variant="secondary" className="text-sm">
-                {filteredJobs.length} of {jobs.length} jobs
+                {jobs.length} of {stats.total} jobs
               </Badge>
             </div>
-            <div className="flex flex-col gap-3 md:flex-row md:gap-4 mt-4">
-              <div className="relative flex-1">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4 mt-4">
+              <form className="relative flex-1 w-full" onSubmit={handleSearchSubmit}>
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Search by title, company, or location..."
@@ -323,27 +403,51 @@ const AdminJobs = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 h-10"
                 />
-              </div>
-              <div className="flex gap-2">
+                <button type="submit" className="hidden">Search</button>
+              </form>
+              <div className="flex flex-wrap gap-2 w-full lg:w-auto">
                 <select
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-2 h-10 min-w-[120px]"
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 h-10 min-w-[130px]"
                 >
                   <option value="all">All Status</option>
                   <option value="pending">Pending</option>
                   <option value="approved">Approved</option>
                   <option value="rejected">Rejected</option>
                 </select>
-                <Button variant="outline" size="sm" className="h-10">
+                <select
+                  value={jobTypeFilter}
+                  onChange={(e) => handleJobTypeChange(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 h-10 min-w-[140px]"
+                >
+                  <option value="all">All Types</option>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Internship">Internship</option>
+                  <option value="Temporary">Temporary</option>
+                </select>
+                <select
+                  value={dateFilter}
+                  onChange={(e) => handleDateFilterChange(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 h-10 min-w-[140px]"
+                >
+                  <option value="">Any Date</option>
+                  <option value="today">Today</option>
+                  <option value="yesterday">Yesterday</option>
+                  <option value="week">This Week</option>
+                  <option value="month">This Month</option>
+                </select>
+                <Button variant="outline" size="sm" className="h-10" onClick={handleResetFilters} type="button">
                   <Filter className="h-4 w-4 mr-2" />
-                  More Filters
+                  Reset
                 </Button>
               </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            {filteredJobs.length === 0 ? (
+            {jobs.length === 0 ? (
               <div className="text-center py-12">
                 <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-lg font-medium text-gray-900 mb-2">No jobs found</p>
@@ -366,7 +470,7 @@ const AdminJobs = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredJobs.map((job) => (
+                      {jobs.map((job) => (
                         <TableRow key={job._id} className="hover:bg-gray-50">
                           <TableCell className="p-3">
                             <div>
@@ -493,7 +597,7 @@ const AdminJobs = () => {
                 </div>
 
                 <div className="md:hidden space-y-4 p-4">
-                  {filteredJobs.map((job) => (
+                  {jobs.map((job) => (
                     <Card key={job._id} className="border border-gray-200">
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-3">
@@ -577,6 +681,7 @@ const AdminJobs = () => {
               </>
             )}
           </CardContent>
+          {renderPagination()}
         </Card>
 
         

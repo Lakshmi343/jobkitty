@@ -1,64 +1,128 @@
-import { setAllJobs } from '@/redux/jobSlice'
-import { JOB_API_END_POINT } from '@/utils/constant'
-import axios from 'axios'
-import { useState, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { authUtils } from '@/utils/authUtils'
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import axios from 'axios';
+import { JOB_API_END_POINT } from '@/utils/constant';
+import { authUtils } from '@/utils/authUtils';
+import { setAllJobs, setJobPagination } from '@/redux/jobSlice';
 
-const useGetAllJobs = () => {
-    const dispatch = useDispatch();
-    const { searchedQuery } = useSelector(store => store.job);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+const buildQueryParams = ({ page, limit, searchedQuery, filters }) => {
+  const params = new URLSearchParams();
+  params.set('page', page);
+  params.set('limit', limit);
 
-    useEffect(() => {
-        const fetchAllJobs = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const token = authUtils.getAccessToken?.() || localStorage.getItem('accessToken') || '';
-                const url = `${JOB_API_END_POINT}/get${searchedQuery ? `?keyword=${encodeURIComponent(searchedQuery)}` : ''}`;
-                console.log('Fetching jobs from:', url);
-                const res = await axios.get(url, {
-                    withCredentials: true,
-                    headers: token ? { Authorization: `Bearer ${token}` } : {}
-                });
-                if (res.data.success) {
-                    dispatch(setAllJobs(res.data.jobs || []));
-                }
-            } catch (error) {
-                // If unauthorized and we have refresh support, try once more
-                try {
-                    const ok = await authUtils.validateToken();
-                    if (ok) {
-                        const token2 = authUtils.getAccessToken?.() || localStorage.getItem('accessToken') || '';
-                        const res2 = await axios.get(
-                            `${JOB_API_END_POINT}/get${searchedQuery ? `?keyword=${encodeURIComponent(searchedQuery)}` : ''}`,
-                            {
-                                withCredentials: true,
-                                headers: token2 ? { Authorization: `Bearer ${token2}` } : {}
-                            }
-                        );
-                        if (res2.data.success) {
-                            dispatch(setAllJobs(res2.data.jobs || []));
-                            return;
-                        }
-                    }
-                } catch (innerError) {
-                    console.error('Error in token refresh:', innerError);
-                }
-                console.error('Error fetching jobs:', error);
-                console.error('Error response:', error.response?.data);
-                console.error('Error status:', error.response?.status);
-                setError(error.response?.data?.message || error.message || 'Failed to fetch jobs');
-            } finally {
-                setIsLoading(false);
-            }
+  if (searchedQuery) params.set('keyword', searchedQuery.trim());
+  if (filters.location) params.set('location', filters.location.trim());
+  if (filters.jobType) params.set('jobType', filters.jobType);
+  if (filters.salaryRange) params.set('salaryRange', filters.salaryRange);
+  if (filters.experienceRange) params.set('experienceRange', filters.experienceRange);
+  if (filters.categoryId) params.set('categoryId', filters.categoryId);
+  if (filters.companyType) params.set('companyType', filters.companyType);
+  if (filters.datePosted) params.set('datePosted', filters.datePosted);
+
+  return params.toString();
+};
+
+const useGetAllJobs = ({ page = 1, limit = 20 } = {}) => {
+  const dispatch = useDispatch();
+  const { searchedQuery, filters, pagination } = useSelector((store) => ({
+    searchedQuery: store.job.searchedQuery,
+    filters: store.job.filters,
+    pagination: store.job.pagination
+  }));
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchJobs = async () => {
+      const isLoadMoreRequest = page > 1;
+      setError(null);
+
+      if (isLoadMoreRequest) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
+
+      const request = async () => {
+        const query = buildQueryParams({ page, limit, searchedQuery, filters });
+        const token = authUtils.getAccessToken?.() || localStorage.getItem('accessToken') || '';
+        return axios.get(`${JOB_API_END_POINT}/get?${query}`, {
+          withCredentials: true,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+      };
+
+      try {
+        const response = await request();
+        if (!isMounted) return;
+
+        if (response.data.success) {
+          dispatch(
+            setAllJobs({
+              jobs: response.data.jobs || [],
+              append: page > 1
+            })
+          );
+          dispatch(setJobPagination(response.data.pagination || null));
+        } else {
+          throw new Error(response.data.message || 'Failed to fetch jobs');
         }
-        fetchAllJobs();
-    }, [dispatch, searchedQuery])
+      } catch (err) {
+        if (!isMounted) return;
 
-    return { isLoading, error };
-}
+        if (err.response?.status === 401) {
+          try {
+            const refreshed = await authUtils.validateToken();
+            if (refreshed) {
+              const retryResponse = await request();
+              if (retryResponse.data.success) {
+                dispatch(
+                  setAllJobs({
+                    jobs: retryResponse.data.jobs || [],
+                    append: page > 1
+                  })
+                );
+                dispatch(setJobPagination(retryResponse.data.pagination || null));
+                return;
+              }
+            }
+          } catch (tokenErr) {
+            console.error('Token refresh failed:', tokenErr);
+          }
+        }
+
+        console.error('Error fetching jobs:', err);
+        setError(err.response?.data?.message || err.message || 'Failed to fetch jobs');
+      } finally {
+        if (!isMounted) return;
+        setIsLoading(false);
+        setIsLoadingMore(false);
+      }
+    };
+
+    fetchJobs();
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    dispatch,
+    page,
+    limit,
+    searchedQuery,
+    filters.location,
+    filters.jobType,
+    filters.salaryRange,
+    filters.experienceRange,
+    filters.categoryId,
+    filters.companyType,
+    filters.datePosted
+  ]);
+
+  return { isLoading, isLoadingMore, error, pagination };
+};
 
 export default useGetAllJobs;

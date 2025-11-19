@@ -318,7 +318,7 @@ const Internships = () => {
         const response = await axios.get(`${JOB_API_END_POINT}/get?${params.toString()}`);
         
         if (response.data.success) {
-          dispatch(setAllJobs(response.data.jobs || []));
+          dispatch(setAllJobs({ jobs: response.data.jobs || [], append: false }));
         } else {
           setError("Failed to load internships. Please try again later.");
         }

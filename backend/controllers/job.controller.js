@@ -157,75 +157,102 @@ export const postJob = async (req, res) => {
 
 export const getAllJobs = async (req, res) => {
     try {
-        const { 
-            keyword = "", 
-            location = "", 
-            jobType = "", 
+        const {
+            keyword = "",
+            location = "",
+            jobType = "",
             categoryId = "",
-            salaryMin = 0,
-            salaryMax = 0,
-            experienceMin = 0,
-            experienceMax = 0,
-            experience = "" // Support experience string like "Fresher (0 years)", "0-1 years", etc.
+            salaryMin = "",
+            salaryMax = "",
+            salaryRange = "",
+            experienceMin = "",
+            experienceMax = "",
+            experience = "",
+            experienceRange = "",
+            companyType = "",
+            companyId = "",
+            status = "",
+            datePosted = "",
+            page = 1,
+            limit = 20
         } = req.query;
 
-        // Build dynamic query
-        let query = {};
-        let conditions = [];
+        const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+        const limitNum = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
+        const skip = (pageNum - 1) * limitNum;
 
-        // Keyword search (case-insensitive)
+        const conditions = [];
+
+        const safeRegex = (value) => new RegExp(value, "i");
+
         if (keyword) {
             conditions.push({
                 $or: [
-                    { title: { $regex: keyword, $options: "i" } },
-                    { description: { $regex: keyword, $options: "i" } },
-                    { "location.state": { $regex: keyword, $options: "i" } },
-                    { "location.district": { $regex: keyword, $options: "i" } },
-                    { "location.legacy": { $regex: keyword, $options: "i" } }
+                    { title: { $regex: safeRegex(keyword) } },
+                    { description: { $regex: safeRegex(keyword) } },
+                    { "location.state": { $regex: safeRegex(keyword) } },
+                    { "location.district": { $regex: safeRegex(keyword) } },
+                    { "location.legacy": { $regex: safeRegex(keyword) } }
                 ]
             });
         }
 
-        // Location filter (case-insensitive) - search in both state, district, and legacy fields
         if (location) {
             conditions.push({
                 $or: [
-                    { "location.state": { $regex: location, $options: "i" } },
-                    { "location.district": { $regex: location, $options: "i" } },
-                    { "location.legacy": { $regex: location, $options: "i" } }
+                    { "location.state": { $regex: safeRegex(location) } },
+                    { "location.district": { $regex: safeRegex(location) } },
+                    { "location.legacy": { $regex: safeRegex(location) } }
                 ]
             });
         }
 
-        // Job type filter (case-insensitive)
         if (jobType) {
-            conditions.push({ jobType: { $regex: `^${jobType}$`, $options: "i" } });
+            conditions.push({ jobType: { $regex: new RegExp(`^${jobType}$`, "i") } });
         }
 
-        // Category filter
         if (categoryId) {
             conditions.push({ category: categoryId });
         }
 
-        // Salary range filter
-        if (salaryMin > 0 || salaryMax > 0) {
-            let salaryCondition = {};
-            if (salaryMin > 0) salaryCondition['salary.min'] = { $gte: parseInt(salaryMin) };
-            if (salaryMax > 0) salaryCondition['salary.max'] = { $lte: parseInt(salaryMax) };
-            conditions.push(salaryCondition);
+        if (companyId) {
+            conditions.push({ company: companyId });
         }
 
-        // Experience range filter - parse experience string if provided
+        if (salaryMin || salaryMax) {
+            const salaryCondition = {};
+            if (salaryMin) salaryCondition["salary.min"] = { $gte: parseInt(salaryMin, 10) };
+            if (salaryMax) salaryCondition["salary.max"] = { $lte: parseInt(salaryMax, 10) };
+            if (Object.keys(salaryCondition).length) {
+                conditions.push(salaryCondition);
+            }
+        } else if (salaryRange) {
+            const normalizedRange = salaryRange.toLowerCase();
+            if (normalizedRange === "0-40k") {
+                conditions.push({ "salary.max": { $lte: 40000 } });
+            } else if (normalizedRange === "42-1lakh") {
+                conditions.push({
+                    "salary.max": { $gte: 42000, $lte: 100000 }
+                });
+            } else if (normalizedRange === "1lakh to 5lakh") {
+                conditions.push({
+                    "salary.max": { $gte: 100000, $lte: 500000 }
+                });
+            } else if (normalizedRange === "5lakh+") {
+                conditions.push({ "salary.max": { $gte: 500000 } });
+            }
+        }
+
         let parsedExpMin = null;
         let parsedExpMax = null;
         let hasExperienceFilter = false;
-        
-        // Check if experience filter is provided via string
-        if (experience) {
+
+        const experienceInput = experienceRange || experience;
+
+        if (experienceInput) {
             hasExperienceFilter = true;
-            // Parse experience string from frontend
-            const expStr = experience.toLowerCase().trim();
-            if (expStr.includes("fresher") || expStr === "0 years" || expStr === "fresher (0 years)") {
+            const expStr = experienceInput.toLowerCase().trim();
+            if (expStr.includes("fresher")) {
                 parsedExpMin = 0;
                 parsedExpMax = 0;
             } else if (expStr === "0-1 years") {
@@ -237,73 +264,116 @@ export const getAllJobs = async (req, res) => {
             } else if (expStr === "3-5 years") {
                 parsedExpMin = 3;
                 parsedExpMax = 5;
-            } else if (expStr.includes("5+") || expStr.includes("5+ years")) {
+            } else if (expStr.includes("5+")) {
                 parsedExpMin = 5;
-                parsedExpMax = 999; // No upper limit
+                parsedExpMax = 999;
             }
         } else if (experienceMin || experienceMax) {
-            // Check if experience filter is provided via numeric values
             hasExperienceFilter = true;
-            parsedExpMin = experienceMin ? parseInt(experienceMin) : 0;
-            parsedExpMax = experienceMax ? parseInt(experienceMax) : null;
+            parsedExpMin = experienceMin ? parseInt(experienceMin, 10) : null;
+            parsedExpMax = experienceMax ? parseInt(experienceMax, 10) : null;
         }
 
-        // Apply experience filter only if one was provided
         if (hasExperienceFilter && (parsedExpMin !== null || parsedExpMax !== null)) {
             let expCondition = {};
-            
-            // Special case for Fresher (0 years)
+
             if (parsedExpMin === 0 && parsedExpMax === 0) {
                 expCondition = {
-                    'experience.min': { $eq: 0 },
-                    'experience.max': { $eq: 0 }
+                    "experience.min": { $eq: 0 },
+                    "experience.max": { $eq: 0 }
                 };
             } else if (parsedExpMax === 999) {
-                // 5+ years: job's min experience should be >= 5
+                expCondition = { "experience.min": { $gte: parsedExpMin } };
+            } else if (parsedExpMin !== null && parsedExpMax !== null) {
                 expCondition = {
-                    'experience.min': { $gte: parsedExpMin }
+                    "experience.min": { $lte: parsedExpMax },
+                    "experience.max": { $gte: parsedExpMin }
                 };
-            } else {
-                // For ranges like 0-1, 1-3, 3-5: job should overlap with the range
-                // Job's min should be <= max requirement and job's max should be >= min requirement
-                if (parsedExpMin !== null && parsedExpMax !== null) {
-                    expCondition = {
-                        'experience.min': { $lte: parsedExpMax },
-                        'experience.max': { $gte: parsedExpMin }
-                    };
-                } else if (parsedExpMin !== null) {
-                    expCondition = {
-                        'experience.min': { $gte: parsedExpMin }
-                    };
-                } else if (parsedExpMax !== null) {
-                    expCondition = {
-                        'experience.max': { $lte: parsedExpMax }
-                    };
-                }
+            } else if (parsedExpMin !== null) {
+                expCondition = { "experience.min": { $gte: parsedExpMin } };
+            } else if (parsedExpMax !== null) {
+                expCondition = { "experience.max": { $lte: parsedExpMax } };
             }
-            
-            if (Object.keys(expCondition).length > 0) {
+
+            if (Object.keys(expCondition).length) {
                 conditions.push(expCondition);
             }
         }
 
-        // Combine all conditions
-        if (conditions.length > 0) {
-            query = { $and: conditions };
+        if (datePosted) {
+            const now = new Date();
+            let threshold = null;
+
+            if (datePosted === "today") {
+                threshold = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            } else if (datePosted === "yesterday") {
+                threshold = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+            } else if (datePosted === "week") {
+                threshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            } else if (datePosted === "month") {
+                threshold = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            }
+
+            if (threshold) {
+                conditions.push({ createdAt: { $gte: threshold } });
+            }
         }
 
-        const jobs = await Job.find(query)
-            .populate({
-                path: "company"
-            })
-            .populate({
-                path: "category"
-            })
-            .sort({ createdAt: -1 });
+        if (companyType) {
+            const matchingCompanies = await Company.find({
+                companyType: { $regex: new RegExp(`^${companyType}$`, "i") }
+            }).select("_id");
+
+            if (!matchingCompanies.length) {
+                return res.status(200).json({
+                    success: true,
+                    jobs: [],
+                    totalJobs: 0,
+                    pagination: {
+                        total: 0,
+                        limit: limitNum,
+                        currentPage: pageNum,
+                        totalPages: 0,
+                        hasNext: false,
+                        hasPrev: pageNum > 1
+                    }
+                });
+            }
+
+            conditions.push({ company: { $in: matchingCompanies.map((c) => c._id) } });
+        }
+
+        const normalizedStatus = status || "approved";
+        if (normalizedStatus && normalizedStatus !== "all") {
+            conditions.push({ status: normalizedStatus });
+        }
+
+        const query = conditions.length ? { $and: conditions } : {};
+
+        const [jobs, totalJobs] = await Promise.all([
+            Job.find(query)
+                .populate({ path: "company" })
+                .populate({ path: "category" })
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNum),
+            Job.countDocuments(query)
+        ]);
+
+        const totalPages = Math.ceil(totalJobs / limitNum) || 0;
 
         return res.status(200).json({
+            success: true,
             jobs,
-            success: true
+            totalJobs,
+            pagination: {
+                total: totalJobs,
+                currentPage: pageNum,
+                limit: limitNum,
+                totalPages,
+                hasNext: pageNum < totalPages,
+                hasPrev: pageNum > 1
+            }
         });
     } catch (error) {
         console.error("Get all jobs error:", error);
