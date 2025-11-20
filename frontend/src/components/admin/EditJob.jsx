@@ -375,7 +375,7 @@ const EditJob = () => {
 
     const submitHandler = async (e) => {
         e.preventDefault();
-        const requiredFields = ['title','description','requirements','salaryMin','salaryMax','experienceLevel','expMin','expMax','location','jobType','position','category'];
+        const requiredFields = ['title','description','requirements','salaryMin','salaryMax','experienceLevel','location','jobType','position','category'];
         const missingFields = requiredFields.filter(field => !input[field]);
         if (missingFields.length) return toast.error(`Missing required fields: ${missingFields.join(', ')}`);
         if (!userCompany) return toast.error("Company info is required in profile.");
@@ -387,7 +387,10 @@ const EditJob = () => {
                 description: input.description,
                 requirements: input.requirements.split(",").map(req => req.trim()),
                 salary: { min: Number(input.salaryMin), max: Number(input.salaryMax) },
-                experience: { min: Number(input.expMin), max: Number(input.expMax) },
+                experience: (input.expMin || input.expMax) ? { 
+                    min: Number(input.expMin || 0), 
+                    max: Number(input.expMax || 5) 
+                } : undefined,
                 location: input.location,
                 jobType: input.jobType,
                 experienceLevel: input.experienceLevel,
@@ -472,11 +475,11 @@ const EditJob = () => {
                             </Select>
                         </div>
                         <div>
-                            <Label>Experience Min (years)*</Label>
+                            <Label>Experience Min (years)</Label>
                             <Input type="number" name="expMin" value={input.expMin} onChange={changeEventHandler} min="0" placeholder="e.g., 0" className="mt-1" />
                         </div>
                         <div>
-                            <Label>Experience Max (years)*</Label>
+                            <Label>Experience Max (years)</Label>
                             <Input type="number" name="expMax" value={input.expMax} onChange={changeEventHandler} min={input.expMin || 0} placeholder="e.g., 1" className="mt-1" />
                         </div>
                         <div>

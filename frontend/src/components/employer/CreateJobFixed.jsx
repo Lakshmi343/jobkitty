@@ -540,7 +540,7 @@ const CreateJob = () => {
                                             </Select>
                                         </div>
                                         <div>
-                                            <Label>Experience Range - Min (years)*</Label>
+                                            <Label>Experience Range - Min (years)</Label>
                                             <Input
                                                 name="experienceMin"
                                                 type="number"
@@ -548,11 +548,10 @@ const CreateJob = () => {
                                                 onChange={changeEventHandler}
                                                 placeholder="e.g., 2"
                                                 min="0"
-                                                required
                                             />
                                         </div>
                                         <div>
-                                            <Label>Experience Range - Max (years)*</Label>
+                                            <Label>Experience Range - Max (years)</Label>
                                             <Input
                                                 name="experienceMax"
                                                 type="number"
@@ -560,7 +559,6 @@ const CreateJob = () => {
                                                 onChange={changeEventHandler}
                                                 placeholder="e.g., 5"
                                                 min="0"
-                                                required
                                             />
                                         </div>
                                     </div>

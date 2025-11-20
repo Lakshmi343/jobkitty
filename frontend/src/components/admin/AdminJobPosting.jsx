@@ -199,9 +199,7 @@ const AdminJobPosting = () => {
                jobData.jobType &&
                jobData.salaryMin && 
                jobData.salaryMax && 
-               jobData.openings &&
-               (jobData.experienceMin !== "" || jobData.experienceMin === "0") &&
-               (jobData.experienceMax !== "" || jobData.experienceMax === "0");
+               jobData.openings;
     };
 
     const nextStep = () => {
@@ -629,7 +627,7 @@ const AdminJobPosting = () => {
                                         </Select>
                                     </div>
                                     <div>
-                                        <Label>Experience Min (years) *</Label>
+                                        <Label>Experience Min (years)</Label>
                                         <Input
                                             name="experienceMin"
                                             type="number"
@@ -637,12 +635,11 @@ const AdminJobPosting = () => {
                                             value={jobData.experienceMin}
                                             onChange={handleJobChange}
                                             placeholder="e.g., 0"
-                                            required
                                             min="0"
                                         />
                                     </div>
                                     <div>
-                                        <Label>Experience Max (years) *</Label>
+                                        <Label>Experience Max (years)</Label>
                                         <Input
                                             name="experienceMax"
                                             type="number"
@@ -650,7 +647,6 @@ const AdminJobPosting = () => {
                                             value={jobData.experienceMax}
                                             onChange={handleJobChange}
                                             placeholder="e.g., 1"
-                                            required
                                             min="0"
                                         />
                                     </div>

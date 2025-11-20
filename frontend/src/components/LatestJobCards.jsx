@@ -57,7 +57,7 @@ openings} Positions</Badge>
                         {formatExperience(job.experience, job.experienceLevel)}
                     </Badge>
                 )}
-                <Badge className={'text-[#7209b7] font-bold text-xs md:text-sm'} variant="ghost">{typeof job?.salary === 'object' ? `${job?.salary?.min}-${job?.salary?.max} LPA` : `${job?.salary} LPA`}</Badge>
+                <Badge className={'text-[#7209b7] font-bold text-xs md:text-sm'} variant="ghost">{typeof job?.salary === 'object' ? `${job?.salary?.min}-${job?.salary?.max} ` : `${job?.salary} LPA`}</Badge>
             </div>
             
             <div className='mt-4 flex justify-end'>

@@ -511,7 +511,7 @@ const EditJob = () => {
                                     </Select>
                                 </div>
                                 <div>
-                                    <Label>Experience Min (years)*</Label>
+                                    <Label>Experience Min (years)</Label>
                                     <Input 
                                         type="number" 
                                         name="experienceMin" 
@@ -522,7 +522,7 @@ const EditJob = () => {
                                     />
                                 </div>
                                 <div>
-                                    <Label>Experience Max (years)*</Label>
+                                    <Label>Experience Max (years)</Label>
                                     <Input 
                                         type="number" 
                                         name="experienceMax" 

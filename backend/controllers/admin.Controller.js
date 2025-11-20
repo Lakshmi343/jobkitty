@@ -565,11 +565,28 @@ export const getAllJobs = async (req, res) => {
     }
 
     if (search) {
-      filter.$or = [
+      // Search for companies matching the search term
+      const matchingCompanies = await Company.find({
+        name: { $regex: new RegExp(search, 'i') }
+      }).select('_id');
+      
+      const companyIds = matchingCompanies.map((c) => c._id);
+      
+      // Build search filter for jobs
+      const searchConditions = [
         { title: { $regex: new RegExp(search, 'i') } },
         { description: { $regex: new RegExp(search, 'i') } },
-        { 'location.legacy': { $regex: new RegExp(search, 'i') } }
+        { 'location.legacy': { $regex: new RegExp(search, 'i') } },
+        { 'location.district': { $regex: new RegExp(search, 'i') } },
+        { 'location.state': { $regex: new RegExp(search, 'i') } }
       ];
+      
+      // If companies found, add company ID filter
+      if (companyIds.length > 0) {
+        searchConditions.push({ company: { $in: companyIds } });
+      }
+      
+      filter.$or = searchConditions;
     }
 
     if (dateFrom || dateTo || postedWithin) {

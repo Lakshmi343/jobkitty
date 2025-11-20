@@ -20,7 +20,7 @@ export const postJob = async (req, res) => {
             category         
         } = req.body;
         const userId = req.id;
-        const user = req.user; // From employerAuth middleware
+        const user = req.user; 
         
         if (!user.profile.company) {
             return res.status(400).json({ 
@@ -31,7 +31,7 @@ export const postJob = async (req, res) => {
         
         const companyId = user.profile.company;
         
-        // Only check for essential fields
+      
         if (!title || !description || !category) {
             return res.status(400).json({ 
                 message: "Job title, description, and category are required", 
@@ -42,7 +42,6 @@ export const postJob = async (req, res) => {
         // Set default values for missing fields
         const defaultRequirements = ["No specific requirements"];
         const defaultSalary = { min: 0, max: 0 };
-        const defaultExperience = { min: 0, max: 5 };
         // Avoid forcing a specific city/state; prefer a neutral default
         const defaultLocation = {
             state: "",
@@ -112,17 +111,13 @@ export const postJob = async (req, res) => {
         }
 
         // Create job with employer's company, using default values only if no location info
-        const job = await Job.create({
+        const jobData = {
             title,
             description,
             requirements: requirements ? (Array.isArray(requirements) ? requirements : requirements.split(",").map(req => req.trim())) : defaultRequirements,
             salary: {
                 min: salary && salary.min !== undefined ? Number(salary.min) : 0,
                 max: salary && salary.max !== undefined ? Number(salary.max) : 0
-            },
-            experience: {
-                min: experience && experience.min !== undefined ? Number(experience.min) : 0,
-                max: experience && experience.max !== undefined ? Number(experience.max) : 5
             },
             location: finalLocation ? {
                 state: finalLocation.state,
@@ -136,7 +131,17 @@ export const postJob = async (req, res) => {
             company: companyId,
             category,   
             created_by: userId
-        });
+        };
+
+        // Only set experience if provided, otherwise let Mongoose use schema defaults
+        if (experience && (experience.min !== undefined || experience.max !== undefined)) {
+            jobData.experience = {
+                min: experience.min !== undefined ? Number(experience.min) : 0,
+                max: experience.max !== undefined ? Number(experience.max) : 5
+            };
+        }
+
+        const job = await Job.create(jobData);
         
         return res.status(201).json({
             message: "Job created successfully",
@@ -154,185 +159,116 @@ export const postJob = async (req, res) => {
 }
 
 
-
 export const getAllJobs = async (req, res) => {
     try {
         const {
-            keyword = "",
-            location = "",
-            jobType = "",
-            categoryId = "",
-            salaryMin = "",
-            salaryMax = "",
-            salaryRange = "",
-            experienceMin = "",
-            experienceMax = "",
-            experience = "",
-            experienceRange = "",
-            companyType = "",
-            companyId = "",
-            status = "",
-            datePosted = "",
             page = 1,
-            limit = 20
+            limit = 20,
+            keyword = '',
+            location = '',
+            jobType = '',
+            salaryRange = '',
+            experienceRange = '',
+            categoryId = '',
+            companyType = '',
+            datePosted = ''
         } = req.query;
 
         const pageNum = Math.max(parseInt(page, 10) || 1, 1);
         const limitNum = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 100);
         const skip = (pageNum - 1) * limitNum;
 
-        const conditions = [];
+        // Build filter - only show approved jobs for public
+        const filter = {
+            status: 'approved'
+        };
 
-        const safeRegex = (value) => new RegExp(value, "i");
+        // Build $and array for combining multiple OR conditions
+        const andConditions = [];
 
+        // Search by keyword (title, description, location)
         if (keyword) {
-            conditions.push({
+            andConditions.push({
                 $or: [
-                    { title: { $regex: safeRegex(keyword) } },
-                    { description: { $regex: safeRegex(keyword) } },
-                    { "location.state": { $regex: safeRegex(keyword) } },
-                    { "location.district": { $regex: safeRegex(keyword) } },
-                    { "location.legacy": { $regex: safeRegex(keyword) } }
+                    { title: { $regex: new RegExp(keyword, 'i') } },
+                    { description: { $regex: new RegExp(keyword, 'i') } },
+                    { 'location.legacy': { $regex: new RegExp(keyword, 'i') } },
+                    { 'location.district': { $regex: new RegExp(keyword, 'i') } },
+                    { 'location.state': { $regex: new RegExp(keyword, 'i') } }
                 ]
             });
         }
 
+        // Filter by location
         if (location) {
-            conditions.push({
+            const locationRegex = new RegExp(location, 'i');
+            andConditions.push({
                 $or: [
-                    { "location.state": { $regex: safeRegex(location) } },
-                    { "location.district": { $regex: safeRegex(location) } },
-                    { "location.legacy": { $regex: safeRegex(location) } }
+                    { 'location.legacy': locationRegex },
+                    { 'location.district': locationRegex },
+                    { 'location.state': locationRegex }
                 ]
             });
         }
 
+        // Filter by job type
         if (jobType) {
-            conditions.push({ jobType: { $regex: new RegExp(`^${jobType}$`, "i") } });
+            filter.jobType = { $regex: new RegExp(`^${jobType}$`, 'i') };
         }
 
+        // Filter by category
         if (categoryId) {
-            conditions.push({ category: categoryId });
+            filter.category = categoryId;
         }
 
-        if (companyId) {
-            conditions.push({ company: companyId });
-        }
-
-        if (salaryMin || salaryMax) {
-            const salaryCondition = {};
-            if (salaryMin) salaryCondition["salary.min"] = { $gte: parseInt(salaryMin, 10) };
-            if (salaryMax) salaryCondition["salary.max"] = { $lte: parseInt(salaryMax, 10) };
-            if (Object.keys(salaryCondition).length) {
-                conditions.push(salaryCondition);
-            }
-        } else if (salaryRange) {
-            const normalizedRange = salaryRange.toLowerCase();
-            if (normalizedRange === "0-40k") {
-                conditions.push({ "salary.max": { $lte: 40000 } });
-            } else if (normalizedRange === "42-1lakh") {
-                conditions.push({
-                    "salary.max": { $gte: 42000, $lte: 100000 }
+        // Filter by salary range (format: "min-max" or "min+")
+        if (salaryRange) {
+            if (salaryRange.includes('-')) {
+                const [min, max] = salaryRange.split('-').map(Number);
+                andConditions.push({
+                    $or: [
+                        { 'salary.min': { $lte: max }, 'salary.max': { $gte: min } }
+                    ]
                 });
-            } else if (normalizedRange === "1lakh to 5lakh") {
-                conditions.push({
-                    "salary.max": { $gte: 100000, $lte: 500000 }
+            } else if (salaryRange.includes('+')) {
+                const min = parseInt(salaryRange.replace('+', ''));
+                andConditions.push({
+                    'salary.max': { $gte: min }
                 });
-            } else if (normalizedRange === "5lakh+") {
-                conditions.push({ "salary.max": { $gte: 500000 } });
             }
         }
 
-        let parsedExpMin = null;
-        let parsedExpMax = null;
-        let hasExperienceFilter = false;
-
-        const experienceInput = experienceRange || experience;
-
-        if (experienceInput) {
-            hasExperienceFilter = true;
-            const expStr = experienceInput.toLowerCase().trim();
-            if (expStr.includes("fresher")) {
-                parsedExpMin = 0;
-                parsedExpMax = 0;
-            } else if (expStr === "0-1 years") {
-                parsedExpMin = 0;
-                parsedExpMax = 1;
-            } else if (expStr === "1-3 years") {
-                parsedExpMin = 1;
-                parsedExpMax = 3;
-            } else if (expStr === "3-5 years") {
-                parsedExpMin = 3;
-                parsedExpMax = 5;
-            } else if (expStr.includes("5+")) {
-                parsedExpMin = 5;
-                parsedExpMax = 999;
-            }
-        } else if (experienceMin || experienceMax) {
-            hasExperienceFilter = true;
-            parsedExpMin = experienceMin ? parseInt(experienceMin, 10) : null;
-            parsedExpMax = experienceMax ? parseInt(experienceMax, 10) : null;
-        }
-
-        if (hasExperienceFilter && (parsedExpMin !== null || parsedExpMax !== null)) {
-            let expCondition = {};
-
-            if (parsedExpMin === 0 && parsedExpMax === 0) {
-                expCondition = {
-                    "experience.min": { $eq: 0 },
-                    "experience.max": { $eq: 0 }
-                };
-            } else if (parsedExpMax === 999) {
-                expCondition = { "experience.min": { $gte: parsedExpMin } };
-            } else if (parsedExpMin !== null && parsedExpMax !== null) {
-                expCondition = {
-                    "experience.min": { $lte: parsedExpMax },
-                    "experience.max": { $gte: parsedExpMin }
-                };
-            } else if (parsedExpMin !== null) {
-                expCondition = { "experience.min": { $gte: parsedExpMin } };
-            } else if (parsedExpMax !== null) {
-                expCondition = { "experience.max": { $lte: parsedExpMax } };
-            }
-
-            if (Object.keys(expCondition).length) {
-                conditions.push(expCondition);
+        // Filter by experience range (format: "min-max")
+        if (experienceRange) {
+            if (experienceRange.includes('-')) {
+                const [min, max] = experienceRange.split('-').map(Number);
+                andConditions.push({
+                    $or: [
+                        { 'experience.min': { $lte: max }, 'experience.max': { $gte: min } }
+                    ]
+                });
             }
         }
 
-        if (datePosted) {
-            const now = new Date();
-            let threshold = null;
-
-            if (datePosted === "today") {
-                threshold = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            } else if (datePosted === "yesterday") {
-                threshold = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-            } else if (datePosted === "week") {
-                threshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            } else if (datePosted === "month") {
-                threshold = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-            }
-
-            if (threshold) {
-                conditions.push({ createdAt: { $gte: threshold } });
-            }
+        // Combine all AND conditions
+        if (andConditions.length > 0) {
+            filter.$and = andConditions;
         }
 
+        // Filter by company type
         if (companyType) {
             const matchingCompanies = await Company.find({
-                companyType: { $regex: new RegExp(`^${companyType}$`, "i") }
-            }).select("_id");
+                companyType: { $regex: new RegExp(`^${companyType}$`, 'i') }
+            }).select('_id');
 
             if (!matchingCompanies.length) {
                 return res.status(200).json({
                     success: true,
                     jobs: [],
-                    totalJobs: 0,
                     pagination: {
                         total: 0,
-                        limit: limitNum,
                         currentPage: pageNum,
+                        limit: limitNum,
                         totalPages: 0,
                         hasNext: false,
                         hasPrev: pageNum > 1
@@ -340,24 +276,41 @@ export const getAllJobs = async (req, res) => {
                 });
             }
 
-            conditions.push({ company: { $in: matchingCompanies.map((c) => c._id) } });
+            const companyIds = matchingCompanies.map((c) => c._id);
+            filter.company = { $in: companyIds };
         }
 
-        const normalizedStatus = status || "approved";
-        if (normalizedStatus && normalizedStatus !== "all") {
-            conditions.push({ status: normalizedStatus });
+        // Filter by date posted
+        if (datePosted) {
+            const now = new Date();
+            const createdAtCondition = {};
+            
+            if (datePosted === 'today') {
+                createdAtCondition.$gte = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            } else if (datePosted === 'week') {
+                createdAtCondition.$gte = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            } else if (datePosted === 'month') {
+                createdAtCondition.$gte = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            }
+
+            if (Object.keys(createdAtCondition).length) {
+                filter.createdAt = createdAtCondition;
+            }
         }
 
-        const query = conditions.length ? { $and: conditions } : {};
-
+        // Execute query with pagination
         const [jobs, totalJobs] = await Promise.all([
-            Job.find(query)
-                .populate({ path: "company" })
-                .populate({ path: "category" })
+            Job.find(filter)
+                .populate({
+                    path: "company"
+                })
+                .populate({
+                    path: "category"
+                })
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limitNum),
-            Job.countDocuments(query)
+            Job.countDocuments(filter)
         ]);
 
         const totalPages = Math.ceil(totalJobs / limitNum) || 0;
@@ -365,7 +318,6 @@ export const getAllJobs = async (req, res) => {
         return res.status(200).json({
             success: true,
             jobs,
-            totalJobs,
             pagination: {
                 total: totalJobs,
                 currentPage: pageNum,
