@@ -1372,6 +1372,9 @@ const defaultLocation = location ? {
     const defaultPosition = position ? Number(position) : 1;
     const defaultOpenings = openings ? Number(openings) : 1;
     
+    // Initialize normalizedLocationMulti
+    let normalizedLocationMulti = null;
+    
     if (locationMulti && typeof locationMulti === 'object') {
       const lmState = locationMulti.state || company?.state;
       const lmDistricts = Array.isArray(locationMulti.districts) ? locationMulti.districts.filter(Boolean) : company?.districts;
