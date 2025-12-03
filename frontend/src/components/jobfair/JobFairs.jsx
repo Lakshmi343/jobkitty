@@ -82,16 +82,16 @@ const JobFairs = () => {
 								<Link key={it._id} to={`/job-fair/${it._id}`} className="group block border rounded-xl overflow-hidden bg-white hover:shadow-lg transition-shadow">
 									<div className="relative bg-white">
 										{it.image ? <img src={it.image} alt={it.title} className="w-full h-48 object-contain bg-gray-50" /> : <div className="w-full h-48 bg-gradient-to-br from-indigo-50 to-indigo-100" />}
-										<div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 text-xs font-medium rounded shadow-sm">
+										{/* <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 text-xs font-medium rounded shadow-sm">
 											{formatDate(it.date)}{it.time ? ` • ${it.time}` : ''}
-										</div>
+										</div> */}
 									</div>
 									<div className="p-4">
 										<h3 className="text-lg font-semibold group-hover:text-indigo-600">{it.title}</h3>
 										<p className="text-sm text-gray-600 line-clamp-3 mt-1">{it.description}</p>
-										{(it.location?.city || it.location?.state || it.location?.country) && (
+										{/* {(it.location?.city || it.location?.state || it.location?.country) && (
 											<p className="text-xs text-gray-500 mt-3">{[it.location?.city, it.location?.state, it.location?.country].filter(Boolean).join(', ')}</p>
-										)}
+										)} */}
 										<div className="mt-3">
 											<span className="inline-flex items-center text-xs font-medium text-indigo-700 bg-indigo-50 px-2 py-1 rounded-full">View details →</span>
 										</div>
