@@ -27,7 +27,9 @@
 //   Layers,
 //   BriefcaseBusiness,
 //   BadgeDollarSign,
-//   Clock3
+//   Clock3,
+//   Instagram,
+//   Linkedin
 // } from 'lucide-react';
 
 // // Components
@@ -550,6 +552,26 @@
 //                     Visit Website
 //                   </a>
 //                 )}
+//                 {singleJob.company?.instagram && (
+//                   <a 
+//                     href={`https://instagram.com/${singleJob.company.instagram}`} 
+//                     target="_blank" 
+//                     rel="noopener noreferrer"
+//                     className="text-gray-400 hover:text-pink-500 transition-colors"
+//                   >
+//                     <Instagram className="w-5 h-5" />
+//                   </a>
+//                 )}
+//                 {singleJob.company?.linkedin && (
+//                   <a 
+//                     href={singleJob.company.linkedin.startsWith('http') ? singleJob.company.linkedin : `https://linkedin.com/company/${singleJob.company.linkedin}`} 
+//                     target="_blank" 
+//                     rel="noopener noreferrer"
+//                     className="text-gray-400 hover:text-blue-600 transition-colors"
+//                   >
+//                     <Linkedin className="w-5 h-5" />
+//                   </a>
+//                 )}
 //               </div>
               
 //               <div className="flex items-start space-x-4 mb-4">
@@ -631,26 +653,35 @@
 //                   className="w-full justify-start"
 //                   onClick={() => {
 //                     const text = `Check out this ${singleJob.jobType} position at ${singleJob.company?.name}: ${window.location.href}`;
-//                     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+//                     window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(text)}`, '_blank');
 //                   }}
 //                 >
 //                   <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
 //                     <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
 //                   </svg>
-//                   Share on Twitter
+//                   Share on Facebook
 //                 </Button>
 //                 <Button 
 //                   variant="outline" 
 //                   className="w-full justify-start"
 //                   onClick={() => {
-//                     const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`;
-//                     window.open(url, '_blank');
+//                     const text = `Check out this ${singleJob.jobType} position at ${singleJob.company?.name}: ${window.location.href}`;
+//                     window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(text)}`, '_blank');
 //                   }}
 //                 >
-//                   <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
-//                     <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-//                   </svg>
+//                   <Linkedin className="h-4 w-4 mr-2" />
 //                   Share on LinkedIn
+//                 </Button>
+//                 <Button 
+//                   variant="outline" 
+//                   className="w-full justify-start"
+//                   onClick={() => {
+//                     const text = `Check out this ${singleJob.jobType} position at ${singleJob.company?.name}: ${window.location.href}`;
+//                     window.open(`https://www.instagram.com/direct/new/?text=${encodeURIComponent(text)}`, '_blank');
+//                   }}
+//                 >
+//                   <Instagram className="h-4 w-4 mr-2" />
+//                   Share on Instagram
 //                 </Button>
 //               </div>
 //             </div>
@@ -744,337 +775,6 @@
 
 // export default JobDescription;
 
-
-// import React, { useEffect, useState, useRef } from 'react'
-// import { Badge } from './ui/badge'
-// import { Button } from './ui/button'
-// import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-// import axios from 'axios';
-// import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
-// import { setSingleJob } from '@/redux/jobSlice';
-// import { useDispatch, useSelector } from 'react-redux';
-// import { toast } from 'sonner';
-// import { Briefcase, MapPin, DollarSign, Clock, Users, Calendar, Building, CheckCircle, ArrowLeft, ExternalLink, Star, TrendingUp, FileText, Share2, Mail, Linkedin, Twitter, Facebook, Copy, Check } from 'lucide-react';
-// import Navbar from './shared/Navbar';
-// import { Avatar, AvatarImage } from './ui/avatar'
-// import LoadingSpinner from './shared/LoadingSpinner';
-// import { formatLocationForDisplay } from '../utils/locationUtils';
-// import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from './ui/dialog';
-// import ResumeUpload from './jobseeker/ResumeUpload';
-
-
-
-
-// const JobDescription = () => {
-//     const {singleJob} = useSelector(store => store.job);
-//     const {user} = useSelector(store=>store.auth);
-//     const isIntiallyApplied = singleJob?.applications?.some(application => application.applicant === user?._id) || false;
-//     const [isApplied, setIsApplied] = useState(isIntiallyApplied);
-
-//     const params = useParams();
-//     const jobId = params.id;
-//     const dispatch = useDispatch();
-//     const navigate = useNavigate();
-//     const [searchParams] = useSearchParams();
-//     const requirementsRef = useRef(null);
-//     const jobDescriptionRef = useRef(null);
-//     const headerRef = useRef(null);
-
-//     const [showResumeDialog, setShowResumeDialog] = useState(false);
-//     const [applyAfterUpload, setApplyAfterUpload] = useState(false);
-//     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-//     const [showShareMenu, setShowShareMenu] = useState(false);
-//     const [isCopied, setIsCopied] = useState(false);
-//     const shareMenuRef = useRef(null);
-
-//     // Close share menu when clicking outside
-//     useEffect(() => {
-//         function handleClickOutside(event) {
-//             if (shareMenuRef.current && !shareMenuRef.current.contains(event.target)) {
-//                 setShowShareMenu(false);
-//             }
-//         }
-//         document.addEventListener('mousedown', handleClickOutside);
-//         return () => {
-//             document.removeEventListener('mousedown', handleClickOutside);
-//         };
-//     }, []);
-
-//     const isProfileComplete = (u) => {
-//         if (!u) return false;
-//         // Define your completeness criteria here (adjust as needed)
-//         const hasPhone = Boolean(u.phoneNumber);
-//         const hasResume = Boolean(u.profile?.resume);
-//         return hasPhone && hasResume; // extend with more fields if required
-//     };
-
-//     const applyJobHandler = async () => {
-//         // Check if user is logged in
-//         if (!user) {
-//             // Store job info for after login
-//             localStorage.setItem('pendingJobApplication', JSON.stringify({
-//                 jobId: jobId,
-//                 jobTitle: singleJob?.title,
-//                 returnUrl: window.location.pathname
-//             }));
-            
-//             toast.info('Please login to apply for this job');
-//             navigate('/login');
-//             return;
-//         }
-
-//         // Check profile completeness first
-//         if (!isProfileComplete(user)) {
-//             // Save intent and send to profile editor
-//             localStorage.setItem('pendingJobApplication', JSON.stringify({
-//                 jobId,
-//                 jobTitle: singleJob?.title,
-//                 returnUrl: window.location.pathname,
-//                 requireConfirm: true,
-//                 autoReturn: true
-//             }));
-//             toast.info('Please complete your profile before applying.');
-//             navigate('/profile?edit=1');
-//             return;
-//         }
-
-//         setShowConfirmDialog(true);
-//         return;
-//     }
-
-//     // Share job function
-//     const shareJob = (platform = null) => {
-//         const jobTitle = singleJob?.title || 'Job Opportunity';
-//         const companyName = singleJob?.company?.name || '';
-//         const jobUrl = window.location.href;
-//         const text = `Check out this ${singleJob?.jobType || ''} position at ${companyName}`;
-
-//         switch (platform) {
-//             case 'copy':
-//                 navigator.clipboard.writeText(jobUrl);
-//                 setIsCopied(true);
-//                 toast.success('Link copied to clipboard!');
-//                 setTimeout(() => setIsCopied(false), 2000);
-//                 setShowShareMenu(false);
-//                 break;
-//             case 'email':
-//                 window.open(`mailto:?subject=${encodeURIComponent(jobTitle)}&body=${encodeURIComponent(`${text}\n\n${jobUrl}`)}`);
-//                 break;
-//             case 'linkedin':
-//                 window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(jobUrl)}`);
-//                 break;
-//             case 'twitter':
-//                 window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${text} ${jobUrl}`)}`);
-//                 break;
-//             case 'facebook':
-//                 window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(jobUrl)}&quote=${encodeURIComponent(text)}`);
-//                 break;
-//             default:
-//                 if (navigator.share) {
-//                     navigator.share({
-//                         title: jobTitle,
-//                         text: text,
-//                         url: jobUrl,
-//                     }).catch(console.error);
-//                 } else {
-//                     setShowShareMenu(!showShareMenu);
-//                 }
-//         }
-//     };
-
-//     // Share menu component
-//     const ShareMenu = () => (
-//         <div 
-//             ref={shareMenuRef}
-//             className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
-//         >
-//             <div className="py-1" role="menu" aria-orientation="vertical">
-//                 <button
-//                     onClick={() => shareJob('copy')}
-//                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-//                     role="menuitem"
-//                 >
-//                     {isCopied ? (
-//                         <>
-//                             <Check className="w-4 h-4 mr-3 text-green-500" />
-//                             <span>Copied!</span>
-//                         </>
-//                     ) : (
-//                         <>
-//                             <Copy className="w-4 h-4 mr-3 text-gray-500" />
-//                             <span>Copy link</span>
-//                         </>
-//                     )}
-//                 </button>
-//                 <button
-//                     onClick={() => shareJob('email')}
-//                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-//                     role="menuitem"
-//                 >
-//                     <Mail className="w-4 h-4 mr-3 text-gray-500" />
-//                     <span>Email</span>
-//                 </button>
-//                 <button
-//                     onClick={() => shareJob('linkedin')}
-//                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-//                     role="menuitem"
-//                 >
-//                     <Linkedin className="w-4 h-4 mr-3 text-[#0A66C2]" />
-//                     <span>LinkedIn</span>
-//                 </button>
-//                 <button
-//                     onClick={() => shareJob('twitter')}
-//                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-//                     role="menuitem"
-//                 >
-//                     <Twitter className="w-4 h-4 mr-3 text-[#1DA1F2]" />
-//                     <span>Twitter</span>
-//                 </button>
-//                 <button
-//                     onClick={() => shareJob('facebook')}
-//                     className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-b-md"
-//                     role="menuitem"
-//                 >
-//                     <Facebook className="w-4 h-4 mr-3 text-[#1877F2]" />
-//                     <span>Facebook</span>
-//                 </button>
-//             </div>
-//         </div>
-//     );
-
-//     const handleResumeUploaded = async () => {
-//         setShowResumeDialog(false);
-//         if (applyAfterUpload && !isApplied) {
-//             setApplyAfterUpload(false);
-        
-//             setTimeout(() => {
-                
-//                 setShowConfirmDialog(true);
-//             }, 500);
-//         }
-//     };
-
-//     const confirmApply = async () => {
-//         try {
-//             const res = await axios.get(`${APPLICATION_API_END_POINT}/apply/${jobId}`, { withCredentials: true });
-//             if (res.data.success) {
-//                 setIsApplied(true);
-//                 const updatedSingleJob = { ...singleJob, applications: [...singleJob.applications, { applicant: user?._id }] };
-//                 dispatch(setSingleJob(updatedSingleJob));
-//                 toast.success('Great! Your application has been sent successfully!');
-//                 localStorage.removeItem('pendingJobApplication');
-//             }
-//         } catch (error) {
-//             console.log(error);
-//             toast.error(error.response?.data?.message || 'Something went wrong. Please try again.');
-//         } finally {
-//             setShowConfirmDialog(false);
-//         }
-//     };
-
-//     useEffect(()=>{
-//         const fetchSingleJob = async () => {
-//             try {
-//                 const res = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`,{withCredentials:true});
-//                 if(res.data.success){
-//                     dispatch(setSingleJob(res.data.job));
-//                     setIsApplied(res.data.job.applications.some(application=>application.applicant === user?._id))
-//                 } else {
-//                     toast.error('Job not found');
-//                 }
-//             } catch (error) {
-//                 console.error('Error fetching job details:', error);
-//                 if (error.response?.status === 404) {
-//                     toast.error('Job not found');
-//                 } else if (error.response?.status === 401) {
-//                     toast.error('Please login to view job details');
-//                 } else {
-//                     toast.error('Failed to load job details');
-//                 }
-//             }
-//         }
-//         fetchSingleJob(); 
-//     },[jobId,dispatch, user?._id]);
-
-//     useEffect(() => {
-//         const hasSection = Boolean(searchParams.get('section'));
-//         if (!hasSection) {
-//             window.scrollTo({ top: 0, behavior: 'smooth' });
-//         }
-     
-
-//     }, [jobId, searchParams]);
-
-   
-//     useEffect(() => {
-//         if (user && singleJob) {
-//             const pendingApplication = localStorage.getItem('pendingJobApplication');
-//             if (pendingApplication) {
-//                 const applicationData = JSON.parse(pendingApplication);
-                
-            
-//                 if (applicationData.jobId === jobId) {
-                  
-//                     if (isProfileComplete(user) && !isApplied) {
-//                         setShowConfirmDialog(true);
-//                     }
-//                 }
-//             }
-//         }
-//     }, [user, singleJob, jobId, isApplied]);
-
-    
-//     useEffect(() => {
-//         if (singleJob && searchParams.get('section')) {
-//             const section = searchParams.get('section');
-//             let targetRef = null;
-            
-//             if (section === 'requirements' && requirementsRef.current) {
-//                 targetRef = requirementsRef.current;
-//             } else if (section === 'job-description' && jobDescriptionRef.current) {
-//                 targetRef = jobDescriptionRef.current;
-//             } else if (section === 'header' && headerRef.current) {
-//                 targetRef = headerRef.current;
-//             }
-            
-//             if (targetRef) {
-//                 setTimeout(() => {
-//                     targetRef.scrollIntoView({ 
-//                         behavior: 'smooth', 
-//                         block: 'start' 
-//                     });
-//                 }, 500); 
-//             }
-//         }
-//     }, [singleJob, searchParams]);
-
-//     if (!singleJob) {
-//         return (
-//             <>
-               
-//                 <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 flex items-center justify-center">
-//                     <LoadingSpinner size={60} />
-//                 </div>
-//             </>
-//         );
-//     }
-
-//     return (
-//         <>
-           
-//             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-//                 <div className="max-w-6xl mx-auto px-4 py-8">
-                
-//                     <div className="mb-6">
-//                         <button
-//                             onClick={() => window.history.back()}
-//                             className="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
-//                         >
-//                             <ArrowLeft className="w-5 h-5" />
-//                             Back to Jobs
-//                         </button>
-//                     </div>
-
                     
 //                     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
                     
@@ -1124,10 +824,10 @@
 //                                         <Button
 //                                             onClick={isApplied ? null : applyJobHandler}
 //                                             disabled={isApplied}
-//                                             className={`px-6 py-3 text-lg font-semibold rounded-xl transition-all duration-200 ${
+//                                             className={`w-full px-6 py-6 text-lg font-semibold rounded-2xl transition-all duration-200 ${
 //                                                 isApplied 
-//                                                     ? 'bg-green-600 hover:bg-green-700 cursor-not-allowed' 
-//                                                     : 'bg-white text-blue-600 hover:bg-gray-100 shadow-lg hover:shadow-xl transform hover:scale-105'
+//                                                     ? 'bg-green-100 text-green-700 border-2 border-green-200' 
+//                                                     : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white border-0 hover:from-blue-700 hover:to-purple-700 shadow-md hover:shadow-lg'
 //                                             }`}
 //                                         >
 //                                             {isApplied ? (
@@ -1374,7 +1074,7 @@ import {
   Share2, 
   Mail, 
   Linkedin, 
-  Twitter, 
+  Instagram, 
   Facebook, 
   Copy, 
   Check,
@@ -1492,10 +1192,11 @@ const JobDescription = () => {
                 window.open(`mailto:?subject=${encodeURIComponent(jobTitle)}&body=${encodeURIComponent(`${text}\n\n${jobUrl}`)}`);
                 break;
             case 'linkedin':
-                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(jobUrl)}`);
+                window.open(`https://www.linkedin.com/company/109610014/admin/dashboard/=${encodeURIComponent(jobUrl)}`);
                 break;
-            case 'twitter':
-                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${text} ${jobUrl}`)}`);
+            case 'instagram':
+                window.open(`https://www.instagram.com/jobkitty_official?igsh=MW5lNmtid20wZm1qMw==
+=${encodeURIComponent(`${text} ${jobUrl}`)}`);
                 break;
             case 'facebook':
                 window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(jobUrl)}&quote=${encodeURIComponent(text)}`);
@@ -1553,12 +1254,12 @@ const JobDescription = () => {
                     <span>LinkedIn</span>
                 </button>
                 <button
-                    onClick={() => shareJob('twitter')}
+                    onClick={() => shareJob('instagram')}
                     className="flex items-center w-full px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 transition-colors duration-200"
                     role="menuitem"
                 >
-                    <Twitter className="w-4 h-4 mr-3 text-[#1DA1F2]" />
-                    <span>Twitter</span>
+                    <Instagram className="w-4 h-4 mr-3 text-[#E1306C]" />
+                    <span>Instagram</span>
                 </button>
                 <button
                     onClick={() => shareJob('facebook')}
@@ -1758,8 +1459,8 @@ const JobDescription = () => {
                                             disabled={isApplied}
                                             className={`px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-300 shadow-2xl ${
                                                 isApplied 
-                                                    ? 'bg-emerald-600 hover:bg-emerald-700 cursor-not-allowed' 
-                                                    : 'bg-white text-blue-600 hover:bg-gray-50 hover:shadow-2xl transform hover:scale-105'
+                                                    ? 'bg-emerald-600 hover:bg-emerald-700 cursor-not-allowed text-white' 
+                                                    : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:shadow-2xl transform hover:scale-105'
                                             }`}
                                         >
                                             {isApplied ? (
@@ -1781,8 +1482,8 @@ const JobDescription = () => {
                                                 onClick={handleSaveJob}
                                                 className={`flex-1 px-4 py-4 border-2 rounded-2xl transition-all duration-200 ${
                                                     isSaved 
-                                                        ? 'border-blue-200 text-blue-600' 
-                                                        : 'border-gray-300 hover:bg-gray-50'
+                                                        ? 'border-blue-200 text-blue-600 hover:bg-transparent' 
+                                                        : 'border-gray-300 hover:bg-transparent'
                                                 }`}
                                             >
                                                 <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
@@ -1791,7 +1492,7 @@ const JobDescription = () => {
                                         </div>
                                     </div>
                                     
-                                    {/* Quick Stats */}
+                                  
                                     <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm">
                                         <div className="text-sm text-blue-100 space-y-2">
                                             <div className="flex justify-between">
@@ -1814,12 +1515,12 @@ const JobDescription = () => {
                             </div>
                         </div>
 
-                        {/* Content Section */}
+                     
                         <div className="p-8 lg:p-10">
                             <div className="grid lg:grid-cols-3 gap-8">
-                                {/* Main Content */}
+                             
                                 <div className="lg:col-span-2 space-y-8">
-                                    {/* Job Description */}
+                              
                                     <div ref={jobDescriptionRef} className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 border border-gray-200 shadow-sm">
                                         <div className="flex items-center justify-between mb-6">
                                             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
@@ -1836,7 +1537,7 @@ const JobDescription = () => {
                                         </div>
                                     </div>
 
-                                    {/* Requirements */}
+                                 
                                     {singleJob?.requirements && singleJob.requirements.length > 0 && (
                                         <div ref={requirementsRef} className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 border border-gray-200 shadow-sm">
                                             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
@@ -1856,7 +1557,7 @@ const JobDescription = () => {
                                         </div>
                                     )}
 
-                                    {/* Share This Job Section */}
+                                  
                                     <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-3xl p-6 shadow-sm">
                                         <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
                                             <div className="p-2 bg-purple-100 rounded-xl">
@@ -1876,11 +1577,11 @@ const JobDescription = () => {
                                                 LinkedIn
                                             </Button>
                                             <Button
-                                                onClick={() => shareJob('twitter')}
-                                                className="bg-[#1DA1F2] hover:bg-[#1a8cd8] text-white rounded-xl py-3 transition-all duration-200"
+                                                onClick={() => shareJob('instagram')}
+                                                className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-xl py-3 transition-all duration-200"
                                             >
-                                                <Twitter className="w-5 h-5 mr-2" />
-                                                Twitter
+                                                <Instagram className="w-5 h-5 mr-2" />
+                                                Instagram
                                             </Button>
                                             <Button
                                                 onClick={() => shareJob('facebook')}
@@ -1900,9 +1601,9 @@ const JobDescription = () => {
                                     </div>
                                 </div>
 
-                                {/* Sidebar */}
+                                
                                 <div className="space-y-6">
-                                    {/* Job Details Card */}
+                                   
                                     <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-3xl p-6 shadow-sm">
                                         <h3 className="text-xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Job Details</h3>
                                         <div className="space-y-5">
@@ -1941,7 +1642,7 @@ const JobDescription = () => {
                                         </div>
                                     </div>
 
-                                    {/* Company Info */}
+                              
                                     {singleJob?.company && (
                                         <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-3xl p-6 shadow-sm">
                                             <h3 className="text-xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Company</h3>
@@ -1972,7 +1673,7 @@ const JobDescription = () => {
                                         </div>
                                     )}
 
-                                    {/* Posted Date */}
+                                   
                                     <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-3xl p-6 shadow-sm">
                                         <div className="flex items-center gap-4">
                                             <div className="p-3 bg-blue-100 rounded-xl">
@@ -1997,7 +1698,7 @@ const JobDescription = () => {
                 </div>
             </div>
 
-            {/* Resume required dialog */}
+   
             <Dialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
                 <DialogContent className="max-w-xl rounded-3xl">
                     <DialogHeader>
@@ -2012,7 +1713,7 @@ const JobDescription = () => {
                 </DialogContent>
             </Dialog>
 
-            {/* Confirmation dialog with resume preview */}
+
             <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
                 <DialogContent className="max-w-4xl rounded-3xl">
                     <DialogHeader>

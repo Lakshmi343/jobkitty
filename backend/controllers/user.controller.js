@@ -1,3 +1,4 @@
+
 import { User } from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
@@ -6,7 +7,6 @@ import { sendRegistrationReminderEmail, sendPasswordResetEmail, sendWelcomeEmail
 import crypto from "crypto";
 import cloudinary from "../utils/cloudinary.js";
 
-// Helper: compute profile completion status for jobseekers
 const computeJobseekerProfileStatus = (userDoc) => {
   const status = {
     isIncomplete: false,
@@ -436,7 +436,7 @@ export const updateProfile = async (req, res) => {
                 });
             }
 
-            // Enforce resume requirement
+            
             const hasExistingResume = !!(user.profile && user.profile.resume);
             const providedThisRequest = !!resumeUrl; 
             if (!hasExistingResume && !providedThisRequest) {

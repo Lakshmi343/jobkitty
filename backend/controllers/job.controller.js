@@ -17,7 +17,8 @@ export const postJob = async (req, res) => {
             experienceLevel,  
             position, 
             openings,
-            category         
+            category, // This can now be a single category ID or an array of category IDs
+            categories // Alternative field name for multiple categories
         } = req.body;
         const userId = req.id;
         const user = req.user; 
@@ -31,10 +32,17 @@ export const postJob = async (req, res) => {
         
         const companyId = user.profile.company;
         
+        // Handle both single category (for backward compatibility) and multiple categories
+        let categoryIds = [];
+        if (categories && Array.isArray(categories) && categories.length > 0) {
+            categoryIds = categories;
+        } else if (category) {
+            categoryIds = [category]; // Convert single category to array
+        }
       
-        if (!title || !description || !category) {
+        if (!title || !description || categoryIds.length === 0) {
             return res.status(400).json({ 
-                message: "Job title, description, and category are required", 
+                message: "Job title, description, and at least one category are required", 
                 success: false 
             });
         }
@@ -53,10 +61,11 @@ export const postJob = async (req, res) => {
         const defaultPosition = 1;
         const defaultOpenings = 1;
         
-        const categoryExists = await Category.findById(category);
-        if (!categoryExists) {
+        // Verify all categories exist
+        const existingCategories = await Category.find({ _id: { $in: categoryIds } });
+        if (existingCategories.length !== categoryIds.length) {
             return res.status(404).json({ 
-                message: "Category not found", 
+                message: "One or more categories not found", 
                 success: false 
             });
         }
@@ -129,7 +138,7 @@ export const postJob = async (req, res) => {
             position: position ? Number(position) : defaultPosition,
             openings: openings ? Number(openings) : defaultOpenings,
             company: companyId,
-            category,   
+            category: categoryIds,   
             created_by: userId
         };
 
@@ -426,7 +435,8 @@ export const updateJob = async (req, res) => {
             jobType, 
             experienceLevel,  
             position, 
-            category         
+            category,
+            categories        
         } = req.body;
         
         const jobId = req.params.id;
@@ -459,19 +469,27 @@ export const updateJob = async (req, res) => {
         }
         
         // Validate required fields
+        // Handle both single category (for backward compatibility) and multiple categories
+        let categoryIds = [];
+        if (categories && Array.isArray(categories) && categories.length > 0) {
+            categoryIds = categories;
+        } else if (category) {
+            categoryIds = [category]; // Convert single category to array
+        }
+
         if (!title || !description || !requirements || !salary || !location || 
-            !jobType || !experienceLevel || !position || !category) {
+            !jobType || !experienceLevel || !position || categoryIds.length === 0) {
             return res.status(400).json({ 
-                message: "All fields are required", 
+                message: "All fields are required and at least one category must be selected", 
                 success: false 
             });
         }
         
-        // Check if category exists
-        const categoryExists = await Category.findById(category);
-        if (!categoryExists) {
+        // Verify all categories exist
+        const existingCategories = await Category.find({ _id: { $in: categoryIds } });
+        if (existingCategories.length !== categoryIds.length) {
             return res.status(404).json({ 
-                message: "Category not found", 
+                message: "One or more categories not found", 
                 success: false 
             });
         }
@@ -501,7 +519,7 @@ export const updateJob = async (req, res) => {
         if (jobType !== undefined) normalized.jobType = jobType;
         if (experienceLevel !== undefined) normalized.experienceLevel = String(experienceLevel);
         if (position !== undefined) normalized.position = Number(position);
-        if (category !== undefined) normalized.category = category;
+        if (categoryIds.length > 0) normalized.category = categoryIds;
 
         // Normalize location: accept string or object like in postJob
         if (location !== undefined) {

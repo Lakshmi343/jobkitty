@@ -2,10 +2,7 @@ import express from "express";
 import { login, logout, register, updateProfile, getUserProfile, forgotPassword, resetPassword, uploadResume,getAllEmployers,getAllJobseekers, refreshToken, updateProfilePhoto } from "../controllers/user.controller.js";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import { singleUpload, resumeUpload } from "../middlewares/mutler.js";
- 
 const router = express.Router();
-
-
 router.post("/register", register);
 router.route("/login").post(login);
 router.route("/logout").get(logout);
@@ -18,7 +15,5 @@ router.route("/upload-resume").post(isAuthenticated, resumeUpload, uploadResume)
 router.route("/refresh-token").post(refreshToken);
 router.route("/jobseekers").get(getAllJobseekers);
 router.route("/employers").get(getAllEmployers);
-
-
 export default router;
 

@@ -7,10 +7,10 @@ const connectDB = async () => {
         }
 		const uri = process.env.MONGO_URI;
 
-		// Enable stricter query parsing and clearer deprecation behavior
+		
 		mongoose.set('strictQuery', true);
 
-		// Helpful diagnostics for common Atlas misconfigurations
+		
 		if (uri.startsWith('mongodb://') && uri.includes('mongodb.net') && !uri.includes('replicaSet=')) {
 			console.warn('[MongoDB] Detected non-SRV Atlas URI without replicaSet/SSL params. ' +
 				'Consider using the SRV URI (mongodb+srv://...) or add ?ssl=true&replicaSet=<name>&authSource=admin&retryWrites=true&w=majority');
@@ -22,7 +22,7 @@ const connectDB = async () => {
 		await mongoose.connect(uri, {
 			serverSelectionTimeoutMS: serverSelectionTimeoutMs,
 			connectTimeoutMS: connectTimeoutMs,
-			// Use MongoDB Stable API (recommended for Atlas)
+		
 			serverApi: { version: '1', strict: true, deprecationErrors: true }
 		});
 

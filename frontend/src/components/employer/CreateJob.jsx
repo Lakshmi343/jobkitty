@@ -31,7 +31,8 @@ const CreateJob = () => {
         jobType: "",
         position: "1",
         openings: "1",
-        category: ""
+        category: "",
+        categories: [] // New field for multiple categories
     });
     
     const [loading, setLoading] = useState(false);
@@ -126,6 +127,27 @@ const CreateJob = () => {
 
     const selectChangeHandler = (name, value) => {
         setInput(prev => ({ ...prev, [name]: value }));
+    };
+
+    const toggleCategory = (categoryId) => {
+        setInput(prev => {
+            const currentCategories = [...(prev.categories || [])];
+            const categoryIndex = currentCategories.indexOf(categoryId);
+            
+            if (categoryIndex === -1) {
+                // Add category if not already selected
+                return { ...prev, categories: [...currentCategories, categoryId] };
+            } else {
+                // Remove category if already selected
+                const updatedCategories = [...currentCategories];
+                updatedCategories.splice(categoryIndex, 1);
+                return { ...prev, categories: updatedCategories };
+            }
+        });
+    };
+
+    const isCategorySelected = (categoryId) => {
+        return input.categories?.includes(categoryId) || false;
     };
 
     const addRequirement = () => {
@@ -243,8 +265,8 @@ const CreateJob = () => {
             return;
         }
 
-        if (!input.title || !input.description || !input.category) {
-            toast.error("Job title, description, and category are required");
+        if (!input.title || !input.description || input.categories.length === 0) {
+            toast.error("Job title, description, and at least one category are required");
             return;
         }
 
@@ -302,7 +324,7 @@ const CreateJob = () => {
                 jobType: updatedInput.jobType,
                 position: parseInt(updatedInput.position) || 1,
                 openings: openingsCount,
-                category: updatedInput.category,
+categories: input.categories,
                 status: 'pending'
             };
 
@@ -400,35 +422,75 @@ const CreateJob = () => {
                                             />
                                         </div>
                                         <div className="md:col-span-2">
-                                            <Label>Category*</Label>
-                                            <Select
-                                                name="category"
-                                                value={input.category}
-                                                onValueChange={(value) => selectChangeHandler("category", value)}
-                                                required
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Select a category" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    <div className="p-2 sticky top-0 bg-white border-b">
+                                            <Label>Categories*</Label>
+                                            <div className="space-y-2">
+                                                <div className="p-2 border rounded-md">
+                                                    {input.categories?.length > 0 ? (
+                                                        <div className="flex flex-wrap gap-2 mb-2">
+                                                            {input.categories.map(catId => {
+                                                                const category = categories.find(c => c._id === catId);
+                                                                return category ? (
+                                                                    <span 
+                                                                        key={catId}
+                                                                        className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                                                                    >
+                                                                        {category.name}
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={(e) => {
+                                                                                e.preventDefault();
+                                                                                toggleCategory(catId);
+                                                                            }}
+                                                                            className="ml-2 text-blue-500 hover:text-blue-700"
+                                                                        >
+                                                                            <X className="h-3 w-3" />
+                                                                        </button>
+                                                                    </span>
+                                                                ) : null;
+                                                            })}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-sm text-gray-500">No categories selected</p>
+                                                    )}
+                                                    <div className="relative">
                                                         <Input
                                                             value={categoryQuery}
                                                             onChange={(e) => setCategoryQuery(e.target.value)}
-                                                            placeholder="Search category..."
+                                                            placeholder="Search and select categories..."
+                                                            className="pr-10"
                                                         />
                                                     </div>
-                                                    <SelectGroup>
-                                                        {filteredCategories.length > 0 ? (
-                                                            filteredCategories.map(cat => (
-                                                                <SelectItem key={cat._id} value={cat._id}>{cat.name}</SelectItem>
-                                                            ))
-                                                        ) : (
-                                                            <SelectItem disabled value="no_results">No categories found</SelectItem>
-                                                        )}
-                                                    </SelectGroup>
-                                                </SelectContent>
-                                            </Select>
+                                                </div>
+                                                <div className="max-h-60 overflow-y-auto border rounded-md">
+                                                    {filteredCategories.length > 0 ? (
+                                                        <div className="divide-y">
+                                                            {filteredCategories.map(cat => (
+                                                                <div 
+                                                                    key={cat._id}
+                                                                    className={`p-3 hover:bg-gray-50 cursor-pointer flex items-center ${isCategorySelected(cat._id) ? 'bg-blue-50' : ''}`}
+                                                                    onClick={() => toggleCategory(cat._id)}
+                                                                >
+                                                                    <div className={`h-4 w-4 rounded border mr-3 flex items-center justify-center ${isCategorySelected(cat._id) ? 'bg-blue-600 border-blue-600' : 'border-gray-300'}`}>
+                                                                        {isCategorySelected(cat._id) && (
+                                                                            <CheckCircle className="h-3 w-3 text-white" />
+                                                                        )}
+                                                                    </div>
+                                                                    <span className={isCategorySelected(cat._id) ? 'font-medium text-blue-700' : ''}>
+                                                                        {cat.name}
+                                                                    </span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="p-4 text-center text-gray-500">
+                                                            No categories found
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {input.categories?.length === 0 && (
+                                                    <p className="text-sm text-red-500 mt-1">Please select at least one category</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </CardContent>

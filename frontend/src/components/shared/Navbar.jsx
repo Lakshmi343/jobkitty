@@ -279,7 +279,7 @@ const Navbar = () => {
                                     
                                     <li><Link to="/admin/companies">Companies</Link></li>
                                     <li><Link to="/jobs">Jobs</Link></li>
-                                    {/* <li><Link to="/job-fair">Job Fairs</Link></li> */}
+                                    <li><Link to="/job-fair">Job Fairs</Link></li>
                                     <li><Link to="/internships">Internships</Link></li>
                                     <li><Link to="/contact">Contact</Link></li>
                                 </>
@@ -289,7 +289,7 @@ const Navbar = () => {
                                     <li><Link to="/employer/jobs">My Jobs</Link></li>
                                     <li><Link to="/employer/jobs/create">Post Job</Link></li>
                                     <li><Link to="/jobs">Browse Jobs</Link></li>
-                                    {/* <li><Link to="/job-fair">Job Fairs</Link></li> */}
+                                    <li><Link to="/job-fair">Job Fairs</Link></li>
                                     <li><Link to="/internships">Internships</Link></li>
                                     <li><Link to="/contact">Contact</Link></li>
                                 </>
@@ -297,7 +297,7 @@ const Navbar = () => {
                                 <>
                               
                                     <li><Link to="/jobs">Jobs</Link></li>
-                                    {/* <li><Link to="/job-fair">Job Fairs</Link></li> */}
+                                    <li><Link to="/job-fair">Job Fairs</Link></li>
                                     <li><Link to="/internships">Internships</Link></li>
                                     <li><Link to="/browse">Browse</Link></li>
                                     <li><Link to="/jobseeker/applied-jobs">Applied Jobs</Link></li>
@@ -308,7 +308,7 @@ const Navbar = () => {
                                    
                                     <li><Link to="/">Home</Link></li>
                                     <li><Link to="/jobs">Jobs</Link></li>
-                                    {/* <li><Link to="/job-fair">Job Fairs</Link></li> */}
+                                    <li><Link to="/job-fair">Job Fairs</Link></li>
                                     <li><Link to="/internships">Internships</Link></li>
                                     <li><Link to="/browse">Browse</Link></li>
                                     <li><Link to="/contact">Contact</Link></li>

@@ -66,21 +66,21 @@ const Login = () => {
       });
 
       if (res.data.success) {
-        // Set user data and tokens
+      
         dispatch(setUser(res.data.user));
         authUtils.setUser(res.data.user);
         
-        // Set appropriate tokens
+       
         if (res.data.accessToken && res.data.refreshToken) {
           authUtils.setTokens(res.data.accessToken, res.data.refreshToken);
         } else if (res.data.token) {
           authUtils.setTokens(res.data.token, res.data.token);
         }
 
-        // Handle redirection based on user role
+       
         const isJobseeker = res.data?.user?.role === 'Jobseeker';
         
-        // Check for pending job application
+    
         const pendingApplication = localStorage.getItem('pendingJobApplication');
         if (pendingApplication) {
           try {
@@ -94,7 +94,7 @@ const Login = () => {
           }
         }
         
-        // Redirect based on user role
+        
         if (isJobseeker) {
           navigate('/jobs');
         } else {
@@ -135,7 +135,7 @@ const Login = () => {
             </div>
 
             <form onSubmit={submitHandler} className='space-y-6'>
-              {/* Email */}
+             
               <div className='space-y-2'>
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</Label>
                 <div className="relative">
@@ -153,7 +153,7 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* Password */}
+             
               <div className='space-y-2'>
                 <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
                 <div className="relative">
@@ -178,7 +178,7 @@ const Login = () => {
                 </div>
               </div>
 
-              {/* Accept Code (when blocked) */}
+             
               {isBlocked && (
                 <div className='space-y-2'>
                   <Label htmlFor="acceptCode" className="text-sm font-medium text-red-700">Accept Code</Label>
@@ -214,7 +214,7 @@ const Login = () => {
               </Button>
             </form>
 
-            {/* Forgot password link */}
+         
             <div className="mt-4 text-right">
               <Link
                 to="/forgot-password"

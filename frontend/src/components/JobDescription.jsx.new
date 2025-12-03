@@ -8,11 +8,7 @@ import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
 import { setSingleJob } from '@/redux/jobSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
-import { 
-  Briefcase, MapPin, DollarSign, Clock, Users, Calendar, 
-  Building, CheckCircle, ArrowLeft, ExternalLink, Star, 
-  TrendingUp, FileText 
-} from 'lucide-react';
+import {  Briefcase, MapPin, DollarSign, Clock, Users, Calendar,  Building, CheckCircle, ArrowLeft, ExternalLink, Star,  TrendingUp, FileText } from 'lucide-react';
 import Navbar from './shared/Navbar';
 import { Avatar, AvatarImage } from './ui/avatar';
 import LoadingSpinner from './shared/LoadingSpinner';
@@ -27,7 +23,6 @@ const JobDescription = () => {
   const [isApplied, setIsApplied] = useState(isIntiallyApplied);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const params = useParams();
   const jobId = params.id;
   const dispatch = useDispatch();
@@ -38,26 +33,21 @@ const JobDescription = () => {
   const headerRef = useRef(null);
   const [isResumeDialogOpen, setIsResumeDialogOpen] = useState(false);
   const [selectedResume, setSelectedResume] = useState(null);
-
   // Prepare SEO metadata
   const jobTitle = singleJob?.title || 'Job Opportunity';
   const companyName = singleJob?.company?.name || 'Company';
   const location = singleJob?.location ? formatLocationForDisplay(singleJob.location) : '';
   const jobType = singleJob?.jobType || '';
   const salary = singleJob?.salary ? 
-    `${singleJob.salary.currency || '₹'}${singleJob.salary.min || '0'} - ${singleJob.salary.max || '0'} ${singleJob.salary.period || 'year'}` : 'Negotiable';
-  
+    `${singleJob.salary.currency || '₹'}${singleJob.salary.min || '0'} - ${singleJob.salary.max || '0'} ${singleJob.salary.period || 'year'}` : 'Negotiable'; 
   const metaDescription = `${jobTitle} at ${companyName} in ${location}. ${jobType} position${salary ? ` with salary ${salary}` : ''}. ${singleJob?.description?.substring(0, 150)}...`;
   const pageTitle = `${jobTitle} at ${companyName} | JobKitty`;
   const imageUrl = singleJob?.company?.logo || '/images/jobkitty-og.jpg';
   const jobUrl = window.location.href;
-
   // Rest of your component code...
   // [Previous component logic remains the same until the return statement]
-
   if (isLoading) return <LoadingSpinner />;
   if (error) return <div className="min-h-screen flex items-center justify-center">Error loading job details</div>;
-
   return (
     <>
       {/* SEO Meta Tags */}

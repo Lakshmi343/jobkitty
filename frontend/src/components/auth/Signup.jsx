@@ -434,7 +434,7 @@ const Signup = () => {
             </div>
 
             <form onSubmit={submitHandler} className='space-y-6'>
-              {/* Full Name */}
+              
               <div className='space-y-2'>
                 <Label htmlFor="fullname" className="text-sm font-medium text-gray-700">Full Name</Label>
                 <div className="relative">
@@ -452,7 +452,7 @@ const Signup = () => {
                 </div>
               </div>
 
-              {/* Email */}
+              
               <div className='space-y-2'>
                 <Label htmlFor="email" className="text-sm font-medium text-gray-700">Email Address</Label>
                 <div className="relative">
@@ -488,7 +488,7 @@ const Signup = () => {
                 </div>
               </div>
 
-              {/* Password */}
+              
               <div className='space-y-2'>
                 <Label htmlFor="password" className="text-sm font-medium text-gray-700">Password</Label>
                 <div className="relative">
@@ -585,7 +585,6 @@ const Signup = () => {
               </Button>
             </form>
 
-            {/* Login Link */}
             <div className='mt-6 text-center'>
               <span className='text-sm text-gray-600'>
                 Already have an account?{' '}

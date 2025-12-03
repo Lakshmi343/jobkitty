@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react'
-
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
@@ -7,7 +6,6 @@ import { Badge } from '../ui/badge'
 import { Button } from '../ui/button'
 import { Edit2, Eye, MoreHorizontal, Calendar, Building, MapPin, Users, Clock } from 'lucide-react'
 import { formatLocationForDisplay } from '../../utils/locationUtils'
-
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "./shared/Navbar";
 import TopFilterBar from "./TopFilterBar";
@@ -26,59 +27,59 @@ const Jobs = () => {
     pagination: store.job.pagination || null
   }));
 
-  // Initialize filters from URL on mount and when URL changes
+  
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const filtersFromUrl = {};
 
-    // Get role from search query or URL params
+ 
     const roleFromUrl = searchParams.get('q') || '';
     
-    // Get category from URL params (e.g., /jobs/category/it-jobs)
+   
     if (params.category) {
-      // Handle both /category/ID and ?category=ID formats
+     
       const categoryParam = params.category.replace(/-/g, ' ');
-      // Extract just the ID part if it contains a slash
+   
       filtersFromUrl.categoryId = categoryParam.split('/')[0];
       console.log('Extracted category ID from URL:', filtersFromUrl.categoryId);
     }
     
-    // Get location from URL params (e.g., /jobs/location/kochi)
+  
     if (params.location) {
       filtersFromUrl.location = params.location.replace(/-/g, ' ');
     }
 
-    // Get other filters from search params
+    
     if (searchParams.has('jobType')) filtersFromUrl.jobType = searchParams.get('jobType');
     if (searchParams.has('salary')) filtersFromUrl.salaryRange = searchParams.get('salary');
     if (searchParams.has('experience')) filtersFromUrl.experienceRange = searchParams.get('experience');
     if (searchParams.has('companyType')) filtersFromUrl.companyType = searchParams.get('companyType');
     if (searchParams.has('datePosted')) filtersFromUrl.datePosted = searchParams.get('datePosted');
 
-    // Update Redux store with filters from URL
+
     dispatch(setSearchedQuery(roleFromUrl));
     dispatch(setJobFilters(filtersFromUrl));
   }, [dispatch, location.search, params]);
 
-  // Use the useGetAllJobs hook for initial load and pagination
+
   const { isLoading, isLoadingMore, error: hookError, pagination } = useGetAllJobs({
     page: currentPage,
     limit: 20
   });
 
-  // Update error state from hook
+ 
   useEffect(() => {
     if (hookError) {
       setError(hookError);
     }
   }, [hookError]);
 
-  // Handle load more functionality
+  
   const handleLoadMore = () => {
     setCurrentPage((prev) => prev + 1);
   };
 
-  // Reset pagination when filters change
+  
   useEffect(() => {
     setCurrentPage(1);
   }, [searchedQuery, filters]);

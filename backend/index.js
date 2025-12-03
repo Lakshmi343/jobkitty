@@ -24,6 +24,7 @@ app.use(cookieParser());
 app.use(helmet());
 
 const allowedOrigins = [
+
   "http://localhost:5173",
   "http://localhost:5174",
   "http://localhost:8000",
@@ -34,6 +35,7 @@ const allowedOrigins = [
   "https://api.jobkitty.in",
   "http://168.231.123.129:8000",
   "https://168.231.123.129:8000",
+  
 ];
 
 const corsOptions = {
@@ -59,6 +61,7 @@ app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 
 const PORT = process.env.PORT || 8000;
+
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/company", companyRoute);
 app.use("/api/v1/job", jobRoute);

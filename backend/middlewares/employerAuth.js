@@ -27,7 +27,6 @@ const employerAuth = async (req, res, next) => {
             });
         }
 
-        // Add user info to request for use in controllers
         req.user = user;
         next();
     } catch (error) {

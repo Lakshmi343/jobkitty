@@ -1,29 +1,24 @@
 import mongoose from 'mongoose';
 
+const registrationLinkSchema = new mongoose.Schema({
+    label: { type: String, required: true, default: 'Registration' },
+    url: { type: String, required: true }
+}, { _id: false });
+
 const jobFairSchema = new mongoose.Schema({
-	image: { type: String, default: '' }, // URL or storage path
-	title: { type: String, required: true },
-	description: { type: String, required: true },
-	date: { type: Date, required: true },
-	time: { type: String, default: '' }, // optional textual time range
-	location: {
-		venue: { type: String, default: '' },
-		address: { type: String, default: '' },
-		city: { type: String, default: '' },
-		state: { type: String, default: '' },
-		country: { type: String, default: '' }
-	},
-	organizer: {
-		name: { type: String, default: '' },
-		email: { type: String, default: '' },
-		phone: { type: String, default: '' },
-		website: { type: String, default: '' }
-	},
-	registrationLink: { type: String, default: '' }, // external link if any
-	externalLink: { type: String, default: '' },
-	status: { type: String, enum: ['draft', 'published', 'archived'], default: 'published' },
-	isActive: { type: Boolean, default: true },
-	createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true }
+    image: { type: String, default: '' }, // URL or storage path
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    date: { type: Date, required: true },
+    time: { type: String, default: '' }, // optional textual time range
+    location: {
+        city: { type: String, default: '' },
+        state: { type: String, default: '' },
+        country: { type: String, default: 'India' }
+    },
+    registrationLinks: [registrationLinkSchema],
+    isActive: { type: Boolean, default: true },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true }
 }, { timestamps: true });
 
 export const JobFair = mongoose.model('JobFair', jobFairSchema);
