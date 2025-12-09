@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Build a robust transporter with env-driven config and Gmail SMTP defaults
+
 const buildTransporter = () => {
     const {
         EMAIL_HOST,
@@ -13,7 +13,7 @@ const buildTransporter = () => {
         EMAIL_PASSWORD
     } = process.env;
 
-    // Prefer explicit host/port if provided
+  
     if (EMAIL_HOST || EMAIL_PORT || EMAIL_SERVICE) {
         const usingService = Boolean(EMAIL_SERVICE);
         return nodemailer.createTransport({
@@ -29,7 +29,7 @@ const buildTransporter = () => {
         });
     }
 
-    // Default to Gmail SMTP
+    
     return nodemailer.createTransport({
         host: 'smtp.gmail.com',
         port: 465,
@@ -44,7 +44,6 @@ const buildTransporter = () => {
 
 const transporter = buildTransporter();
 
-// Proactively verify transport once on startup for clearer diagnostics
 (async () => {
     try {
         await transporter.verify();

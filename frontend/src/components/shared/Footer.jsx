@@ -170,7 +170,7 @@
 // export default Footer;
 import React, { useState } from 'react';
 import { Mail, MapPin, Phone, Clock, ArrowUp, ExternalLink, Facebook, Instagram, Linkedin, Twitter, Youtube, Send, MessageSquare } from 'lucide-react';
-import logo from "../../assets/jobkitty-01.png";
+import logo from "../../assets/jobkitty_xmass.png";
 
 const Footer = () => {
   const [email, setEmail] = useState("");
