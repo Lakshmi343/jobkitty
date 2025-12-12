@@ -7,18 +7,14 @@ dotenv.config();
 
 const createSuperAdmin = async () => {
   try {
-    // Connect to MongoDB
+
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to MongoDB');
-
-    // Check if super admin already exists
     const existingAdmin = await Admin.findOne({ email: 'superadmin@jobportal.com' });
     if (existingAdmin) {
       console.log('Super admin already exists');
       return;
     }
-
-    // Create super admin
     const hashedPassword = await bcrypt.hash('superadmin123', 10);
     
     const superAdmin = new Admin({
@@ -41,5 +37,4 @@ const createSuperAdmin = async () => {
     console.log('Disconnected from MongoDB');
   }
 };
-
 createSuperAdmin(); 
