@@ -239,7 +239,7 @@
 
 // export default Internships;
 
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -257,7 +257,12 @@ const Internships = () => {
   const location = useLocation();
   const params = useParams();
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalJobs, setTotalJobs] = useState(0);
+  const jobsPerPage = 20;
   
   const { allJobs = [], searchedQuery = "", filters = {} } = useSelector((store) => ({
     allJobs: store.job.allJobs || [],
@@ -298,40 +303,97 @@ const Internships = () => {
   }, [dispatch, location.search, params]);
 
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
+  const fetchJobs = useCallback(async (pageNum = 1, append = false) => {
+    try {
+      if (pageNum === 1) {
         setIsLoading(true);
-        setError(null);
-        
-       
-        const params = new URLSearchParams();
-        if (searchedQuery) params.append('keyword', searchedQuery);
-        params.append('jobType', 'Internship'); 
-        if (filters.location) params.append('location', filters.location);
-        if (filters.salaryRange) params.append('salary', filters.salaryRange);
-        if (filters.experienceRange) params.append('experience', filters.experienceRange);
-        if (filters.categoryId) params.append('category', filters.categoryId);
-        if (filters.companyType) params.append('companyType', filters.companyType);
-        if (filters.datePosted) params.append('datePosted', filters.datePosted);
+      } else {
+        setIsLoadingMore(true);
+      }
+      setError(null);
+      
+      const params = new URLSearchParams();
+      if (searchedQuery) params.append('keyword', searchedQuery);
+      params.append('jobType', 'Internship');
+      params.append('page', pageNum);
+      params.append('limit', jobsPerPage);
+      if (filters.location) params.append('location', filters.location);
+      if (filters.salaryRange) params.append('salary', filters.salaryRange);
+      if (filters.experienceRange) params.append('experience', filters.experienceRange);
+      if (filters.categoryId) params.append('category', filters.categoryId);
+      if (filters.companyType) params.append('companyType', filters.companyType);
+      if (filters.datePosted) params.append('datePosted', filters.datePosted);
 
-        const response = await axios.get(`${JOB_API_END_POINT}/get?${params.toString()}`);
+      const response = await axios.get(`${JOB_API_END_POINT}/get?${params.toString()}`);
+      
+      if (response.data.success) {
+        const jobs = response.data.jobs || [];
+        const total = response.data.total || 0;
         
-        if (response.data.success) {
-          dispatch(setAllJobs({ jobs: response.data.jobs || [], append: false }));
-        } else {
-          setError("Failed to load internships. Please try again later.");
+        setTotalJobs(total);
+        setHasMore(jobs.length === jobsPerPage);
+        dispatch(setAllJobs({ 
+          jobs, 
+          append: append 
+        }));
+        
+        if (jobs.length === 0 && pageNum > 1) {
+          setPage(1);
+          return;
         }
-      } catch (err) {
-        console.error("Error fetching internships:", err);
-        setError("Failed to load internships. Please check your connection and try again.");
-      } finally {
-        setIsLoading(false);
+      } else {
+        setError("Failed to load internships. Please try again later.");
+      }
+    } catch (err) {
+      console.error("Error fetching internships:", err);
+      setError("Failed to load internships. Please check your connection and try again.");
+    } finally {
+      setIsLoading(false);
+      setIsLoadingMore(false);
+    }
+  }, [dispatch, searchedQuery, filters]);
+
+  // Load initial jobs when component mounts or filters change
+  useEffect(() => {
+    const loadInitialJobs = async () => {
+      setPage(1);
+      await fetchJobs(1, false);
+    };
+    
+    loadInitialJobs();
+  }, [searchedQuery, filters, fetchJobs]);
+
+  // Load more jobs when page changes
+  useEffect(() => {
+    if (page > 1) {
+      fetchJobs(page, true);
+    }
+  }, [page, fetchJobs]);
+  
+  // Handle loading more jobs
+  const loadMoreJobs = () => {
+    if (!isLoadingMore && hasMore) {
+      setPage(prevPage => prevPage + 1);
+    }
+  };
+  
+  // Set up infinite scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop >= 
+        document.documentElement.offsetHeight - 200 && 
+        !isLoadingMore && 
+        hasMore &&
+        !isLoading
+      ) {
+        loadMoreJobs();
       }
     };
 
-    fetchJobs();
-  }, [dispatch, searchedQuery, filters]);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isLoadingMore, hasMore, isLoading, loadMoreJobs]);
 
   const filterJobs = useMemo(() => {
     console.log('Filtering internships with filters:', filters);
@@ -578,21 +640,51 @@ const Internships = () => {
                 </button>
               </motion.div>
             ) : (
-              <AnimatePresence>
-                <div className="space-y-4">
-                  {filterJobs.map((job) => (
-                    <motion.div
-                      key={job._id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
+              <div>
+                <AnimatePresence>
+                  <div className="space-y-4">
+                    {filterJobs.map((job) => (
+                      <motion.div
+                        key={job._id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <Job job={job} />
+                      </motion.div>
+                    ))}
+                  </div>
+                </AnimatePresence>
+                
+                {/* Loading indicator for infinite scroll */}
+                {isLoadingMore && (
+                  <div className="mt-6 text-center">
+                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent"></div>
+                    <p className="mt-2 text-gray-500">Loading more internships...</p>
+                  </div>
+                )}
+                
+                {/* Load more button as fallback */}
+                {!isLoading && !isLoadingMore && hasMore && (
+                  <div className="mt-6 text-center">
+                    <button
+                      onClick={loadMoreJobs}
+                      className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
-                      <Job job={job} />
-                    </motion.div>
-                  ))}
-                </div>
-              </AnimatePresence>
+                      Load More
+                    </button>
+                    <p className="mt-2 text-sm text-gray-500">Showing {Math.min(filterJobs.length, totalJobs)} of {totalJobs} internships</p>
+                  </div>
+                )}
+                
+                {!hasMore && filterJobs.length > 0 && (
+                  <div className="mt-6 text-center">
+                    <p className="text-gray-500">You've reached the end of the list</p>
+                    <p className="text-sm text-gray-400 mt-1">Showing all {totalJobs} internships</p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
