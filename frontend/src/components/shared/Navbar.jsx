@@ -1,6 +1,19 @@
 
 
 import React, { useState } from 'react';
+
+// Navigation Item Component
+const NavItem = ({ to, children, onClick }) => (
+    <li>
+        <Link 
+            to={to} 
+            className="block px-4 py-3 text-lg font-medium text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
+            onClick={onClick}
+        >
+            {children}
+        </Link>
+    </li>
+);
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { Button } from '../ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/avatar';
@@ -174,6 +187,113 @@ const Navbar = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Mobile Navigation Menu */}
+            <div className={`md:hidden fixed inset-0 bg-white z-40 transform transition-transform duration-300 ease-in-out ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                <div className="h-16 flex items-center justify-between px-4 border-b">
+                    <Link to="/" className="flex items-center" onClick={() => {
+                        setMobileMenuOpen(false);
+                        window.scrollTo(0, 0);
+                    }}>
+                        <img src={logo} alt="JobKitty" className="h-10" />
+                    </Link>
+                    <button 
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="p-2 text-gray-700"
+                    >
+                        ✕
+                    </button>
+                </div>
+                <div className="p-4 overflow-y-auto h-[calc(100vh-64px)]">
+                    <ul className="space-y-4">
+                        {user && user.role === 'admin' ? (
+                            <>
+                                <NavItem to="/admin/companies" onClick={() => setMobileMenuOpen(false)}>Companies</NavItem>
+                                <NavItem to="/jobs" onClick={() => setMobileMenuOpen(false)}>Jobs</NavItem>
+                                <NavItem to="/job-fair" onClick={() => setMobileMenuOpen(false)}>Job Fairs</NavItem>
+                                <NavItem to="/internships" onClick={() => setMobileMenuOpen(false)}>Internships</NavItem>
+                                <NavItem to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</NavItem>
+                            </>
+                        ) : user && user.role === 'Employer' ? (
+                            <>
+                                <NavItem to="/employer/jobs" onClick={() => setMobileMenuOpen(false)}>My Jobs</NavItem>
+                                <NavItem to="/employer/jobs/create" onClick={() => setMobileMenuOpen(false)}>Post Job</NavItem>
+                                <NavItem to="/internships" onClick={() => setMobileMenuOpen(false)}>Internships</NavItem>
+                                <NavItem to="/jobs" onClick={() => setMobileMenuOpen(false)}>Browse Jobs</NavItem>
+                                <NavItem to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</NavItem>
+                            </>
+                        ) : user && user.role === 'Jobseeker' ? (
+                            <>
+                                <NavItem to="/jobs" onClick={() => setMobileMenuOpen(false)}>Jobs</NavItem>
+                                <NavItem to="/job-fair" onClick={() => setMobileMenuOpen(false)}>Job Fairs</NavItem>
+                                <NavItem to="/internships" onClick={() => setMobileMenuOpen(false)}>Internships</NavItem>
+                                <NavItem to="/browse" onClick={() => setMobileMenuOpen(false)}>Browse</NavItem>
+                                <NavItem to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</NavItem>
+                            </>
+                        ) : (
+                            <>
+                                <NavItem to="/" onClick={() => setMobileMenuOpen(false)}>Home</NavItem>
+                                <NavItem to="/jobs" onClick={() => setMobileMenuOpen(false)}>Jobs</NavItem>
+                                <NavItem to="/internships" onClick={() => setMobileMenuOpen(false)}>Internships</NavItem>
+                                <NavItem to="/job-fair" onClick={() => setMobileMenuOpen(false)}>Job Fairs</NavItem>
+                                <NavItem to="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</NavItem>
+                            </>
+                        )}
+                    </ul>
+
+                    <div className="mt-8 space-y-4">
+                        {!user ? (
+                            <>
+                                <Link to="/login">
+                                    <Button variant="outline" className="w-full mb-2 border-red-300 text-red-600 hover:bg-red-50" onClick={() => setMobileMenuOpen(false)}>
+                                        Login
+                                    </Button>
+                                </Link>
+                                <Link to="/signup/jobseeker">
+                                    <Button className="w-full mb-2 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700" onClick={() => setMobileMenuOpen(false)}>
+                                        Jobseeker Signup
+                                    </Button>
+                                </Link>
+                                <Link to="/signup/employer">
+                                    <Button className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700" onClick={() => setMobileMenuOpen(false)}>
+                                        Employer Signup
+                                    </Button>
+                                </Link>
+                            </>
+                        ) : (
+                            <div className="space-y-4">
+                                {user?.role === 'Jobseeker' && (
+                                    <>
+                                        <NavItem to="/profile" onClick={() => setMobileMenuOpen(false)}>View Profile</NavItem>
+                                        <NavItem to="/profile?edit=1" onClick={() => setMobileMenuOpen(false)}>Edit Profile</NavItem>
+                                    </>
+                                )}
+                                {user?.role === 'Employer' && (
+                                    <NavItem to={`/employer/profile/${user._id}`} onClick={() => setMobileMenuOpen(false)}>Company Profile</NavItem>
+                                )}
+                                <Button 
+                                    variant="ghost" 
+                                    className="w-full justify-start text-red-600 hover:bg-red-50"
+                                    onClick={() => {
+                                        logoutHandler();
+                                        setMobileMenuOpen(false);
+                                    }}
+                                >
+                                    <LogOut className="mr-2" /> Logout
+                                </Button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Backdrop for mobile menu */}
+            {mobileMenuOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/50 z-30 md:hidden"
+                    onClick={() => setMobileMenuOpen(false)}
+                />
+            )}
 
             {/* Christmas Animations */}
             <style jsx>{`
