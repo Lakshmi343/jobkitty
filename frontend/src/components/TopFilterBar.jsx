@@ -176,20 +176,22 @@ const TopFilterBar = ({ variant = 'top', locationInputMode = 'select' }) => {
       <div className={innerClasses}>
         {/* Grid of filters */}
         <div className={variant === 'top' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "grid grid-cols-1 gap-4"}>
-
-          {/* 🔍 Search Input */}
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              value={role}
-              onChange={(e) => updateURL({ role: e.target.value })}
-              placeholder="Job title, company, or keywords"
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg 
-              focus:ring-2 focus:ring-blue-500 focus:border-transparent 
-              transition-all duration-200 bg-gray-50 hover:bg-white"
-            />
-          </div>
+          
+          {/* 🔍 Search Input - Only show in top variant */}
+          {variant === 'top' && (
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                value={role}
+                onChange={(e) => updateURL({ role: e.target.value })}
+                placeholder="Job title, company, or keywords"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg 
+                focus:ring-2 focus:ring-blue-500 focus:border-transparent 
+                transition-all duration-200 bg-gray-50 hover:bg-white"
+              />
+            </div>
+          )}
 
           {/* 🏢 Category Filter */}
           <div className="relative">
@@ -207,32 +209,34 @@ const TopFilterBar = ({ variant = 'top', locationInputMode = 'select' }) => {
             </select>
           </div>
 
-          {/* 📍 Location Filter */}
-          <div className="relative">
-            <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-            {locationInputMode === 'text' ? (
-              <input
-                type="text"
-                value={locationFilter}
-                onChange={(e) => updateURL({ location: e.target.value })}
-                placeholder="City, District or Remote"
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg 
-                focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-white"
-              />
-            ) : (
-              <select
-                value={locationFilter}
-                onChange={(e) => updateURL({ location: e.target.value })}
-                className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg 
-                focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-white"
-              >
-                <option value="">All Locations</option>
-                {LOCATIONS.map((loc) => (
-                  <option key={loc} value={loc}>{loc}</option>
-                ))}
-              </select>
-            )}
-          </div>
+          {/* 📍 Location Filter - Only show in top variant */}
+          {variant === 'top' && (
+            <div className="relative">
+              <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              {locationInputMode === 'text' ? (
+                <input
+                  type="text"
+                  value={locationFilter}
+                  onChange={(e) => updateURL({ location: e.target.value })}
+                  placeholder="City, District or Remote"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg 
+                  focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-white"
+                />
+              ) : (
+                <select
+                  value={locationFilter}
+                  onChange={(e) => updateURL({ location: e.target.value })}
+                  className="w-full pl-10 pr-8 py-3 border border-gray-300 rounded-lg 
+                  focus:ring-2 focus:ring-blue-500 bg-gray-50 hover:bg-white"
+                >
+                  <option value="">All Locations</option>
+                  {LOCATIONS.map((loc) => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
+              )}
+            </div>
+          )}
 
           {/* 💼 Job Type */}
           <div className="relative">

@@ -34,6 +34,49 @@ const AdminJobs = () => {
   const [showJobModal, setShowJobModal] = useState(false);
   const [applications, setApplications] = useState([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [companyFilter, setCompanyFilter] = useState('all');
+
+  // Fetch categories and companies for filters
+  useEffect(() => {
+    const fetchFiltersData = async () => {
+      try {
+        const token = localStorage.getItem('adminToken');
+        
+        // Fetch categories
+        const categoriesRes = await axios.get(`${ADMIN_API_END_POINT}/categories`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (categoriesRes.data.success) {
+          setCategories(categoriesRes.data.categories || []);
+        }
+
+        // Fetch companies
+        const companiesRes = await axios.get(`${ADMIN_API_END_POINT}/companies`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (companiesRes.data.success) {
+          setCompanies(companiesRes.data.companies || []);
+        }
+      } catch (error) {
+        console.error('Error fetching filter data:', error);
+      }
+    };
+
+    fetchFiltersData();
+  }, []);
+
+  const handleCategoryChange = (value) => {
+    setCategoryFilter(value);
+    setPage(1);
+  };
+
+  const handleCompanyChange = (value) => {
+    setCompanyFilter(value);
+    setPage(1);
+  };
 
   const handleStatusChange = (value) => {
     setStatusFilter(value);
@@ -62,6 +105,8 @@ const AdminJobs = () => {
     setStatusFilter('all');
     setJobTypeFilter('all');
     setDateFilter('');
+    setCategoryFilter('all');
+    setCompanyFilter('all');
     setPage(1);
   };
 
@@ -82,6 +127,8 @@ const AdminJobs = () => {
       if (statusFilter !== 'all') params.set('status', statusFilter);
       if (jobTypeFilter !== 'all') params.set('jobType', jobTypeFilter);
       if (dateFilter) params.set('postedWithin', dateFilter);
+      if (categoryFilter !== 'all') params.set('category', categoryFilter);
+      if (companyFilter !== 'all') params.set('company', companyFilter);
 
       const response = await axios.get(`${ADMIN_API_END_POINT}/jobs?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -109,7 +156,7 @@ const AdminJobs = () => {
     } finally {
       setLoading(false);
     }
-  }, [appliedSearch, statusFilter, jobTypeFilter, dateFilter, navigate]);
+  }, [appliedSearch, statusFilter, jobTypeFilter, dateFilter, categoryFilter, companyFilter, navigate]);
 
   useEffect(() => {
     fetchJobs(page);
@@ -439,9 +486,46 @@ const AdminJobs = () => {
                   <option value="week">This Week</option>
                   <option value="month">This Month</option>
                 </select>
-                <Button variant="outline" size="sm" className="h-10" onClick={handleResetFilters} type="button">
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 h-10 min-w-[160px]"
+                >
+                  <option value="all">All Categories</option>
+                  {categories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={companyFilter}
+                  onChange={(e) => handleCompanyChange(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 h-10 min-w-[160px]"
+                >
+                  <option value="all">All Companies</option>
+                  {companies.map((company) => (
+                    <option key={company._id} value={company._id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </select>
+                <Button 
+                  onClick={handleSearchSubmit}
+                  className="bg-blue-600 hover:bg-blue-700 text-white h-10"
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-10" 
+                  onClick={handleResetFilters} 
+                  type="button"
+                >
                   <Filter className="h-4 w-4 mr-2" />
-                  Reset
+                  Reset All
                 </Button>
               </div>
             </div>

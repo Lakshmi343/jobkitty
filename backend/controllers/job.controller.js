@@ -168,6 +168,81 @@ export const postJob = async (req, res) => {
 }
 
 
+// Search jobs by role and location
+export const searchJobs = async (req, res) => {
+    try {
+        const { role = '', location = '', page = 1, limit = 10 } = req.query;
+        const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+        const limitNum = Math.min(Math.max(parseInt(limit, 10) || 10, 1), 100);
+        const skip = (pageNum - 1) * limitNum;
+
+        // Build search query
+        const query = { status: 'approved' };
+        
+        // Add role search (case-insensitive regex search in title and description)
+        if (role) {
+            query.$or = [
+                { title: { $regex: role, $options: 'i' } },
+                { description: { $regex: role, $options: 'i' } }
+            ];
+        }
+
+        // Add location search (case-insensitive search in location fields)
+        if (location) {
+            const locationQuery = {
+                $or: [
+                    { 'location.legacy': { $regex: location, $options: 'i' } },
+                    { 'location.district': { $regex: location, $options: 'i' } },
+                    { 'location.state': { $regex: location, $options: 'i' } }
+                ]
+            };
+            
+            if (query.$or) {
+                query.$and = (query.$and || []).concat([
+                    { $or: query.$or },
+                    { $or: locationQuery.$or }
+                ]);
+                delete query.$or;
+            } else {
+                Object.assign(query, locationQuery);
+            }
+        }
+
+        // Execute search with pagination
+        const [jobs, total] = await Promise.all([
+            Job.find(query)
+                .populate('company', 'name logo companyType')
+                .populate('category', 'name')
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNum),
+            Job.countDocuments(query)
+        ]);
+
+        const totalPages = Math.ceil(total / limitNum);
+
+        return res.status(200).json({
+            success: true,
+            jobs,
+            pagination: {
+                total,
+                currentPage: pageNum,
+                limit: limitNum,
+                totalPages,
+                hasNext: pageNum < totalPages,
+                hasPrev: pageNum > 1
+            }
+        });
+    } catch (error) {
+        console.error('Search jobs error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error searching for jobs',
+            error: error.message
+        });
+    }
+};
+
 export const getAllJobs = async (req, res) => {
     try {
         const {

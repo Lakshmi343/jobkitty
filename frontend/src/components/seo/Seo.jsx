@@ -7,7 +7,6 @@ const Seo = ({ title, description, keywords, image, url, type = 'website' }) => 
   const defaultKeywords = 'jobs, employment, career, hiring, job search, job portal, job board, find job, job openings';
   const defaultImage = '/images/og-image.jpg'; 
   const siteUrl = 'https://yourjobportal.com'; 
-
   const seo = {
     title: title ? `${title} | ${siteName}` : siteName,
     description: description || defaultDescription,
@@ -16,7 +15,6 @@ const Seo = ({ title, description, keywords, image, url, type = 'website' }) => 
     url: url || siteUrl,
     type: type
   };
-
   return (
     <Helmet>
       <title>{seo.title}</title>
@@ -34,9 +32,7 @@ const Seo = ({ title, description, keywords, image, url, type = 'website' }) => 
       <meta name="twitter:description" content={seo.description} />
       <meta name="twitter:image" content={seo.image} />
       <link rel="canonical" href={seo.url} />
-      
-   
-      <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.ico" />
       <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     </Helmet>
   );
