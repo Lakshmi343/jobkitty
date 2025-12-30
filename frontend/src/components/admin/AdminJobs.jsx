@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -39,13 +40,13 @@ const AdminJobs = () => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [companyFilter, setCompanyFilter] = useState('all');
 
-  // Fetch categories and companies for filters
+ 
   useEffect(() => {
     const fetchFiltersData = async () => {
       try {
         const token = localStorage.getItem('adminToken');
         
-        // Fetch categories
+      
         const categoriesRes = await axios.get(`${ADMIN_API_END_POINT}/categories`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -53,7 +54,7 @@ const AdminJobs = () => {
           setCategories(categoriesRes.data.categories || []);
         }
 
-        // Fetch companies
+        
         const companiesRes = await axios.get(`${ADMIN_API_END_POINT}/companies`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -94,9 +95,15 @@ const AdminJobs = () => {
   };
 
   const handleSearchSubmit = (event) => {
-    event.preventDefault();
-    setAppliedSearch(searchTerm.trim());
-    setPage(1);
+    if (event) {
+      event.preventDefault();
+    }
+    
+    // Only update if the search term has changed
+    if (appliedSearch !== searchTerm.trim()) {
+      setAppliedSearch(searchTerm.trim());
+      setPage(1);
+    }
   };
 
   const handleResetFilters = () => {
@@ -123,7 +130,10 @@ const AdminJobs = () => {
       const params = new URLSearchParams();
       params.set('page', targetPage);
       params.set('limit', PAGE_SIZE);
-      if (appliedSearch) params.set('search', appliedSearch.trim());
+      // Use search parameter for both job title and company name
+      if (appliedSearch) {
+        params.set('search', appliedSearch.trim());
+      }
       if (statusFilter !== 'all') params.set('status', statusFilter);
       if (jobTypeFilter !== 'all') params.set('jobType', jobTypeFilter);
       if (dateFilter) params.set('postedWithin', dateFilter);
@@ -442,15 +452,32 @@ const AdminJobs = () => {
               </Badge>
             </div>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4 mt-4">
-              <form className="relative flex-1 w-full" onSubmit={handleSearchSubmit}>
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Search by title, company, or location..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 h-10"
-                />
-                <button type="submit" className="hidden">Search</button>
+              <form 
+                className="flex flex-col md:flex-row gap-3 w-full" 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSearchSubmit(e);
+                }}
+              >
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Search by company name or job title..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearchSubmit(e)}
+                    className="pl-10 h-10 w-full"
+                    name="search"
+                  />
+                </div>
+                <Button 
+                  type="submit" 
+                  className="h-10 bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={handleSearchSubmit}
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Search
+                </Button>
               </form>
               <div className="flex flex-wrap gap-2 w-full lg:w-auto">
                 <select
@@ -486,7 +513,7 @@ const AdminJobs = () => {
                   <option value="week">This Week</option>
                   <option value="month">This Month</option>
                 </select>
-                <select
+                {/* <select
                   value={categoryFilter}
                   onChange={(e) => handleCategoryChange(e.target.value)}
                   className="border border-gray-300 rounded-md px-3 py-2 h-10 min-w-[160px]"
@@ -497,8 +524,8 @@ const AdminJobs = () => {
                       {category.name}
                     </option>
                   ))}
-                </select>
-                <select
+                </select> */}
+                {/* <select
                   value={companyFilter}
                   onChange={(e) => handleCompanyChange(e.target.value)}
                   className="border border-gray-300 rounded-md px-3 py-2 h-10 min-w-[160px]"
@@ -509,14 +536,8 @@ const AdminJobs = () => {
                       {company.name}
                     </option>
                   ))}
-                </select>
-                <Button 
-                  onClick={handleSearchSubmit}
-                  className="bg-blue-600 hover:bg-blue-700 text-white h-10"
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  Search
-                </Button>
+                </select> */}
+               
                 <Button 
                   variant="outline" 
                   size="sm" 
