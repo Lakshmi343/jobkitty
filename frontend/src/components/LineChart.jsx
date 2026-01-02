@@ -14,9 +14,9 @@ const LineChart = ({ data, title, height = 300, width = 600 }) => {
   const minValue = Math.min(...data.map(item => item.value));
   const range = maxValue - minValue || 1;
   
-  // Chart dimensions
-  const chartHeight = height - 80; // Leave space for title and labels
-  const chartWidth = width - 80; // Leave space for y-axis labels
+  
+  const chartHeight = height - 80; 
+  const chartWidth = width - 80; 
   const leftPadding = 60;
   const bottomPadding = 40;
   const topPadding = 20;
@@ -102,7 +102,7 @@ const LineChart = ({ data, title, height = 300, width = 600 }) => {
             strokeLinejoin="round"
           />
           
-          {/* Data points */}
+     
           {points.map((point, index) => (
             <g key={index}>
               <circle
@@ -114,7 +114,7 @@ const LineChart = ({ data, title, height = 300, width = 600 }) => {
                 strokeWidth="2"
                 className="hover:r-6 transition-all duration-200 cursor-pointer"
               />
-              {/* Tooltip on hover */}
+            
               <g className="opacity-0 hover:opacity-100 transition-opacity duration-200">
                 <rect
                   x={point.x - 20}

@@ -10,10 +10,7 @@ import { PersistGate } from 'redux-persist/integration/react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import setupGlobalInterceptors from './utils/axiosSetup.js'
-
 const persistor = persistStore(store)
-
-// Initialize axios interceptors early
 setupGlobalInterceptors()
 
 ReactDOM.createRoot(document.getElementById('root')).render(

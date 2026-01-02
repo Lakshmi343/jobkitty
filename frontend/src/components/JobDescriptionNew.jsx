@@ -9,31 +9,8 @@ import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
 import { setSingleJob } from '@/redux/jobSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
-import { 
-  Briefcase, 
-  MapPin, 
-  DollarSign, 
-  Clock, 
-  Users, 
-  Calendar, 
-  Building, 
-  CheckCircle, 
-  ArrowLeft, 
-  ExternalLink, 
-  Star, 
-  TrendingUp, 
-  FileText, 
-  Share2, 
-  Mail, 
-  Linkedin, 
-  Instagram, 
-  Facebook, 
-  Copy, 
-  Check,
-  Bookmark,
-  Eye,
-  Send
-} from 'lucide-react';
+import {  Briefcase,  MapPin,  DollarSign,  Clock,  Users,  Calendar,  Building,  CheckCircle,  ArrowLeft,  ExternalLink, 
+  Star,  TrendingUp,  FileText,  Share2,  Mail, Linkedin,  Instagram, Facebook,  Copy, Check,Bookmark, Eye, Send} from 'lucide-react';
 import Navbar from './shared/Navbar';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar'
 import LoadingSpinner from './shared/LoadingSpinner';
@@ -336,7 +313,7 @@ const JobDescription = () => {
         <>
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {/* Back Navigation */}
+                  
                     <div className="mb-8">
                         <button
                             onClick={() => window.history.back()}
@@ -349,9 +326,8 @@ const JobDescription = () => {
                         </button>
                     </div>
 
-                    {/* Main Job Card */}
                     <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
-                        {/* Header Section with Gradient */}
+
                         <div ref={headerRef} className="relative bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 text-white p-8 lg:p-10">
                             <div className="absolute top-4 right-4 flex items-center gap-2 text-blue-100">
                                 <Eye className="w-4 h-4" />
@@ -379,7 +355,7 @@ const JobDescription = () => {
                                         </div>
                                     </div>
                                     
-                                    {/* Job Meta Badges */}
+                                   
                                     <div className="flex flex-wrap items-center gap-3">
                                         <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 backdrop-blur-sm px-4 py-2">
                                             <MapPin className="w-4 h-4 mr-2" />
@@ -403,7 +379,7 @@ const JobDescription = () => {
                                     </div>
                                 </div>
                                 
-                                {/* Action Buttons */}
+                             
                                 <div className="flex flex-col gap-4">
                                     <div className="flex flex-col sm:flex-row lg:flex-col gap-3">
                                         <Button

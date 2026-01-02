@@ -57,7 +57,7 @@ const AdminJobPosting = () => {
     const [newRequirement, setNewRequirement] = useState("");
     const filteredCategories = categories.filter(cat => 
         cat?.name?.toLowerCase().includes(categoryQuery.toLowerCase())
-    ).slice(0, 10); // Limit to 10 results for better performance
+    ).slice(0, 10); 
     
     const filteredCompanies = companies.filter(company => {
         if (!company || !company.name) return false;

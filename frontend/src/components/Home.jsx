@@ -25,13 +25,12 @@ const Home = () => {
   }, [user, navigate]);
 
   useEffect(() => {
-    // Skip skills prompt popup for all users
+  
     setSkillsPromptOpen(false);
   }, [user]);
   
   return (
     <div>
-      {/* Skills/Profile completion modal on Home */}
       
       <Navbar/>
       <HeroSection/>

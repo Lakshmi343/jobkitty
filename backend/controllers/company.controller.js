@@ -1,5 +1,4 @@
 
-
 import { Company } from "../models/company.model.js";
 import { User } from "../models/user.model.js";
 import getDataUri from "../utils/datauri.js";
@@ -41,7 +40,6 @@ export const registerCompany = async (req, res) => {
         });
     }
 }
-
 export const getCompany = async (req, res) => {
     try {
         const userId = req.id; 
@@ -59,7 +57,6 @@ export const getCompany = async (req, res) => {
         });
     }
 }
-
 
 export const getCompanyById = async (req, res) => {
     try {
@@ -83,8 +80,6 @@ export const getCompanyById = async (req, res) => {
         });
     }
 }
-
-
 
 export const updateCompany = async (req, res) => {
     try {
@@ -168,8 +163,6 @@ export const updateCompany = async (req, res) => {
         return res.status(500).json({ message: "Internal server error", success: false });
     }
 }
-
-
 export const getCompanyByUserId = async (req, res) => {
     try {
         const userId = req.id;
@@ -197,12 +190,7 @@ export const getCompanyByUserId = async (req, res) => {
             success: false
         });
      }}
-
-
-
-
-
-
+     
 export const setupCompany = async (req, res) => {
     try {
         const { name, description, website, location } = req.body;
@@ -211,12 +199,10 @@ export const setupCompany = async (req, res) => {
         if (!name) {
             return res.status(400).json({ message: "Company name is required.", success: false });
         }
-
-        const user = await User.findById(userId);
+       const user = await User.findById(userId);
         if (user.profile.company) {
             return res.status(400).json({ message: "Company already set up.", success: false });
         }
-
         const file = req.file;
         let logoUrl = "";
         if (file) {
@@ -224,7 +210,6 @@ export const setupCompany = async (req, res) => {
             const cloudResponse = await cloudinary.uploader.upload(fileUri.content);
             logoUrl = cloudResponse.secure_url;
         }
-
         const newCompany = await Company.create({
             name,
             description,

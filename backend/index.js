@@ -14,10 +14,8 @@ import categoryRoute from "./routes/category.route.js";
 import contactRoute from "./routes/contact.route.js";
 import adminRoute from "./routes/admin.route.js"
 import jobFairRoute from "./routes/jobfair.route.js";
-
 dotenv.config();
 const app = express();
-
 app.use(express.json());
 app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());

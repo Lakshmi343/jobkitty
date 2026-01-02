@@ -6,7 +6,7 @@ export const createJobFair = async (req, res) => {
 	try {
 		const payload = { ...req.body, createdBy: req.admin._id };
 
-		// Normalize nested fields when coming from multipart form-data
+	
 		if (payload['location[city]'] || payload['location[state]'] || payload['location[country]']) {
 			payload.location = {
 				city: payload['location[city]'] || '',
@@ -18,13 +18,13 @@ export const createJobFair = async (req, res) => {
 			delete payload['location[country]'];
 		}
 
-		// Normalize date if sent as string
+
 		if (payload.date && typeof payload.date === 'string') {
 			const d = new Date(payload.date);
 			if (!isNaN(d.getTime())) payload.date = d;
 		}
 
-		// Handle optional poster upload
+		
 		if (req.file) {
 			try {
 				const fileUri = getDataUri(req.file);
@@ -47,7 +47,7 @@ export const updateJobFair = async (req, res) => {
 		const { id } = req.params;
 		const updates = { ...req.body };
 
-		// Normalize nested fields when coming from multipart form-data
+
 		if (updates['location[city]'] || updates['location[state]'] || updates['location[country]']) {
 			updates.location = {
 				city: updates['location[city]'] || '',
@@ -64,7 +64,7 @@ export const updateJobFair = async (req, res) => {
 			if (!isNaN(d.getTime())) updates.date = d;
 		}
 
-		// Optional poster replacement
+	
 		if (req.file) {
 			try {
 				const fileUri = getDataUri(req.file);

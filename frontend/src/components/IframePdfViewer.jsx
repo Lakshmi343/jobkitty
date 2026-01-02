@@ -3,8 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "./ui/button";
 import { X, Download, ZoomIn, ZoomOut, ExternalLink, FileText } from "lucide-react";
 
-const IframePdfViewer = ({ pdfUrl, isOpen, onClose, fileName }) => {
-    
+const IframePdfViewer = ({ pdfUrl, isOpen, onClose, fileName }) => { 
   const [zoom, setZoom] = useState(100);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [previewError, setPreviewError] = useState(false);

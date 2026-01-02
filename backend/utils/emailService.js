@@ -1,19 +1,10 @@
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 dotenv.config();
-
-
 const buildTransporter = () => {
-    const {
-        EMAIL_HOST,
-        EMAIL_PORT,
-        EMAIL_SECURE,
-        EMAIL_SERVICE,
-        EMAIL_USER,
+    const {   EMAIL_HOST,   EMAIL_PORT,   EMAIL_SECURE,  EMAIL_SERVICE, EMAIL_USER,
         EMAIL_PASSWORD
     } = process.env;
-
-  
     if (EMAIL_HOST || EMAIL_PORT || EMAIL_SERVICE) {
         const usingService = Boolean(EMAIL_SERVICE);
         return nodemailer.createTransport({
@@ -493,7 +484,7 @@ export const sendWelcomeEmail = async (userEmail, userName, userRole) => {
     }
 };
 
-// Job alert email for matching jobs
+
 export const sendResumeNotificationEmail = async (userEmail, userName, hasResume) => {
     try {
         const subject = hasResume 

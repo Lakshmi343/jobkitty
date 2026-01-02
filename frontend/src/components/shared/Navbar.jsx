@@ -1,8 +1,5 @@
 
-
 import React, { useState } from 'react';
-
-// Navigation Item Component
 const NavItem = ({ to, children, onClick }) => (
     <li>
         <Link 
@@ -25,7 +22,7 @@ import { USER_API_END_POINT } from '@/utils/constant';
 import { setUser } from '@/redux/authSlice';
 import { authUtils } from '@/utils/authUtils';
 import { toast } from 'sonner';
-import logo from "../../assets/jobkitty_xmass.png";
+import logo from "../../assets/jobkitty-01.png";
 
 const Navbar = () => {
     const { user } = useSelector(store => store.auth);
@@ -72,30 +69,22 @@ const Navbar = () => {
             </div>
 
             <div className="bg-white/95 backdrop-blur-sm border-b border-red-100 fixed top-0 left-0 w-full z-50 shadow-lg">
-              
                 <div className="h-1 bg-gradient-to-r from-red-600 via-green-600 to-red-600"></div>
 
                 <div className="flex items-center justify-between mx-auto max-w-7xl h-16 px-4">
-                  
                     <Link to="/" className="flex items-center relative group ms-4" onClick={() => window.scrollTo(0, 0)}>
                         <img 
                             src={logo} 
-                            alt="JobKitty Christmas" 
+                            alt="JobKitty" 
                             className="h-12 w-auto object-contain transition-transform group-hover:scale-110 duration-300"
                         />
-                    
-                        <span className="absolute -top-3 -right-3 text-3xl animate-twinkle">✨</span>
-                 
-                        <span className="absolute -top-6 -right-2 text-4xl animate-bounce-slow">🎅</span>
                     </Link>
 
-                   
                     <button 
                         className="md:hidden p-2 relative" 
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                     >
                         <Menu size={28} className="text-gray-800" />
-                        <span className="absolute -top-1 -right-1 text-xl">❄️</span>
                     </button>
 
                     {/* Desktop Navigation */}
@@ -152,8 +141,6 @@ const Navbar = () => {
                                                 {(user?.fullname?.[0] || 'U').toUpperCase()}
                                             </AvatarFallback>
                                         </Avatar>
-                                        {/* Santa Hat on Avatar */}
-                                        <span className="absolute -top-4 -right-2 text-2xl animate-bounce">🎄</span>
                                     </div>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-80 border-red-100">
@@ -164,7 +151,7 @@ const Navbar = () => {
                                         </Avatar>
                                         <div>
                                             <h4 className="font-semibold text-lg">{user?.fullname}</h4>
-                                            <p className="text-sm text-gray-600">Merry Christmas! 🎅</p>
+                                            <p className="text-sm text-gray-600">Welcome back!</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col gap-3 text-gray-700">
@@ -294,27 +281,6 @@ const Navbar = () => {
                     onClick={() => setMobileMenuOpen(false)}
                 />
             )}
-
-            {/* Christmas Animations */}
-            <style jsx>{`
-                @keyframes fall-slow {
-                    0% { transform: translateY(-100px); opacity: 0; }
-                    10% { opacity: 1; }
-                    90% { opacity: 1; }
-                    100% { transform: translateY(200px); opacity: 0; }
-                }
-                @keyframes twinkle {
-                    0%, 100% { opacity: 0.4; transform: scale(1); }
-                    50% { opacity: 1; transform: scale(1.4); }
-                }
-                @keyframes bounce-slow {
-                    0%, 100% { transform: translateY(0); }
-                    50% { transform: translateY(-8px); }
-                }
-                .animate-fall-slow { animation: fall-slow linear infinite; }
-                .animate-twinkle { animation: twinkle 2s infinite; }
-                .animate-bounce-slow { animation: bounce-slow 3s infinite; }
-            `}</style>
         </>
     );
 };

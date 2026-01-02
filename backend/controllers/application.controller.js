@@ -107,7 +107,7 @@ export const getApplicants = async (req,res) => {
 }
 
 
-// Add this to the existing updateStatus function in application.controller.js
+
 
 export const updateStatus = async (req, res) => {
     try {
@@ -137,22 +137,22 @@ export const updateStatus = async (req, res) => {
             });
         }
         
-        // Update application status
+     
         application.status = status;
         
-        // Add rejection reason if provided
+    
         if (status === 'rejected' && rejectionReason) {
             application.rejectionReason = rejectionReason;
         }
         
         await application.save();
         
-        // Get applicant and job details for email notification
+   
         const applicant = await User.findById(application.applicant);
         const job = await Job.findById(application.job).populate('company');
         
         if (applicant && job) {
-            // Send appropriate email based on status
+        
             if (status === 'accepted') {
                 await sendApplicationAcceptanceEmail(
                     applicant.email,

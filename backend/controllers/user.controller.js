@@ -668,7 +668,8 @@ export const refreshToken = async (req, res) => {
     
     const tokenToVerify = refreshToken || cookieRefreshToken;
     
-    if (!tokenToVerify) {
+    if (!tokenToVerify)
+      {
       return res.status(401).json({
         message: "Refresh token is required",
         success: false
@@ -678,7 +679,8 @@ export const refreshToken = async (req, res) => {
    
     const decoded = jwt.verify(tokenToVerify, process.env.REFRESH_SECRET_KEY || process.env.SECRET_KEY);
     
-    if (decoded.type !== 'refresh') {
+    if (decoded.type !== 'refresh') 
+      {
       return res.status(401).json({
         message: "Invalid token type",
         success: false
@@ -686,14 +688,16 @@ export const refreshToken = async (req, res) => {
     }
 
     const user = await User.findById(decoded.userId);
-    if (!user) {
+    if (!user) 
+      {
       return res.status(401).json({
         message: "User not found",
         success: false
       });
     }
 
-    if (user.status === 'blocked') {
+    if (user.status === 'blocked') 
+      {
       return res.status(403).json({
         message: "Account is blocked",
         success: false,
@@ -720,7 +724,8 @@ export const refreshToken = async (req, res) => {
         success: true
       });
 
-  } catch (error) {
+  } catch (error) 
+  {
     console.error("Refresh token error:", error);
     return res.status(401).json({
       message: "Invalid or expired refresh token",

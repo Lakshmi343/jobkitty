@@ -17,8 +17,8 @@ export const postJob = async (req, res) => {
             experienceLevel,  
             position, 
             openings,
-            category, // This can now be a single category ID or an array of category IDs
-            categories // Alternative field name for multiple categories
+            category, 
+            categories 
         } = req.body;
         const userId = req.id;
         const user = req.user; 
@@ -32,12 +32,12 @@ export const postJob = async (req, res) => {
         
         const companyId = user.profile.company;
         
-        // Handle both single category (for backward compatibility) and multiple categories
+       
         let categoryIds = [];
         if (categories && Array.isArray(categories) && categories.length > 0) {
             categoryIds = categories;
         } else if (category) {
-            categoryIds = [category]; // Convert single category to array
+            categoryIds = [category]; 
         }
       
         if (!title || !description || categoryIds.length === 0) {
@@ -45,12 +45,9 @@ export const postJob = async (req, res) => {
                 message: "Job title, description, and at least one category are required", 
                 success: false 
             });
-        }
-        
-        // Set default values for missing fields
+        }   
         const defaultRequirements = ["No specific requirements"];
         const defaultSalary = { min: 0, max: 0 };
-        // Avoid forcing a specific city/state; prefer a neutral default
         const defaultLocation = {
             state: "",
             district: "",
@@ -60,8 +57,6 @@ export const postJob = async (req, res) => {
         const defaultExperienceLevel = "Entry Level";
         const defaultPosition = 1;
         const defaultOpenings = 1;
-        
-        // Verify all categories exist
         const existingCategories = await Category.find({ _id: { $in: categoryIds } });
         if (existingCategories.length !== categoryIds.length) {
             return res.status(404).json({ 
@@ -69,28 +64,26 @@ export const postJob = async (req, res) => {
                 success: false 
             });
         }
-        
-        // Derive final location respecting provided legacy text
         let finalLocation;
         if (location) {
             const parseFromLegacy = (legacy) => {
                 if (!legacy || typeof legacy !== 'string') return { state: '', district: '', legacy: '' };
                 const parts = legacy.split(',').map(s => s.trim()).filter(Boolean);
                 if (parts.length >= 3) {
-                    // Format: City, District, State (or with more commas; take last as state, second last as district)
+                    
                     const state = parts[parts.length - 1];
                     const district = parts[parts.length - 2];
                     return { district, state, legacy };
                 }
                 if (parts.length === 2) {
-                    // Format: District, State
+                 
                     return { district: parts[0], state: parts[1], legacy };
                 }
-                // Single token: treat as district (free text), leave state empty
+
                 return { district: legacy, state: '', legacy };
             };
 
-            // Support both string and object inputs
+         
             if (typeof location === 'string') {
                 const parsed = parseFromLegacy(location.trim());
                 finalLocation = {
@@ -99,7 +92,7 @@ export const postJob = async (req, res) => {
                     legacy: parsed.legacy || location.trim()
                 };
             } else if (typeof location === 'object') {
-                // If structured fields missing, try to parse from legacy
+                
                 const fromLegacy = (!location.state || !location.district) && location.legacy
                     ? parseFromLegacy(location.legacy)
                     : null;

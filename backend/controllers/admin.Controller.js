@@ -17,7 +17,6 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-
 const logActivity = async (adminId, action, target, targetId, details) => {
   try {
     await Admin.findByIdAndUpdate(adminId, {
@@ -39,7 +38,7 @@ const logActivity = async (adminId, action, target, targetId, details) => {
 
 export const getAllJobseekers = async (req, res) => {
   try {
-    const jobseekers = await User.find({ role: 'jobseeker' })
+    const jobseekers = await Usder.find({ role: 'jobseeker' })
       .select('-password')
       .sort({ createdAt: -1 });
     
@@ -245,13 +244,9 @@ export const getDashboardStats = async (req, res) => {
     const totalCompanies = await Company.countDocuments();
     const totalJobs = await Job.countDocuments();
     const totalApplications = await Application.countDocuments();
-    
-    // Job statistics by status
     const pendingJobs = await Job.countDocuments({ status: 'pending' });
     const approvedJobs = await Job.countDocuments({ status: 'approved' });
     const rejectedJobs = await Job.countDocuments({ status: 'rejected' });
-    
-    // Application statistics by status
     const pendingApplications = await Application.countDocuments({ status: 'pending' });
     const acceptedApplications = await Application.countDocuments({ status: 'accepted' });
     const rejectedApplications = await Application.countDocuments({ status: 'rejected' });
@@ -580,7 +575,7 @@ export const getAllJobs = async (req, res) => {
         { 'location.state': { $regex: new RegExp(search, 'i') } }
       ];
       
-      // If companies found, add company ID filter
+
       if (companyIds.length > 0) {
         searchConditions.push({ company: { $in: companyIds } });
       }
@@ -2048,7 +2043,7 @@ export const enforceCompliance = async (req, res) => {
   }
 };
 
-// Admin Management APIs
+
 export const getAllAdmins = async (req, res) => {
   try {
     const admins = await Admin.find()
@@ -2223,7 +2218,7 @@ export const toggleAdminStatus = async (req, res) => {
   }
 };
 
-// Admin Applications Management
+
 export const getAllApplications = async (req, res) => {
   try {
     const { status, jobId, userId, page = 1, limit = 20 } = req.query;
@@ -2332,7 +2327,7 @@ export const deleteApplication = async (req, res) => {
       return res.status(404).json({ message: 'Application not found', success: false });
     }
 
-    // Log activity
+
     await logActivity(admin._id, 'application_deleted', 'application', applicationId, 'Application deleted');
 
     res.status(200).json({ message: 'Application deleted successfully', success: true });
@@ -2347,10 +2342,10 @@ export const getApplicationStats = async (req, res) => {
     const currentDate = new Date();
     const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, currentDate.getDate());
 
-    // Total applications
+
     const totalApplications = await Application.countDocuments();
 
-    // Status distribution
+
     const statusStats = await Application.aggregate([
       {
         $group: {
@@ -2360,7 +2355,7 @@ export const getApplicationStats = async (req, res) => {
       }
     ]);
 
-    // Monthly applications
+
     const monthlyApplications = await Application.aggregate([
       {
         $match: {
@@ -2433,17 +2428,16 @@ export const forgotPassword = async (req, res) => {
 
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenExpiry = Date.now() + 3600000; // 1 hour from now
+    const resetTokenExpiry = Date.now() + 3600000; 
 
-    // Save reset token to admin
     admin.resetPasswordToken = resetToken;
     admin.resetPasswordExpires = resetTokenExpiry;
     await admin.save();
 
-    // Construct reset link with proper environment handling
+   
     let frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     
-    // Handle Vercel and Netlify URLs if FRONTEND_URL is not set
+
     if (!process.env.FRONTEND_URL) {
       if (process.env.VERCEL_URL) {
         frontendUrl = `https://${process.env.VERCEL_URL}`;
@@ -2470,7 +2464,7 @@ export const forgotPassword = async (req, res) => {
     res.status(200).json({
       message: "Password reset instructions have been sent to your email",
       success: true,
-      resetToken: resetToken // Remove this in production - only for testing
+      resetToken: resetToken 
     });
 
   } catch (error) {
@@ -2491,7 +2485,7 @@ export const forgotPassword = async (req, res) => {
   }
 };
 
-// Reset Password
+
 export const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
@@ -2503,7 +2497,7 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    // Password validation
+
     if (newPassword.length < 8) {
       return res.status(400).json({
         message: "Password must be at least 8 characters long",
@@ -2511,7 +2505,7 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    // Find admin with valid reset token
+  
     const admin = await Admin.findOne({
       resetPasswordToken: token,
       resetPasswordExpires: { $gt: Date.now() }
@@ -2524,10 +2518,8 @@ export const resetPassword = async (req, res) => {
       });
     }
 
-    // Hash new password
+   
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-
-    // Update admin password and clear reset token
     admin.password = hashedPassword;
     admin.resetPasswordToken = undefined;
     admin.resetPasswordExpires = undefined;
