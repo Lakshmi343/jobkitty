@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, Building2, Briefcase, FileText, Settings, LogOut, Menu, X, BarChart3, Shield, Flag, UserCheck, Gavel, Activity, Target, FolderOpen, Plus} from 'lucide-react';
@@ -85,7 +87,6 @@ const AdminLayout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-    
       <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
         <div className="fixed inset-y-0 left-0 flex w-64 flex-col bg-white">

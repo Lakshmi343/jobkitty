@@ -6,7 +6,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
-import {  Settings,  Plus,  Edit,  Trash2, X} from 'lucide-react';
+import {  Settings,  Plus,  Edit,  Trash2, X, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import {Dialog,DialogContent,DialogHeader,DialogTitle,DialogTrigger,} from '../ui/dialog';
 
@@ -16,6 +16,7 @@ const AdminCategories = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [formData, setFormData] = useState({ name: '', description: '' });
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchCategories();
@@ -134,9 +135,11 @@ const AdminCategories = () => {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Categories</CardTitle>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
+              <CardTitle>Categories</CardTitle>
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+
               <DialogTrigger asChild>
                 <Button onClick={handleAddNew} className="flex items-center gap-2">
                   <Plus className="h-4 w-4" />
@@ -181,11 +184,26 @@ const AdminCategories = () => {
                 </form>
               </DialogContent>
             </Dialog>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search categories..."
+                className="pl-10 w-full max-w-md"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categories.map((category) => (
+            {categories
+              .filter(category => 
+                category.name.toLowerCase().includes(searchQuery.toLowerCase())
+              )
+              .map((category) => (
               <div key={category._id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">

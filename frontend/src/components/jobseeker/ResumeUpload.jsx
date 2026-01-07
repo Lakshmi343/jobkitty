@@ -1,125 +1,4 @@
-// import React, { useState } from 'react';
-// import axios from 'axios';
-// import { USER_API_END_POINT } from '../../utils/constant';
-// import { Button } from '../ui/button';
-// import { Label } from '../ui/label';
-// import { toast } from 'sonner';
-// import { FileText, Upload, Loader2 } from 'lucide-react';
-// import { useSelector, useDispatch } from 'react-redux';
-// import { useNavigate } from 'react-router-dom';
-// import { setUser } from '@/redux/authSlice';
-// import { authUtils } from '../../utils/authUtils';
-// import PdfViewer from '../PdfViewer';
 
-// const ResumeUpload = ({ onSuccess }) => {
-//     const [file, setFile] = useState(null);
-//     const [loading, setLoading] = useState(false);
-//     const [showPreview, setShowPreview] = useState(false);
-//     const { user } = useSelector(store => store.auth);
-//     const dispatch = useDispatch();
-//     const navigate = useNavigate();
-    
-//     const handleFileChange = (e) => {
-//         const selectedFile = e.target.files[0];
-//         if (selectedFile) {
-        
-//             const fileType = selectedFile.type;
-//             if (fileType !== 'application/pdf' && 
-//                 fileType !== 'application/msword' && 
-//                 fileType !== 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
-//                 toast.error('Please upload a PDF or Word document');
-//                 return;
-//             }
-            
-           
-//             if (selectedFile.size > 5 * 1024 * 1024) {
-//                 toast.error('File size should be less than 5MB');
-//                 return;
-//             }
-            
-//             setFile(selectedFile);
-//         }
-//     };
-    
-//     const refreshUser = async () => {
-//         const profileRes = await axios.get(`${USER_API_END_POINT}/profile`, { withCredentials: true });
-//         if (profileRes.data?.success) {
-//             dispatch(setUser(profileRes.data.user));
-//             authUtils.setUser(profileRes.data.user);
-//         }
-//     };
-    
-//     const handleUpload = async () => {
-//         if (!file) {
-//             toast.error('Please select a file to upload');
-//             return;
-//         }
-        
-//         // Ensure authenticated
-//         if (!user) {
-//             toast.info('Please login to upload your resume');
-//             navigate('/login');
-//             return;
-//         }
-
-//         setLoading(true);
-        
-//         const formData = new FormData();
-//         formData.append('resume', file);
-        
-//         try {
-//             const response = await axios.post(`${USER_API_END_POINT}/upload-resume`, formData, {
-//                 headers: {
-//                     'Content-Type': 'multipart/form-data'
-//                 },
-//                 withCredentials: true
-//             });
-            
-//             if (response.data.success) {
-//                 toast.success('Resume uploaded successfully');
-//                 setFile(null);
-//                 await refreshUser();
-//                 if (typeof onSuccess === 'function') {
-//                     onSuccess();
-//                 }
-//             }
-//         } catch (error) {
-//             console.error('Resume upload error:', error);
-//             if (error.response?.status === 401) {
-//                 toast.error('Your session expired. Please login again.');
-//                 navigate('/login');
-//             } else {
-//                 toast.error(error.response?.data?.message || 'Failed to upload resume');
-//             }
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-    
-//     return (
-//         <div className="bg-white p-6 rounded-lg shadow-md border">
-//             <div className="flex items-center justify-between mb-4">
-//                 <h2 className="text-xl font-semibold">Resume / CV</h2>
-//                 {user?.profile?.resume && (
-//                     <div className="flex items-center gap-3">
-//                         <a 
-//                             href={user.profile.resume} 
-//                             target="_blank" 
-//                             rel="noopener noreferrer"
-//                             download
-//                             className="text-blue-600 hover:text-blue-800 flex items-center gap-1 text-sm"
-//                         >
-//                             <FileText className="h-4 w-4" />
-//                             View Current Resume
-//                         </a>
-//                         {user.profile.resume.toLowerCase().endsWith('.pdf') && (
-//                             <button
-//                                 type="button"
-//                                 onClick={() => setShowPreview(v => !v)}
-//                                 className="text-sm text-blue-600 hover:text-blue-800"
-//                             >
-//                                 {showPreview ? 'Hide Preview' : 'Preview'}
-//                             </button>
 import React, { useState,useRef } from 'react';
 import axios from 'axios';
 import { USER_API_END_POINT } from '../../utils/constant';
@@ -147,27 +26,20 @@ const ResumeUpload = ({ onSuccess }) => {
     
     const validateFile = (file) => {
         if (!file) return { valid: false, error: 'No file selected' };
-        
-        // Check file type
         const validTypes = [
             'application/pdf',
             'application/msword',
             'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-        ];
-        
+        ];        
         if (!validTypes.includes(file.type)) {
             return { valid: false, error: 'Please upload a PDF or Word document (PDF, DOC, DOCX)' };
-        }
-        
-        // Check file size (5MB max)
-        const maxSize = 5 * 1024 * 1024; // 5MB
+        }      
+        const maxSize = 5 * 1024 * 1024; 
         if (file.size > maxSize) {
             return { valid: false, error: 'File size should be less than 5MB' };
-        }
-        
+        }   
         return { valid: true };
-    };
-    
+    };  
     const handleFileChange = (e) => {
         const selectedFile = e.target.files[0];
         setError(null);
@@ -176,7 +48,7 @@ const ResumeUpload = ({ onSuccess }) => {
         if (!valid) {
             setError(error);
             if (fileInputRef.current) {
-                fileInputRef.current.value = ''; // Reset file input
+                fileInputRef.current.value = ''; 
             }
             return;
         }
@@ -188,7 +60,7 @@ const ResumeUpload = ({ onSuccess }) => {
         setFile(null);
         setError(null);
         if (fileInputRef.current) {
-            fileInputRef.current.value = ''; // Reset file input
+            fileInputRef.current.value = ''; 
         }
     };
     
@@ -206,14 +78,14 @@ const ResumeUpload = ({ onSuccess }) => {
             return;
         }
         
-        // Re-validate file before upload
+   
         const { valid, error: validationError } = validateFile(file);
         if (!valid) {
             setError(validationError);
             return;
         }
         
-        // Ensure authenticated
+
         if (!user) {
             toast.info('Please login to upload your resume');
             navigate('/login', { state: { from: window.location.pathname } });
@@ -244,13 +116,13 @@ const ResumeUpload = ({ onSuccess }) => {
                 setFile(null);
                 setUploadProgress(0);
                 if (fileInputRef.current) {
-                    fileInputRef.current.value = ''; // Reset file input
+                    fileInputRef.current.value = ''; 
                 }
                 
-                // Refresh user data
+              
                 await refreshUser();
                 
-                // Call success callback if provided
+             
                 if (typeof onSuccess === 'function') {
                     onSuccess(response.data);
                 }
@@ -342,8 +214,7 @@ const ResumeUpload = ({ onSuccess }) => {
                         </div>
                     </div>
 
-                    {/* PDF Preview */}
-                    {/* Use a modal dialog for a larger, contained preview */}
+
                     <Dialog open={showPreview && isPdfFile(user?.profile?.resume)} onOpenChange={setShowPreview}>
                         <DialogContent className="max-w-4xl w-[92vw]">
                             <DialogHeader>
@@ -370,7 +241,7 @@ const ResumeUpload = ({ onSuccess }) => {
                 </div>
             )}
 
-            {/* Upload Section */}
+           
             <div className="space-y-3">
                 <div>
                     <input

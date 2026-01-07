@@ -1,9 +1,11 @@
 import multer from "multer";
 const storage = multer.memoryStorage();
+
 const multiSingleUpload = multer({ storage }).fields([
   { name: "file", maxCount: 1 },
   { name: "profilePhoto", maxCount: 1 },
 ]);
+
 export const singleUpload = (req, res, next) => {
   if (!req.is('multipart/form-data')) {
     return next();

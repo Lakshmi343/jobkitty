@@ -1,4 +1,3 @@
-
 import { Admin } from '../models/admin.model.js';
 import { User } from '../models/user.model.js';
 import { Company } from '../models/company.model.js';
@@ -64,6 +63,9 @@ export const getAllEmployers = async (req, res) => {
 };
 
 
+
+
+
 export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -126,6 +128,7 @@ export const loginAdmin = async (req, res) => {
 };
 
 
+
 export const registerAdmin = async (req, res) => {
   try {
     const { name, email, password, role = 'admin' } = req.body;
@@ -136,8 +139,6 @@ export const registerAdmin = async (req, res) => {
         success: false
       });
     }
-
-
     const existingAdmin = await Admin.findOne({ email });
     if (existingAdmin) {
       return res.status(400).json({
@@ -145,19 +146,13 @@ export const registerAdmin = async (req, res) => {
         success: false
       });
     }
-
-   
     if (password.length < 8) {
       return res.status(400).json({
         message: "Password must be at least 8 characters long",
         success: false
       });
     }
-
-    
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    
+    const hashedPassword = await bcrypt.hash(password, 10); 
     let permissions = [];
     switch (role) {
       case 'super_admin':
@@ -2181,14 +2176,14 @@ export const toggleAdminStatus = async (req, res) => {
     const { isActive } = req.body;
     const { admin: currentAdmin } = req;
 
-    // Check permissions (same policy as deleteAdmin)
+
     const perms = currentAdmin?.permissions || [];
     const canManage = currentAdmin.role === 'super_admin' || perms.includes('all') || perms.includes('manage_users');
     if (!canManage) {
       return res.status(403).json({ message: 'Insufficient permissions', success: false });
     }
 
-    // Prevent self-deactivation
+   
     if (adminId === currentAdmin._id.toString()) {
       return res.status(400).json({ message: 'Cannot change your own status', success: false });
     }

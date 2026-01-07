@@ -48,40 +48,137 @@ const AdminApplications = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] = useState(null);
-  const [filters, setFilters] = useState({
-    status: '',
-    jobTitle: '',
-    applicantEmail: ''
-  });
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const [keralaOnly, setKeralaOnly] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
     totalApplications: 0
   });
+  
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  
+  const [filters, setFilters] = useState({
+    status: '',
+    jobTitle: '',
+    applicantEmail: '',
+    searchQuery: '',
+    companyName: '',
+    category: ''
+  });
+  
+  const [searchTimeout, setSearchTimeout] = useState(null);
+
+  const handleClearFilters = () => {
+    const resetFilters = {
+      status: '',
+      jobTitle: '',
+      applicantEmail: '',
+      searchQuery: '',
+      companyName: '',
+      category: ''
+    };
+    setFilters(resetFilters);
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  };
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const [keralaOnly, setKeralaOnly] = useState(false);
 
   // Read jobId from query params and keep it in sync
   const jobIdFromQuery = searchParams.get('jobId');
 
+  // Update search automatically when filters change
+  useEffect(() => {
+    // Clear previous timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    // Set a new timeout
+    const timer = setTimeout(() => {
+      fetchApplications();
+    }, 500); // 500ms debounce delay
+
+    setSearchTimeout(timer);
+
+    // Cleanup function
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [filters, pagination.currentPage, jobIdFromQuery]);
+
+  // Fetch categories
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const token = localStorage.getItem('adminToken');
+        const response = await axios.get(`${ADMIN_API_END_POINT}/categories`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          setCategories(response.data.categories || []);
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
+
+  // Initial data fetch
   useEffect(() => {
     fetchApplications();
     fetchStats();
-  }, [filters, pagination.currentPage, jobIdFromQuery]);
+  }, [jobIdFromQuery]);
 
   const fetchApplications = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const params = new URLSearchParams({
-        page: pagination.currentPage,
-        limit: 9, // Changed to 9 to fit 3x3 grid
-        ...filters,
-        ...(jobIdFromQuery ? { jobId: jobIdFromQuery } : {})
-      });
+      const { searchQuery, status, jobTitle, applicantEmail, companyName, category } = filters;
+      
+      // Build search parameters
+      const params = new URLSearchParams();
+      
+      // Add pagination
+      params.append('page', pagination.currentPage);
+      params.append('limit', 9);
+      
+      // Add search query if exists - search in multiple fields
+      if (searchQuery) {
+        params.append('search', searchQuery);
+        params.append('searchFields', 'applicant.fullname,applicant.email,job.title,job.company.name');
+      }
+      
+      // Add status filter
+      if (status) {
+        params.append('status', status);
+      }
+      
+      // Add other filters if they exist
+      if (jobTitle) params.append('jobTitle', jobTitle);
+      if (applicantEmail) params.append('applicantEmail', applicantEmail);
+      if (companyName) params.append('companyName', companyName);
+      if (category) params.append('category', category);
+      
+      // Add jobId from query if exists
+      if (jobIdFromQuery) {
+        params.append('jobId', jobIdFromQuery);
+      }
 
       const response = await axios.get(`${ADMIN_API_END_POINT}/applications?${params}`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
       });
 
       if (response.data.success) {
@@ -326,50 +423,104 @@ const AdminApplications = () => {
           </Card>
         </div>
 
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <select
-                value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                className="border rounded-lg px-3 py-2"
-              >
-                <option value="">All Status</option>
-                <option value="pending">Pending</option>
-                <option value="accepted">Accepted</option>
-                <option value="rejected">Rejected</option>
-              </select>
-
-              <input
-                type="text"
-                placeholder="Search by job title..."
-                value={filters.jobTitle}
-                onChange={(e) => setFilters({ ...filters, jobTitle: e.target.value })}
-                className="border rounded-lg px-3 py-2"
-              />
-
-              <input
-                type="text"
-                placeholder="Search by applicant email..."
-                value={filters.applicantEmail}
-                onChange={(e) => setFilters({ ...filters, applicantEmail: e.target.value })}
-                className="border rounded-lg px-3 py-2"
-              />
-
-              <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" checked={keralaOnly} onChange={(e) => setKeralaOnly(e.target.checked)} />
-                Kerala candidates only
-              </label>
+        {/* Enhanced Search and Filter Bar */}
+        <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
+          <div className="flex flex-col space-y-4">
+            {/* Main Search Bar */}
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search applications..."
+                  className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={filters.searchQuery}
+                  onChange={(e) => setFilters(prev => ({ ...prev, searchQuery: e.target.value }))}
+                />
+                {filters.searchQuery && (
+                  <button
+                    onClick={() => setFilters(prev => ({ ...prev, searchQuery: '' }))}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <XCircle className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleClearFilters}
+                  disabled={!Object.values(filters).some(Boolean)}
+                >
+                  Clear All
+                </Button>
+                <Button 
+                  onClick={() => fetchApplications()} 
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                  Refresh
+                </Button>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Advanced Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Status Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.status}
+                  onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                >
+                  <option value="">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="accepted">Accepted</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              {/* Job Title Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                <input
+                  type="text"
+                  placeholder="Filter by job title"
+                  className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.jobTitle}
+                  onChange={(e) => setFilters(prev => ({ ...prev, jobTitle: e.target.value }))}
+                />
+              </div>
+
+              {/* Applicant Email Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Applicant Email</label>
+                <input
+                  type="text"
+                  placeholder="Filter by email"
+                  className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.applicantEmail}
+                  onChange={(e) => setFilters(prev => ({ ...prev, applicantEmail: e.target.value }))}
+                />
+              </div>
+
+              {/* Company Name Filter */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                <input
+                  type="text"
+                  placeholder="Filter by company"
+                  className="w-full p-2 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  value={filters.companyName}
+                  onChange={(e) => setFilters(prev => ({ ...prev, companyName: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Applications Table */}
         <div className="mb-8">

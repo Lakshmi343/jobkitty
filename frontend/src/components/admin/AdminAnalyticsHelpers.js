@@ -1,5 +1,4 @@
 
-
 export const calculateUserRoles = (users) => {
   const roleCounts = users.reduce((acc, user) => {
     const role = user.role || 'Unknown';
@@ -12,6 +11,7 @@ export const calculateUserRoles = (users) => {
     count
   }));
 };
+
 
 export const calculateJobStatus = (jobs, dashboardData) => {
   if (dashboardData.pendingJobs !== undefined) {
@@ -33,6 +33,8 @@ export const calculateJobStatus = (jobs, dashboardData) => {
   }));
 
 };
+
+
 export const calculateJobCategories = (jobs) => {
   const categoryCounts = jobs.reduce((acc, job) => {
     const category = job.category?.name || 'Uncategorized';
@@ -45,6 +47,7 @@ export const calculateJobCategories = (jobs) => {
     .sort((a, b) => b.count - a.count)
     .slice(0, 10);
 };
+
 export const calculateCompanyStatus = (companies) => {
   const statusCounts = companies.reduce((acc, company) => {
     const status = company.status || 'active';
@@ -56,6 +59,8 @@ export const calculateCompanyStatus = (companies) => {
     count
   }));
 };
+
+
 export const calculateApplicationStatus = (applications, applicationStats) => {
   if (applicationStats.statusStats) {
     return applicationStats.statusStats.map(stat => ({
@@ -101,6 +106,7 @@ export const calculateCVFormats = (users) => {
     count
   }));
 };
+
 export const calculateCVGrowth = (users) => {
   const usersWithCV = users.filter(user => user.profile?.resume);
   return calculateGrowth(usersWithCV);
@@ -168,12 +174,17 @@ export const calculateReportTypes = (reports) => {
   }));
 };
 
+
+
+
 export const calculateJobApprovalRate = (jobs, dashboardData) => {
   const totalJobs = jobs.length || dashboardData.totalJobs || 0;
   const approvedJobs = dashboardData.approvedJobs || jobs.filter(job => job.status === 'approved').length || 0;
   if (totalJobs === 0) return 0;
   return Math.round((approvedJobs / totalJobs) * 100);
 };
+
+
 
 export const calculateQualityScore = (jobs) => {
   const qualityCheckedJobs = jobs.filter(job => job.qualityCheck?.score); 
