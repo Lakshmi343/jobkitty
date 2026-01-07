@@ -87,21 +87,21 @@ const AdminApplications = () => {
   // Read jobId from query params and keep it in sync
   const jobIdFromQuery = searchParams.get('jobId');
 
-  // Update search automatically when filters change
+e
   useEffect(() => {
-    // Clear previous timeout
+  
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
 
-    // Set a new timeout
+    
     const timer = setTimeout(() => {
       fetchApplications();
-    }, 500); // 500ms debounce delay
+    }, 500);
 
     setSearchTimeout(timer);
 
-    // Cleanup function
+  
     return () => {
       if (searchTimeout) {
         clearTimeout(searchTimeout);
@@ -109,7 +109,7 @@ const AdminApplications = () => {
     };
   }, [filters, pagination.currentPage, jobIdFromQuery]);
 
-  // Fetch categories
+ 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -131,7 +131,7 @@ const AdminApplications = () => {
     fetchCategories();
   }, []);
 
-  // Initial data fetch
+
   useEffect(() => {
     fetchApplications();
     fetchStats();
@@ -220,7 +220,7 @@ const AdminApplications = () => {
       if (response.data.success) {
         fetchApplications();
         fetchStats();
-        // Update selected application if it's the one being modified
+        
         if (selectedApplication && selectedApplication._id === applicationId) {
           setSelectedApplication({
             ...selectedApplication,
@@ -245,7 +245,7 @@ const AdminApplications = () => {
       });
 
       if (response.data.success) {
-        // Clear selected application if it's the one being deleted
+    
         if (selectedApplication && selectedApplication._id === applicationId) {
           setSelectedApplication(null);
         }

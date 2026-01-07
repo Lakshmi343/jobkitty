@@ -4,7 +4,7 @@ import { USER_API_END_POINT, ADMIN_API_END_POINT } from '../../utils/constant';
 import { toast } from 'sonner';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { FileText, FileDown, UserCheck, UserX, Trash2, MoreHorizontal, Users, Search, Filter, Calendar, ChevronDown, RefreshCw, Eye, Download, Mail, Phone, MapPin, GraduationCap, Award, List } from 'lucide-react';
+import { FileText, FileDown, UserCheck, UserX, Trash2, MoreHorizontal, Users, Search, Filter, Calendar, ChevronDown, RefreshCw, Eye, Download, Mail, Phone, MapPin, GraduationCap, Award, List, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
@@ -101,11 +101,38 @@ const JobseekerTable = () => {
     let filtered = jobseekers;
 
     if (searchTerm) {
-      filtered = filtered.filter(jobseeker => 
-        jobseeker.fullname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        jobseeker.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        jobseeker.profile?.place?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      const searchTermLower = searchTerm.toLowerCase();
+      filtered = filtered.filter(jobseeker => {
+        // Basic fields
+        const basicMatch = 
+          (jobseeker.fullname?.toLowerCase().includes(searchTermLower) || '') ||
+          (jobseeker.email?.toLowerCase().includes(searchTermLower) || '') ||
+          (jobseeker.phoneNumber?.includes(searchTerm) || '') ||
+          (jobseeker._id?.toLowerCase().includes(searchTermLower) || '');
+        
+        // Profile fields
+        const profileMatch = jobseeker.profile ? (
+          (jobseeker.profile.phoneNumber?.includes(searchTerm) || '') ||
+          (jobseeker.profile.place?.toLowerCase().includes(searchTermLower) || '') ||
+          (jobseeker.profile.district?.toLowerCase().includes(searchTermLower) || '') ||
+          (jobseeker.profile.state?.toLowerCase().includes(searchTermLower) || '') ||
+          (jobseeker.profile.pincode?.includes(searchTerm) || '')
+        ) : false;
+
+        // Education fields
+        const educationMatch = jobseeker.education?.some(edu => 
+          (edu.institution?.toLowerCase().includes(searchTermLower) || '') ||
+          (edu.degree?.toLowerCase().includes(searchTermLower) || '') ||
+          (edu.fieldOfStudy?.toLowerCase().includes(searchTermLower) || '')
+        ) || false;
+
+        // Skills
+        const skillsMatch = jobseeker.skills?.some(skill => 
+          skill.toLowerCase().includes(searchTermLower)
+        ) || false;
+
+        return basicMatch || profileMatch || educationMatch || skillsMatch;
+      });
     }
 
     if (statusFilter !== 'all') {
@@ -356,33 +383,48 @@ const JobseekerTable = () => {
           </div>
         </div>
 
-        <Card>
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search by name, email, or location..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 h-10 sm:h-11 text-sm sm:text-base"
-                  />
-                </div>
-              </div>
-              
-              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); }}>
-                <SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="blocked">Blocked</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                </SelectContent>
-              </Select>
+<Card>
+<CardContent className="p-4 sm:p-6">
+<div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
+<div className="flex-1">
+<div className="relative w-full max-w-md">
+<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+<Input
+type="text"
+placeholder="Search by name, email, phone, location, skills..."
+className="pl-10 w-full pr-10"
+value={searchTerm}
+onChange={(e) => setSearchTerm(e.target.value)}
+/>
+{searchTerm ? (
+<Button
+variant="ghost"
+size="sm"
+className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
+onClick={() => setSearchTerm('')}
+>
+<span className="sr-only">Clear search</span>
+<X className="h-4 w-4" />
+</Button>
+) : (
+<div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">
+{filteredJobseekers.length} results
+</div>
+)}
+</div>
+</div>
+<Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); }}>
+<SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
+<Filter className="w-4 h-4 mr-2" />
+<SelectValue placeholder="Filter by status" />
+</SelectTrigger>
+<SelectContent>
+  <SelectItem value="all">All Status</SelectItem>
+  <SelectItem value="active">Active</SelectItem>
+  <SelectItem value="blocked">Blocked</SelectItem>
+  <SelectItem value="inactive">Inactive</SelectItem>
+</SelectContent>
+</Select>
 
               <Select value={resumeFilter} onValueChange={(v) => { setResumeFilter(v); }}>
                 <SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
