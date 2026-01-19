@@ -1,6 +1,6 @@
 import express from "express";
-import { loginAdmin, registerAdmin,createAdmin, getDashboardStats,getAnalytics,getAllUsers,updateUserStatus, deleteUser, getUserResume,getAllJobs,approveJob,rejectJob,deleteJob,getJobByIdAdmin,
-updateJobDetailsAdmin, postJobAdmin, getJobForEdit, updateJobAdmin, getAllCompanies, getCompanyByIdAdmin,updateCompanyDetailsAdmin, updateCompanyStatus, deleteCompany,
+import { loginAdmin, registerAdmin, createAdmin, getDashboardStats, getAnalytics, getAllUsers, updateUserStatus, deleteUser, getUserResume, getAllJobs, approveJob, rejectJob, deleteJob, getJobByIdAdmin,
+updateJobDetailsAdmin, postJobAdmin, getJobForEdit, updateJobAdmin, getAllCompanies, getCompanyByIdAdmin, updateCompanyDetailsAdmin, updateCompanyStatus, deleteCompany,
     createCompanyAdmin,
     getAllCategories,
     createCategory,
@@ -13,6 +13,7 @@ updateJobDetailsAdmin, postJobAdmin, getJobForEdit, updateJobAdmin, getAllCompan
     toggleAdminStatus,
     bulkApproveJobs,
     getAllJobseekers,
+    getJobseekerStats,
     getAllEmployers,
     checkJobQuality,
     getUserActivity,
@@ -45,6 +46,7 @@ router.patch('/users/:userId/status', adminAuth, updateUserStatus);
 router.delete('/users/:userId', adminAuth, deleteUser);
 router.get('/users/:userId/resume', adminAuth, getUserResume);
 router.get("/jobseekers", adminAuth, getAllJobseekers);
+router.get("/jobseekers/stats", adminAuth, getJobseekerStats);
 router.get("/employers", adminAuth, getAllEmployers);
 router.get('/users/:userId/activity', adminAuth, getUserActivity);
 router.post('/users/:userId/warn', adminAuth, warnUser);
@@ -70,10 +72,11 @@ router.get('/categories', adminAuth, getAllCategories);
 router.post('/categories', adminAuth, createCategory);
 router.put('/categories/:categoryId', adminAuth, updateCategory);
 router.delete('/categories/:categoryId', adminAuth, deleteCategory);
-router.get('/applications', adminAuth, getAllApplications);
+// Applications routes
+router.get('/applications/all', adminAuth, getAllApplications);
 router.get('/applications/stats', adminAuth, getApplicationStats);
-router.get('/applications/:applicationId', adminAuth, getApplicationById);
-router.patch('/applications/:applicationId/status', adminAuth, updateApplicationStatus);
+router.get('/applications/id/:applicationId', adminAuth, getApplicationById);
+router.patch('/applications/status/:applicationId', adminAuth, updateApplicationStatus);
 router.delete('/applications/:applicationId', adminAuth, deleteApplication);
 router.get('/admins', adminAuth, getAllAdmins);
 router.get('/admins/:adminId', adminAuth, getAdminById);

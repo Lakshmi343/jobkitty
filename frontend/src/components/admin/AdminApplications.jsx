@@ -84,10 +84,9 @@ const AdminApplications = () => {
   const navigate = useNavigate();
   const [keralaOnly, setKeralaOnly] = useState(false);
 
-  // Read jobId from query params and keep it in sync
+ 
   const jobIdFromQuery = searchParams.get('jobId');
 
-e
   useEffect(() => {
   
     if (searchTimeout) {
@@ -141,16 +140,20 @@ e
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
+      if (!token) {
+        toast.error('Authentication required. Please log in again.');
+        navigate('/admin/login');
+        return;
+      }
+
       const { searchQuery, status, jobTitle, applicantEmail, companyName, category } = filters;
       
-      // Build search parameters
+   
       const params = new URLSearchParams();
       
-      // Add pagination
+     
       params.append('page', pagination.currentPage);
-      params.append('limit', 9);
-      
-      // Add search query if exists - search in multiple fields
+      params.append('limit', 20); 
       if (searchQuery) {
         params.append('search', searchQuery);
         params.append('searchFields', 'applicant.fullname,applicant.email,job.title,job.company.name');
@@ -172,21 +175,85 @@ e
         params.append('jobId', jobIdFromQuery);
       }
 
-      const response = await axios.get(`${ADMIN_API_END_POINT}/applications?${params}`, {
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
+      const url = `${ADMIN_API_END_POINT}/applications?${params}`;
+      console.log('Fetching applications from:', url);
+      
+      const headers = { 
+        'Authorization': `Bearer ${token}`,
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      };
+      
+      console.log('Request headers:', headers);
+      
+      const response = await axios.get(url, { headers });
+      
+      console.log('API Response:', {
+        success: response.data.success,
+        applicationsCount: response.data.applications?.length || 0,
+        pagination: response.data.pagination,
+        hasFiltered: !!response.data.filteredApplications,
+        filteredCount: response.data.filteredApplications?.length || 0
       });
 
       if (response.data.success) {
-        setApplications(response.data.applications);
-        setPagination(response.data.pagination);
+        // Make sure we're using the correct response field
+        const apps = response.data.applications || [];
+        
+        if (!Array.isArray(apps)) {
+          console.error('Expected applications to be an array, got:', typeof apps);
+          setApplications([]);
+          return;
+        }
+        
+        console.log(`Setting ${apps.length} applications`);
+        setApplications(apps);
+        
+        // Update pagination if available
+        if (response.data.pagination) {
+          const newPagination = {
+            currentPage: response.data.pagination.currentPage || 1,
+            totalPages: response.data.pagination.totalPages || 1,
+            totalApplications: response.data.pagination.totalApplications || 0,
+            hasNext: response.data.pagination.hasNext || false,
+            hasPrev: response.data.pagination.hasPrev || false,
+            limit: 20 // Ensure limit is set
+          };
+          
+          console.log('Updating pagination:', newPagination);
+          setPagination(prev => ({
+            ...prev,
+            ...newPagination
+          }));
+        }
       }
     } catch (error) {
       console.error('Error fetching applications:', error);
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Error response data:', error.response.data);
+        console.error('Error status:', error.response.status);
+        console.error('Error headers:', error.response.headers);
+        
+        if (error.response.status === 401) {
+          console.error('Authentication failed. Please log in again.');
+          // Clear invalid token
+          localStorage.removeItem('adminToken');
+          // Optionally redirect to login
+          // navigate('/admin/login');
+        }
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('No response received:', error.request);
+      } else {
+        // Something happened in setting up the request
+        console.error('Error setting up request:', error.message);
+      }
+      
+      // Set empty applications on error
+      setApplications([]);
     } finally {
       setLoading(false);
     }
@@ -195,13 +262,55 @@ e
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('adminToken');
+      console.log('Current admin token:', token ? 'Token exists' : 'No token found');
+      
+      if (!token) {
+        console.error('No authentication token found. Please log in again.');
+        // Optionally redirect to login
+        // navigate('/admin/login');
+        return;
+      }
+
       const response = await axios.get(`${ADMIN_API_END_POINT}/applications/stats`, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        }
       });
 
+      console.log('Stats API Response:', response.data);
+
       if (response.data.success) {
-        setStats(response.data.stats);
+        const statsData = response.data.stats || {};
+        
+        // Transform status stats array to object for easier access
+        const statusCounts = {};
+        if (Array.isArray(statsData.statusStats)) {
+          statsData.statusStats.forEach(stat => {
+            if (stat && stat._id) {
+              statusCounts[stat._id] = stat.count;
+            }
+          });
+        }
+        
+        // Set stats with proper defaults
+        const newStats = {
+          total: statsData.totalApplications || 0,
+          pending: statusCounts['pending'] || 0,
+          accepted: statusCounts['accepted'] || 0,
+          rejected: statusCounts['rejected'] || 0,
+          inReview: statusCounts['in-review'] || 0,
+          shortlisted: statusCounts['shortlisted'] || 0,
+          // Keep other stats if present
+          ...statsData,
+          // Add transformed status counts
+          statusCounts
+        };
       }
+        console.log('Setting stats:', newStats);
+        setStats(newStats);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
@@ -342,6 +451,7 @@ e
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
+       
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Applications Management</h1>
@@ -465,10 +575,8 @@ e
                 </Button>
               </div>
             </div>
-
-            {/* Advanced Filters */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Status Filter */}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select
@@ -483,7 +591,7 @@ e
                 </select>
               </div>
 
-              {/* Job Title Filter */}
+        
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
                 <input
@@ -495,7 +603,7 @@ e
                 />
               </div>
 
-              {/* Applicant Email Filter */}
+   
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Applicant Email</label>
                 <input
@@ -507,7 +615,7 @@ e
                 />
               </div>
 
-              {/* Company Name Filter */}
+            
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
                 <input
@@ -667,7 +775,7 @@ e
           )}
         </div>
 
-        {/* Application Details Sidebar */}
+    
         {selectedApplication && (
           <div className="fixed inset-y-0 right-0 w-full lg:w-1/3 bg-white shadow-lg z-10 overflow-y-auto">
             <div className="p-6">
@@ -849,3 +957,8 @@ e
 };
 
 export default AdminApplications;
+
+
+
+
+

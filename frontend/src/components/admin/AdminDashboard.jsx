@@ -5,13 +5,7 @@ import { ADMIN_API_END_POINT } from '../../utils/constant';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
-import { 
-  Users, 
-  Briefcase, 
-  Building2, 
-  FileText, 
-  TrendingUp, 
-  Eye,
+import { Users, Briefcase, Building2, FileText, TrendingUp, Eye,
   CheckCircle,
   XCircle,
   Clock,
@@ -85,7 +79,7 @@ const AdminDashboard = () => {
   return (
     <div className="p-3 sm:p-6 bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+     
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
           <p className="text-sm sm:text-base text-gray-600">Welcome back, {adminData?.name || 'Admin'}</p>
@@ -129,11 +123,22 @@ const AdminDashboard = () => {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Applications</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center space-x-1">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-xl sm:text-2xl font-bold">{stats?.totalApplications || 0}</div>
-              <p className="text-xs text-muted-foreground">Total applications</p>
+              <div className="text-xl sm:text-2xl font-bold">
+                {stats?.totalApplications?.toLocaleString() || '0'}
+              </div>
+              <div className="mt-1 flex items-center text-xs text-muted-foreground">
+                <span className="flex items-center text-green-500">
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                  {stats?.pendingApplications || 0} pending
+                </span>
+                <span className="mx-2">•</span>
+                <span className="text-blue-500">{stats?.acceptedApplications || 0} accepted</span>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -217,7 +222,7 @@ const AdminDashboard = () => {
           </Button>
         </div>
 
-        {/* Performance Metrics */}
+    
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
             <CardHeader className="pb-2">

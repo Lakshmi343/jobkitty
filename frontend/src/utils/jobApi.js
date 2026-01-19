@@ -80,6 +80,48 @@ export const adminJobApi = {
     }
     
     return response.data;
+  },
+  
+  // Fetch all applications (admin only)
+  fetchAllApplications: async (filters = {}) => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('No admin token found');
+    }
+    
+    const { page = 1, limit = 10, status, jobId, applicantId, sortBy = 'createdAt', sortOrder = 'desc' } = filters;
+    
+    const params = new URLSearchParams({
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+      ...(status && { status }),
+      ...(jobId && { jobId }),
+      ...(applicantId && { applicantId })
+    });
+    
+    const response = await axios.get(`${ADMIN_API_END_POINT}/applications/all?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    return response.data;
+  },
+  
+  // Update application status (admin only)
+  updateApplicationStatus: async (applicationId, { status, rejectionReason, notes }) => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      throw new Error('No admin token found');
+    }
+    
+    const response = await axios.put(
+      `${ADMIN_API_END_POINT}/applications/${applicationId}/status`,
+      { status, rejectionReason, notes },
+      { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
+    );
+    
+    return response.data;
   }
 };
 

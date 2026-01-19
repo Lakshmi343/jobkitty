@@ -47,6 +47,7 @@ import AdminJobEdit from './components/admin/AdminJobEdit';
 import AdminForgotPassword from './components/admin/AdminForgotPassword';
 import AdminResetPassword from './components/admin/AdminResetPassword';
 import AdminCompanyCreate from './components/admin/AdminCompanyCreate';
+import ApplicationsPage from './pages/admin/ApplicationsPage';
 import EmployerJobs from './components/employer/EmployerJobs';
 import EmployerApplicants from './components/employer/EmployerApplicants';
 import EmployerProfile from './components/employer/EmployerProfile';
@@ -393,6 +394,16 @@ const appRouter = createBrowserRouter([
       <AdminProtectedRoute allowedRoles={['super_admin', 'admin', 'moderator']}>
         <AdminLayout>
           <AdminJobEdit />
+        </AdminLayout>
+      </AdminProtectedRoute>
+    )
+  },
+  {
+    path: "/admin/applications",
+    element: (
+      <AdminProtectedRoute allowedRoles={['super_admin', 'admin', 'moderator']}>
+        <AdminLayout>
+          <ApplicationsPage />
         </AdminLayout>
       </AdminProtectedRoute>
     )
