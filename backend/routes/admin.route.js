@@ -32,8 +32,6 @@ updateJobDetailsAdmin, postJobAdmin, getJobForEdit, updateJobAdmin, getAllCompan
 import { singleUpload } from "../middlewares/mutler.js";
 import { adminAuth } from "../middlewares/adminAuth.js";
 const router = express.Router();
-
-
 router.post('/login', loginAdmin);
 router.post('/register', registerAdmin); 
 router.post('/create-admin', adminAuth, createAdmin);
@@ -72,7 +70,6 @@ router.get('/categories', adminAuth, getAllCategories);
 router.post('/categories', adminAuth, createCategory);
 router.put('/categories/:categoryId', adminAuth, updateCategory);
 router.delete('/categories/:categoryId', adminAuth, deleteCategory);
-// Applications routes
 router.get('/applications/all', adminAuth, getAllApplications);
 router.get('/applications/stats', adminAuth, getApplicationStats);
 router.get('/applications/id/:applicationId', adminAuth, getApplicationById);

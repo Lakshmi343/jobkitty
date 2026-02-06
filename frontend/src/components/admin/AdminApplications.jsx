@@ -10,11 +10,12 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
-import { 
-  FileText, 
-  Users, 
-  CheckCircle, 
-  XCircle, 
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import {
+  FileText,
+  Users,
+  CheckCircle,
+  XCircle,
   Clock,
   TrendingUp,
   Search,
@@ -48,15 +49,16 @@ const AdminApplications = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
     totalApplications: 0
   });
-  
+
   const [categories, setCategories] = useState([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
-  
+
   const [filters, setFilters] = useState({
     status: '',
     jobTitle: '',
@@ -65,7 +67,7 @@ const AdminApplications = () => {
     companyName: '',
     category: ''
   });
-  
+
   const [searchTimeout, setSearchTimeout] = useState(null);
 
   const handleClearFilters = () => {
@@ -84,23 +86,23 @@ const AdminApplications = () => {
   const navigate = useNavigate();
   const [keralaOnly, setKeralaOnly] = useState(false);
 
- 
+
   const jobIdFromQuery = searchParams.get('jobId');
 
   useEffect(() => {
-  
+
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
 
-    
+
     const timer = setTimeout(() => {
       fetchApplications();
     }, 500);
 
     setSearchTimeout(timer);
 
-  
+
     return () => {
       if (searchTimeout) {
         clearTimeout(searchTimeout);
@@ -108,7 +110,7 @@ const AdminApplications = () => {
     };
   }, [filters, pagination.currentPage, jobIdFromQuery]);
 
- 
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -126,7 +128,7 @@ const AdminApplications = () => {
         setLoadingCategories(false);
       }
     };
-    
+
     fetchCategories();
   }, []);
 
@@ -147,29 +149,29 @@ const AdminApplications = () => {
       }
 
       const { searchQuery, status, jobTitle, applicantEmail, companyName, category } = filters;
-      
-   
+
+
       const params = new URLSearchParams();
-      
-     
+
+
       params.append('page', pagination.currentPage);
-      params.append('limit', 20); 
+      params.append('limit', 20);
       if (searchQuery) {
         params.append('search', searchQuery);
         params.append('searchFields', 'applicant.fullname,applicant.email,job.title,job.company.name');
       }
-      
+
       // Add status filter
       if (status) {
         params.append('status', status);
       }
-      
+
       // Add other filters if they exist
       if (jobTitle) params.append('jobTitle', jobTitle);
       if (applicantEmail) params.append('applicantEmail', applicantEmail);
       if (companyName) params.append('companyName', companyName);
       if (category) params.append('category', category);
-      
+
       // Add jobId from query if exists
       if (jobIdFromQuery) {
         params.append('jobId', jobIdFromQuery);
@@ -177,18 +179,18 @@ const AdminApplications = () => {
 
       const url = `${ADMIN_API_END_POINT}/applications?${params}`;
       console.log('Fetching applications from:', url);
-      
-      const headers = { 
+
+      const headers = {
         'Authorization': `Bearer ${token}`,
         'Cache-Control': 'no-cache',
         'Pragma': 'no-cache',
         'Expires': '0'
       };
-      
+
       console.log('Request headers:', headers);
-      
+
       const response = await axios.get(url, { headers });
-      
+
       console.log('API Response:', {
         success: response.data.success,
         applicationsCount: response.data.applications?.length || 0,
@@ -200,16 +202,16 @@ const AdminApplications = () => {
       if (response.data.success) {
         // Make sure we're using the correct response field
         const apps = response.data.applications || [];
-        
+
         if (!Array.isArray(apps)) {
           console.error('Expected applications to be an array, got:', typeof apps);
           setApplications([]);
           return;
         }
-        
+
         console.log(`Setting ${apps.length} applications`);
         setApplications(apps);
-        
+
         // Update pagination if available
         if (response.data.pagination) {
           const newPagination = {
@@ -220,7 +222,7 @@ const AdminApplications = () => {
             hasPrev: response.data.pagination.hasPrev || false,
             limit: 20 // Ensure limit is set
           };
-          
+
           console.log('Updating pagination:', newPagination);
           setPagination(prev => ({
             ...prev,
@@ -236,7 +238,7 @@ const AdminApplications = () => {
         console.error('Error response data:', error.response.data);
         console.error('Error status:', error.response.status);
         console.error('Error headers:', error.response.headers);
-        
+
         if (error.response.status === 401) {
           console.error('Authentication failed. Please log in again.');
           // Clear invalid token
@@ -251,7 +253,7 @@ const AdminApplications = () => {
         // Something happened in setting up the request
         console.error('Error setting up request:', error.message);
       }
-      
+
       // Set empty applications on error
       setApplications([]);
     } finally {
@@ -263,7 +265,7 @@ const AdminApplications = () => {
     try {
       const token = localStorage.getItem('adminToken');
       console.log('Current admin token:', token ? 'Token exists' : 'No token found');
-      
+
       if (!token) {
         console.error('No authentication token found. Please log in again.');
         // Optionally redirect to login
@@ -272,7 +274,7 @@ const AdminApplications = () => {
       }
 
       const response = await axios.get(`${ADMIN_API_END_POINT}/applications/stats`, {
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`,
           'Cache-Control': 'no-cache',
           'Pragma': 'no-cache',
@@ -284,7 +286,7 @@ const AdminApplications = () => {
 
       if (response.data.success) {
         const statsData = response.data.stats || {};
-        
+
         // Transform status stats array to object for easier access
         const statusCounts = {};
         if (Array.isArray(statsData.statusStats)) {
@@ -294,7 +296,7 @@ const AdminApplications = () => {
             }
           });
         }
-        
+
         // Set stats with proper defaults
         const newStats = {
           total: statsData.totalApplications || 0,
@@ -309,8 +311,8 @@ const AdminApplications = () => {
           statusCounts
         };
       }
-        console.log('Setting stats:', newStats);
-        setStats(newStats);
+      console.log('Setting stats:', newStats);
+      setStats(newStats);
     } catch (error) {
       console.error('Error fetching stats:', error);
     }
@@ -319,7 +321,9 @@ const AdminApplications = () => {
   const updateApplicationStatus = async (applicationId, status, reason = '') => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await axios.patch(`${ADMIN_API_END_POINT}/applications/${applicationId}/status`, {
+      console.log('Updating status:', { applicationId, status, url: `${ADMIN_API_END_POINT}/applications/status/${applicationId}` });
+
+      const response = await axios.patch(`${ADMIN_API_END_POINT}/applications/status/${applicationId}`, {
         status,
         reason
       }, {
@@ -327,9 +331,10 @@ const AdminApplications = () => {
       });
 
       if (response.data.success) {
+        toast.success(`Application ${status} successfully`);
         fetchApplications();
         fetchStats();
-        
+
         if (selectedApplication && selectedApplication._id === applicationId) {
           setSelectedApplication({
             ...selectedApplication,
@@ -341,6 +346,7 @@ const AdminApplications = () => {
       }
     } catch (error) {
       console.error('Error updating application status:', error);
+      toast.error(error.response?.data?.message || 'Failed to update application status');
     }
   };
 
@@ -354,7 +360,7 @@ const AdminApplications = () => {
       });
 
       if (response.data.success) {
-    
+
         if (selectedApplication && selectedApplication._id === applicationId) {
           setSelectedApplication(null);
         }
@@ -451,7 +457,7 @@ const AdminApplications = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-       
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Applications Management</h1>
@@ -556,7 +562,7 @@ const AdminApplications = () => {
                   </button>
                 )}
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
@@ -565,8 +571,8 @@ const AdminApplications = () => {
                 >
                   Clear All
                 </Button>
-                <Button 
-                  onClick={() => fetchApplications()} 
+                <Button
+                  onClick={() => fetchApplications()}
                   variant="outline"
                   className="flex items-center gap-2"
                 >
@@ -591,7 +597,7 @@ const AdminApplications = () => {
                 </select>
               </div>
 
-        
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
                 <input
@@ -603,7 +609,7 @@ const AdminApplications = () => {
                 />
               </div>
 
-   
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Applicant Email</label>
                 <input
@@ -615,7 +621,7 @@ const AdminApplications = () => {
                 />
               </div>
 
-            
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
                 <input
@@ -675,6 +681,7 @@ const AdminApplications = () => {
                     <TableHead>Applicant</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Job</TableHead>
+                    <TableHead>CV</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Applied On</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -686,7 +693,7 @@ const AdminApplications = () => {
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium">{application.applicant?.fullname || 'N/A'}</span>
-                          <span className="text-xs text-gray-500">ID: {application.applicant?._id?.slice(0,8)}...</span>
+                          <span className="text-xs text-gray-500">ID: {application.applicant?._id?.slice(0, 8)}...</span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -711,60 +718,90 @@ const AdminApplications = () => {
                         </div>
                       </TableCell>
                       <TableCell>
+                        {application.applicant?.profile?.resume ? (
+                          <div className="flex items-center gap-2">
+                            {/* Resume Preview Dialog */}
+                            <Dialog open={!!previewUrl} onOpenChange={(open) => !open && setPreviewUrl(null)}>
+                              <DialogTrigger asChild>
+                                <Button variant="outline" size="sm" onClick={() => previewOrDownload(application.applicant.profile.resume, application.applicant?.profile?.resumeOriginalName)}>
+                                  <FileText className="w-3 h-3 mr-1" /> Preview
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-5xl w-[90vw] h-[85vh] p-0">
+                                <DialogHeader className="p-4 pb-2">
+                                  <DialogTitle>Resume Preview</DialogTitle>
+                                </DialogHeader>
+                                <div className="w-full h-[calc(85vh-56px)]">
+                                  <iframe src={previewUrl} title="Resume Preview" width="100%" height="100%" />
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+
+                            {/* Direct Download Link */}
+                            <a
+                              href={application.applicant.profile.resume}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download
+                              className="inline-flex items-center gap-2 h-8 px-3 border rounded-md text-sm hover:bg-gray-50 bg-white"
+                            >
+                              <Download className="w-3 h-3" />
+                              <span className="text-xs">Download</span>
+                            </a>
+                          </div>
+                        ) : (
+                          <div className="flex items-center text-gray-400">
+                            <FileText className="h-4 w-4 mr-1" />
+                            <span className="text-sm">No CV</span>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <Badge className={`${getStatusColor(application.status)} border`}>{application.status}</Badge>
                       </TableCell>
                       <TableCell>{formatDate(application.createdAt)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button size="sm" variant="outline" onClick={() => setSelectedApplication(application)}>
-                            <Eye className="h-4 w-4 mr-1" /> View
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
+                            onClick={() => setSelectedApplication(application)}
+                          >
+                            <Eye className="h-4 w-4 md:mr-1" /> <span className="hidden md:inline">View</span>
                           </Button>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-4 w-4" />
+
+                          {application.status === 'pending' && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
+                                onClick={() => updateApplicationStatus(application._id, 'accepted')}
+                              >
+                                Accept
                               </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-44 p-2" align="end">
-                              <div className="space-y-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="w-full justify-start text-green-600"
-                                  onClick={() => updateApplicationStatus(application._id, 'accepted')}
-                                  disabled={application.status==='accepted'}
-                                >
-                                  <CheckCircle className="h-4 w-4 mr-2" /> Accept
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="w-full justify-start text-yellow-600"
-                                  onClick={() => updateApplicationStatus(application._id, 'pending')}
-                                  disabled={application.status==='pending'}
-                                >
-                                  <Clock className="h-4 w-4 mr-2" /> Mark Pending
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="w-full justify-start text-red-600"
-                                  onClick={() => updateApplicationStatus(application._id, 'rejected')}
-                                  disabled={application.status==='rejected'}
-                                >
-                                  <XCircle className="h-4 w-4 mr-2" /> Reject
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="w-full justify-start text-red-600"
-                                  onClick={() => deleteApplication(application._id)}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" /> Delete
-                                </Button>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                                onClick={() => updateApplicationStatus(application._id, 'rejected')}
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          )}
+
+                          {(application.status === 'accepted' || application.status === 'rejected') && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-gray-500"
+                              onClick={() => updateApplicationStatus(application._id, 'pending')}
+                            >
+                              Reset
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -775,14 +812,14 @@ const AdminApplications = () => {
           )}
         </div>
 
-    
+
         {selectedApplication && (
           <div className="fixed inset-y-0 right-0 w-full lg:w-1/3 bg-white shadow-lg z-10 overflow-y-auto">
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     size="sm"
                     onClick={() => setSelectedApplication(null)}
                   >
@@ -791,8 +828,8 @@ const AdminApplications = () => {
                   </Button>
                   <h2 className="text-2xl font-bold">Application Details</h2>
                 </div>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={() => setSelectedApplication(null)}
                 >
@@ -857,9 +894,9 @@ const AdminApplications = () => {
                     {selectedApplication.applicant?.profile?.resume && (
                       <div>
                         <p className="text-sm font-medium text-gray-500">Resume</p>
-                        <a 
-                          href={selectedApplication.applicant.profile.resume} 
-                          target="_blank" 
+                        <a
+                          href={selectedApplication.applicant.profile.resume}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:underline inline-flex items-center gap-1"
                         >
@@ -911,7 +948,7 @@ const AdminApplications = () => {
                     <CardTitle className="text-lg">Manage Application</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <Button 
+                    <Button
                       className="w-full bg-green-600 hover:bg-green-700"
                       onClick={() => updateApplicationStatus(selectedApplication._id, 'accepted')}
                       disabled={selectedApplication.status === 'accepted'}
@@ -919,7 +956,7 @@ const AdminApplications = () => {
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Accept Application
                     </Button>
-                    <Button 
+                    <Button
                       variant="outline"
                       className="w-full text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
                       onClick={() => updateApplicationStatus(selectedApplication._id, 'rejected')}
@@ -928,7 +965,7 @@ const AdminApplications = () => {
                       <XCircle className="h-4 w-4 mr-2" />
                       Reject Application
                     </Button>
-                    <Button 
+                    <Button
                       variant="outline"
                       className="w-full text-yellow-600 hover:text-yellow-700 border-yellow-200 hover:bg-yellow-50"
                       onClick={() => updateApplicationStatus(selectedApplication._id, 'pending')}
@@ -937,7 +974,7 @@ const AdminApplications = () => {
                       <Clock className="h-4 w-4 mr-2" />
                       Mark as Pending
                     </Button>
-                    <Button 
+                    <Button
                       variant="outline"
                       className="w-full text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
                       onClick={() => deleteApplication(selectedApplication._id)}

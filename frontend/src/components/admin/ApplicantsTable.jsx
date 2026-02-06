@@ -26,8 +26,8 @@ const ApplicantsTable = () => {
         try {
             setUpdatingStatus(id);
             axios.defaults.withCredentials = true;
-            const res = await axios.post(`${APPLICATION_API_END_POINT}/status/${id}/update`, { status });
-            
+            const res = await axios.put(`${APPLICATION_API_END_POINT}/${id}/status`, { status });
+
             if (res.data.success) {
                 toast.success(`Application ${status} successfully`);
                 // Refresh the data or update the state
@@ -43,23 +43,23 @@ const ApplicantsTable = () => {
     const getStatusBadge = (status) => {
         // Status comes from database in lowercase, but we want to display it capitalized
         const statusLower = (status || 'pending').toLowerCase();
-        
+
         const statusConfig = {
-            'pending': { 
-                variant: 'secondary', 
-                icon: Clock, 
+            'pending': {
+                variant: 'secondary',
+                icon: Clock,
                 color: 'text-yellow-600',
                 displayText: 'Pending'
             },
-            'accepted': { 
-                variant: 'default', 
-                icon: CheckCircle, 
+            'accepted': {
+                variant: 'default',
+                icon: CheckCircle,
                 color: 'text-green-600',
                 displayText: 'Accepted'
             },
-            'rejected': { 
-                variant: 'destructive', 
-                icon: XCircle, 
+            'rejected': {
+                variant: 'destructive',
+                icon: XCircle,
                 color: 'text-red-600',
                 displayText: 'Rejected'
             }
@@ -103,7 +103,7 @@ const ApplicantsTable = () => {
                     u.pathname = segments.join('/');
                     out = u.toString();
                 }
-            } catch {}
+            } catch { }
         }
         return out;
     };
@@ -222,9 +222,9 @@ const ApplicantsTable = () => {
                             <TableCell className="text-right">
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="sm" 
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
                                             className="h-8 w-8 p-0"
                                             disabled={updatingStatus === item._id}
                                         >

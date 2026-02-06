@@ -9,8 +9,10 @@ import { APPLICATION_API_END_POINT, JOB_API_END_POINT } from '@/utils/constant';
 import { setSingleJob } from '@/redux/jobSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
-import {  Briefcase,  MapPin,  DollarSign,  Clock,  Users,  Calendar,  Building,  CheckCircle,  ArrowLeft,  ExternalLink, 
-  Star,  TrendingUp,  FileText,  Share2,  Mail, Linkedin,  Instagram, Facebook,  Copy, Check,Bookmark, Eye, Send} from 'lucide-react';
+import {
+    Briefcase, MapPin, DollarSign, Clock, Users, Calendar, Building, CheckCircle, ArrowLeft, ExternalLink,
+    Star, TrendingUp, FileText, Share2, Mail, Linkedin, Instagram, Facebook, Copy, Check, Bookmark, Eye, Send
+} from 'lucide-react';
 import Navbar from './shared/Navbar';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar'
 import LoadingSpinner from './shared/LoadingSpinner';
@@ -49,7 +51,7 @@ const JobDescription = () => {
         }
     }, [singleJob]);
 
-  
+
     useEffect(() => {
         function handleClickOutside(event) {
             if (shareMenuRef.current && !shareMenuRef.current.contains(event.target)) {
@@ -76,7 +78,7 @@ const JobDescription = () => {
                 jobTitle: singleJob?.title,
                 returnUrl: window.location.pathname
             }));
-            
+
             toast.info('Please login to apply for this job');
             navigate('/login');
             return;
@@ -144,7 +146,7 @@ const JobDescription = () => {
     };
 
     const ShareMenu = () => (
-        <div 
+        <div
             ref={shareMenuRef}
             className="absolute right-0 top-full mt-2 w-56 rounded-xl shadow-2xl bg-white border border-gray-200 z-50 backdrop-blur-sm"
         >
@@ -214,7 +216,7 @@ const JobDescription = () => {
 
     const confirmApply = async () => {
         try {
-            const res = await axios.get(`${APPLICATION_API_END_POINT}/apply/${jobId}`, { withCredentials: true });
+            const res = await axios.post(`${APPLICATION_API_END_POINT}/apply/${jobId}`, { withCredentials: true });
             if (res.data.success) {
                 setIsApplied(true);
                 const updatedSingleJob = { ...singleJob, applications: [...singleJob.applications, { applicant: user?._id }] };
@@ -279,7 +281,7 @@ const JobDescription = () => {
         if (singleJob && searchParams.get('section')) {
             const section = searchParams.get('section');
             let targetRef = null;
-            
+
             if (section === 'requirements' && requirementsRef.current) {
                 targetRef = requirementsRef.current;
             } else if (section === 'job-description' && jobDescriptionRef.current) {
@@ -287,12 +289,12 @@ const JobDescription = () => {
             } else if (section === 'header' && headerRef.current) {
                 targetRef = headerRef.current;
             }
-            
+
             if (targetRef) {
                 setTimeout(() => {
-                    targetRef.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'start' 
+                    targetRef.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
                     });
                 }, 500);
             }
@@ -313,7 +315,7 @@ const JobDescription = () => {
         <>
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50/30">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                  
+
                     <div className="mb-8">
                         <button
                             onClick={() => window.history.back()}
@@ -333,7 +335,7 @@ const JobDescription = () => {
                                 <Eye className="w-4 h-4" />
                                 <span className="text-sm">{views} views</span>
                             </div>
-                            
+
                             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-8">
                                 <div className="flex-1">
                                     <div className="flex items-start gap-4 mb-6">
@@ -354,8 +356,8 @@ const JobDescription = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    
-                                   
+
+
                                     <div className="flex flex-wrap items-center gap-3">
                                         <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 backdrop-blur-sm px-4 py-2">
                                             <MapPin className="w-4 h-4 mr-2" />
@@ -371,25 +373,24 @@ const JobDescription = () => {
                                         </Badge>
                                         <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30 backdrop-blur-sm px-4 py-2">
                                             <DollarSign className="w-4 h-4 mr-2" />
-                                            {singleJob?.salary?.min && singleJob?.salary?.max 
+                                            {singleJob?.salary?.min && singleJob?.salary?.max
                                                 ? `₹${singleJob.salary.min}-${singleJob.salary.max} `
                                                 : `${singleJob?.salary} `
                                             }
                                         </Badge>
                                     </div>
                                 </div>
-                                
-                             
+
+
                                 <div className="flex flex-col gap-4">
                                     <div className="flex flex-col sm:flex-row lg:flex-col gap-3">
                                         <Button
                                             onClick={isApplied ? null : applyJobHandler}
                                             disabled={isApplied}
-                                            className={`px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-300 shadow-2xl ${
-                                                isApplied 
-                                                    ? 'bg-emerald-600 hover:bg-emerald-700 cursor-not-allowed text-white' 
+                                            className={`px-8 py-4 text-lg font-semibold rounded-2xl transition-all duration-300 shadow-2xl ${isApplied
+                                                    ? 'bg-emerald-600 hover:bg-emerald-700 cursor-not-allowed text-white'
                                                     : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:shadow-2xl transform hover:scale-105'
-                                            }`}
+                                                }`}
                                         >
                                             {isApplied ? (
                                                 <>
@@ -403,24 +404,23 @@ const JobDescription = () => {
                                                 </>
                                             )}
                                         </Button>
-                                        
+
                                         <div className="flex gap-2">
-                                            <Button 
+                                            <Button
                                                 variant="outline"
                                                 onClick={handleSaveJob}
-                                                className={`flex-1 px-4 py-4 border-2 rounded-2xl transition-all duration-200 ${
-                                                    isSaved 
-                                                        ? 'border-blue-200 text-blue-600 hover:bg-transparent' 
+                                                className={`flex-1 px-4 py-4 border-2 rounded-2xl transition-all duration-200 ${isSaved
+                                                        ? 'border-blue-200 text-blue-600 hover:bg-transparent'
                                                         : 'border-gray-300 hover:bg-transparent'
-                                                }`}
+                                                    }`}
                                             >
                                                 <Bookmark className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
                                                 <span className="ml-2">{isSaved ? 'Saved' : 'Save'}</span>
                                             </Button>
                                         </div>
                                     </div>
-                                    
-                                  
+
+
                                     <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-sm">
                                         <div className="text-sm text-blue-100 space-y-2">
                                             <div className="flex justify-between">
@@ -443,12 +443,12 @@ const JobDescription = () => {
                             </div>
                         </div>
 
-                     
+
                         <div className="p-8 lg:p-10">
                             <div className="grid lg:grid-cols-3 gap-8">
-                             
+
                                 <div className="lg:col-span-2 space-y-8">
-                              
+
                                     <div ref={jobDescriptionRef} className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 border border-gray-200 shadow-sm">
                                         <div className="flex items-center justify-between mb-6">
                                             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
@@ -465,7 +465,7 @@ const JobDescription = () => {
                                         </div>
                                     </div>
 
-                                 
+
                                     {singleJob?.requirements && singleJob.requirements.length > 0 && (
                                         <div ref={requirementsRef} className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 border border-gray-200 shadow-sm">
                                             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
@@ -485,7 +485,7 @@ const JobDescription = () => {
                                         </div>
                                     )}
 
-                                  
+
                                     <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-3xl p-6 shadow-sm">
                                         <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
                                             <div className="p-2 bg-purple-100 rounded-xl">
@@ -529,16 +529,16 @@ const JobDescription = () => {
                                     </div>
                                 </div>
 
-                                
+
                                 <div className="space-y-6">
-                                   
+
                                     <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-3xl p-6 shadow-sm">
                                         <h3 className="text-xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Job Details</h3>
                                         <div className="space-y-5">
                                             <div className="flex items-center justify-between p-3 bg-blue-50 rounded-xl">
                                                 <span className="text-gray-600 font-medium">Experience</span>
                                                 <span className="font-bold text-gray-900">
-                                                    {singleJob?.experience?.min && singleJob?.experience?.max 
+                                                    {singleJob?.experience?.min && singleJob?.experience?.max
                                                         ? `${singleJob.experience.min}-${singleJob.experience.max} years`
                                                         : `${singleJob?.experienceLevel} years`
                                                     }
@@ -547,7 +547,7 @@ const JobDescription = () => {
                                             <div className="flex items-center justify-between p-3 bg-green-50 rounded-xl">
                                                 <span className="text-gray-600 font-medium">Salary Range</span>
                                                 <span className="font-bold text-gray-900">
-                                                    {singleJob?.salary?.min && singleJob?.salary?.max 
+                                                    {singleJob?.salary?.min && singleJob?.salary?.max
                                                         ? `₹${singleJob.salary.min}-${singleJob.salary.max} `
                                                         : `₹${singleJob?.salary} `
                                                     }
@@ -570,7 +570,7 @@ const JobDescription = () => {
                                         </div>
                                     </div>
 
-                              
+
                                     {singleJob?.company && (
                                         <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-3xl p-6 shadow-sm">
                                             <h3 className="text-xl font-bold text-gray-900 mb-6 pb-4 border-b border-gray-200">Company</h3>
@@ -596,12 +596,12 @@ const JobDescription = () => {
                                                     {singleJob.company.description}
                                                 </p>
                                             )}
-                                            
-                                            
+
+
                                         </div>
                                     )}
 
-                                   
+
                                     <div className="bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-3xl p-6 shadow-sm">
                                         <div className="flex items-center gap-4">
                                             <div className="p-3 bg-blue-100 rounded-xl">
@@ -626,7 +626,7 @@ const JobDescription = () => {
                 </div>
             </div>
 
-   
+
             <Dialog open={showResumeDialog} onOpenChange={setShowResumeDialog}>
                 <DialogContent className="max-w-xl rounded-3xl">
                     <DialogHeader>
@@ -666,15 +666,15 @@ const JobDescription = () => {
                         )}
                     </div>
                     <DialogFooter className="mt-6 flex gap-3">
-                        <Button 
-                            variant="outline" 
+                        <Button
+                            variant="outline"
                             onClick={() => setShowConfirmDialog(false)}
                             className="px-8 py-3 rounded-xl text-lg border-2"
                         >
                             Cancel
                         </Button>
-                        <Button 
-                            onClick={confirmApply} 
+                        <Button
+                            onClick={confirmApply}
                             disabled={isApplied || !user?.profile?.resume}
                             className="px-8 py-3 rounded-xl text-lg bg-blue-600 hover:bg-blue-700"
                         >

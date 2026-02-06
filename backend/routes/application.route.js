@@ -2,13 +2,7 @@
 import express from "express";
 import isAuthenticated from "../middlewares/isAuthenticated.js";
 import isAdmin from "../middlewares/isAdmin.js";
-import { 
-    applyJob, 
-    getApplicants, 
-    getAppliedJobs, 
-    updateStatus,
-    getAllApplications 
-} from "../controllers/application.controller.js";
+import { applyJob,  getApplicants,  getAppliedJobs,  updateStatus,  getAllApplications } from "../controllers/application.controller.js";
 
 const router = express.Router();
 

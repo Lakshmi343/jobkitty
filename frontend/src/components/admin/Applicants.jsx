@@ -20,7 +20,7 @@ const Applicants = () => {
         const fetchAllApplicants = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get(`${APPLICATION_API_END_POINT}/${params.id}/applicants`, { withCredentials: true });
+                const res = await axios.get(`${APPLICATION_API_END_POINT}/job/${params.id}/applicants`, { withCredentials: true });
                 dispatch(setAllApplicants(res.data.job));
             } catch (error) {
                 console.log(error);
@@ -33,9 +33,9 @@ const Applicants = () => {
 
     const getApplicationStats = () => {
         if (!applicants?.applications) return { total: 0, pending: 0, accepted: 0, rejected: 0 };
-        
+
         const applications = applicants.applications;
-        
+
         const stats = {
             total: applications.length,
             pending: 0,
@@ -47,7 +47,7 @@ const Applicants = () => {
             // Status is stored in lowercase in the database
             const status = app.status || 'pending';
             const statusLower = status.toLowerCase();
-            
+
             if (statusLower === 'pending') {
                 stats.pending++;
             } else if (statusLower === 'accepted') {
@@ -68,7 +68,7 @@ const Applicants = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             <Navbar />
-            
+
             <div className="max-w-7xl mx-auto px-4 py-8">
                 {/* Header Section */}
                 <div className="mb-8">
