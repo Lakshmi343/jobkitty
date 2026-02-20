@@ -27,7 +27,7 @@ updateJobDetailsAdmin, postJobAdmin, getJobForEdit, updateJobAdmin, getAllCompan
     getApplicationStats,
     getApplicationById,
     updateApplicationStatus,
-    deleteApplication,
+    deleteApplication
 } from "../controllers/admin.Controller.js";
 import { singleUpload } from "../middlewares/mutler.js";
 import { adminAuth } from "../middlewares/adminAuth.js";

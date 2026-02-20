@@ -163,8 +163,27 @@ const ApplicationsPage = () => {
         setRejectModalVisible(true);
         return;
       }
+      
+      // Call the API to approve/reject
+      const endpoint = status === 'accepted' 
+        ? `/api/v1/applications/admin/applications/${applicationId}/approve`
+        : `/api/v1/applications/admin/applications/${applicationId}/reject`;
+      
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: status === 'rejected' ? JSON.stringify({ reason: 'Rejected by admin' }) : undefined
+      });
 
-      await updateApplicationStatus(applicationId, status);
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+
+      const result = await response.json();
+      toast.success(`Application ${status} successfully`);
+      fetchApplications();
     } catch (error) {
       console.error('Error updating status:', error);
       toast.error('Failed to update application status');
@@ -174,11 +193,23 @@ const ApplicationsPage = () => {
 
   const updateApplicationStatus = async (applicationId, status, reason = '') => {
     try {
-      await adminJobApi.updateApplicationStatus(applicationId, {
-        status,
-        rejectionReason: reason,
-      });
+      const endpoint = status === 'accepted' 
+        ? `/api/v1/applications/admin/applications/${applicationId}/approve`
+        : `/api/v1/applications/admin/applications/${applicationId}/reject`;
       
+      const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: status === 'rejected' ? JSON.stringify({ reason }) : undefined
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+      
+      const result = await response.json();
       toast.success(`Application ${status} successfully`);
       fetchApplications();
       setRejectModalVisible(false);
@@ -240,6 +271,37 @@ const ApplicationsPage = () => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
+      render: (status, record) => (
+        <div>
+          <Badge 
+            status={
+              status === 'accepted' ? 'success' : 
+              status === 'rejected' ? 'error' : 'processing'
+            } 
+            text={
+              status === 'accepted' ? 'Approved' : 
+              status === 'rejected' ? 'Rejected' : 'Pending'
+            } 
+          />
+          {status === 'pending' && (
+            <div style={{ marginTop: 8 }}>
+              <Button 
+                type="text" 
+                size="small" 
+                icon={<CheckCircleOutlined style={{ color: 'green' }} />} 
+                onClick={() => handleStatusUpdate(record._id, 'accepted')}
+              />
+              <Button 
+                type="text" 
+                size="small" 
+                danger 
+                icon={<CloseCircleOutlined />} 
+                onClick={() => handleStatusUpdate(record._id, 'rejected')}
+              />
+            </div>
+          )}
+        </div>
+      ),
       render: (status) => {
         let statusObj = {
           pending: { text: 'Pending', color: 'orange', icon: <ClockCircleOutlined /> },

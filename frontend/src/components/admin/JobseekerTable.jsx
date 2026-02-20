@@ -23,6 +23,7 @@ const JobseekerTable = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [resumeFilter, setResumeFilter] = useState('all'); // all | with | without
   const [sortBy, setSortBy] = useState('date');
+  const [dateFilter, setDateFilter] = useState('all'); // all | today | week | month
   const [page, setPage] = useState(1);
   const [limit] = useState(25);
   // Applications dialog state
@@ -36,6 +37,7 @@ const JobseekerTable = () => {
     setSearchTerm('');
     setStatusFilter('all');
     setResumeFilter('all');
+    setDateFilter('all');
     setSortBy('name');
     setPage(1);
   };
@@ -145,6 +147,28 @@ const JobseekerTable = () => {
       filtered = filtered.filter(jobseeker => !jobseeker.profile?.resume);
     }
 
+    // Date filtering
+    if (dateFilter !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      
+      filtered = filtered.filter(jobseeker => {
+        const createdDate = new Date(jobseeker.createdAt);
+        switch (dateFilter) {
+          case 'today':
+            return createdDate >= today;
+          case 'week':
+            return createdDate >= weekAgo;
+          case 'month':
+            return createdDate >= monthAgo;
+          default:
+            return true;
+        }
+      });
+    }
+
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'name':
@@ -160,7 +184,7 @@ const JobseekerTable = () => {
 
     setFilteredJobseekers(filtered);
     setPage(1); // reset to first page when filters change
-  }, [jobseekers, searchTerm, statusFilter, resumeFilter, sortBy]);
+  }, [jobseekers, searchTerm, statusFilter, resumeFilter, sortBy, dateFilter]);
 
   const total = filteredJobseekers.length;
   const totalPages = Math.max(Math.ceil(total / limit), 1);
@@ -423,6 +447,19 @@ onClick={() => setSearchTerm('')}
   <SelectItem value="active">Active</SelectItem>
   <SelectItem value="blocked">Blocked</SelectItem>
   <SelectItem value="inactive">Inactive</SelectItem>
+</SelectContent>
+</Select>
+
+<Select value={dateFilter} onValueChange={(v) => { setDateFilter(v); }}>
+<SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
+<Calendar className="w-4 h-4 mr-2" />
+<SelectValue placeholder="Date Joined" />
+</SelectTrigger>
+<SelectContent>
+  <SelectItem value="all">All Time</SelectItem>
+  <SelectItem value="today">Today</SelectItem>
+  <SelectItem value="week">This Week</SelectItem>
+  <SelectItem value="month">This Month</SelectItem>
 </SelectContent>
 </Select>
 

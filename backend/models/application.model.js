@@ -20,11 +20,18 @@ const applicationSchema = new mongoose.Schema({
         type: String,
         maxlength: 500
     },
+    rejectionReason: {
+        type: String,
+        maxlength: 500
+    },
     statusUpdatedBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Admin'
+        ref: 'User'
     },
     statusUpdatedAt: {
+        type: Date
+    },
+    adminActionAt: {
         type: Date
     },
     notes: {
@@ -34,6 +41,18 @@ const applicationSchema = new mongoose.Schema({
     adminNotes: {
         type: String,
         maxlength: 1000
+    },
+    priority: {
+        type: String,
+        enum: ['low', 'medium', 'high'],
+        default: 'medium'
+    },
+    reviewedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    reviewedAt: {
+        type: Date
     }
 },{timestamps:true});
 

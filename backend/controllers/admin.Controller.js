@@ -2636,22 +2636,12 @@ export const forgotPassword = async (req, res) => {
 
   } catch (error) {
     console.error('Forgot password error:', error);
-
-    let errorMessage = 'Internal server error';
-    if (error.name === 'ValidationError') {
-      errorMessage = 'Validation error occurred';
-    } else if (error.name === 'MongoError') {
-      errorMessage = 'Database error occurred';
-    }
-
-    res.status(500).json({
-      message: errorMessage,
-      success: false,
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    res.status(500).json({ 
+      message: 'Failed to send password reset instructions', 
+      success: false 
     });
   }
 };
-
 
 export const resetPassword = async (req, res) => {
   try {
@@ -2699,8 +2689,7 @@ export const resetPassword = async (req, res) => {
 
   } catch (error) {
     console.error('Reset password error:', error);
-
-    let errorMessage = 'Internal server error';
+    let errorMessage;
     if (error.name === 'ValidationError') {
       errorMessage = 'Validation error occurred';
     } else if (error.name === 'MongoError') {

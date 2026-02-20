@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ADMIN_API_END_POINT } from '../../utils/constant';
-import { Users, UserCheck, UserX, FileText, TrendingUp, Search } from 'lucide-react';
+import { Users, UserCheck, UserX, FileText, TrendingUp, Search, Calendar } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Input } from '../ui/input';
@@ -12,7 +12,8 @@ const JobseekerManagement = () => {
     total: 0,
     active: 0,
     blocked: 0,
-    withResume: 0
+    withResume: 0,
+    todayRegistered: 0
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -43,7 +44,12 @@ const JobseekerManagement = () => {
           total: jobseekers.length,
           active: jobseekers.filter(js => js.status === 'active').length,
           blocked: jobseekers.filter(js => js.status === 'blocked').length,
-          withResume: jobseekers.filter(js => js.profile?.resume).length
+          withResume: jobseekers.filter(js => js.profile?.resume).length,
+          todayRegistered: jobseekers.filter(js => {
+            const today = new Date();
+            const createdDate = new Date(js.createdAt);
+            return createdDate.toDateString() === today.toDateString();
+          }).length
         };
 
         setStats(jobseekerStats);
@@ -87,6 +93,9 @@ const JobseekerManagement = () => {
           <Badge variant="outline" className="bg-green-50 text-green-700">
             Active: {stats.active}
           </Badge>
+          <Badge variant="outline" className="bg-amber-50 text-amber-700">
+            Today: {stats.todayRegistered}
+          </Badge>
           <Badge variant="outline" className="bg-red-50 text-red-700">
             Blocked: {stats.blocked}
           </Badge>
@@ -94,7 +103,7 @@ const JobseekerManagement = () => {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         <StatCard
           title="Total Jobseekers"
           value={stats.total}
@@ -107,7 +116,7 @@ const JobseekerManagement = () => {
           value={stats.active}
           icon={UserCheck}
           color="#10B981"
-          description="Can access the platform"
+          description="Can access platform"
         />
         <StatCard
           title="Blocked Jobseekers"
@@ -122,6 +131,13 @@ const JobseekerManagement = () => {
           icon={FileText}
           color="#8B5CF6"
           description="Uploaded CV/Resume"
+        />
+        <StatCard
+          title="Today Registered"
+          value={stats.todayRegistered}
+          icon={Calendar}
+          color="#F59E0B"
+          description="New registrations today"
         />
       </div>
 
