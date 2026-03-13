@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 
 import Footer from '../shared/Footer';
 import LoadingSpinner from '../shared/LoadingSpinner';
+import { formatLocationForDisplay } from '../../utils/locationUtils';
 import { 
   Dialog, 
   DialogContent, 
@@ -67,7 +68,7 @@ const EmployerApplicants = () => {
         const fetchAllApplicants = async () => {
             try {
                 setLoading(true);
-                const res = await axios.get(`${APPLICATION_API_END_POINT}/${params.id}/applicants`, { withCredentials: true });
+                const res = await axios.get(`${APPLICATION_API_END_POINT}/job/${params.id}/applicants`, { withCredentials: true });
                 dispatch(setAllApplicants(res.data.job));
             } catch (error) {
                 console.log(error);
@@ -130,12 +131,12 @@ const EmployerApplicants = () => {
                 payload.rejectionReason = reason;
             }
             
-            const res = await axios.post(`${APPLICATION_API_END_POINT}/status/${id}/update`, payload);
+            const res = await axios.put(`${APPLICATION_API_END_POINT}/${id}/status`, payload);
             
             if (res.data.success) {
                 toast.success(`Application ${status} successfully`);
                 // Refresh the data
-                const updatedRes = await axios.get(`${APPLICATION_API_END_POINT}/${params.id}/applicants`, { withCredentials: true });
+                const updatedRes = await axios.get(`${APPLICATION_API_END_POINT}/job/${params.id}/applicants`, { withCredentials: true });
                 dispatch(setAllApplicants(updatedRes.data.job));
                 setShowRejectDialog(false);
                 setRejectionReason('');
@@ -329,7 +330,7 @@ const EmployerApplicants = () => {
                                         {applicants.location && (
                                             <div className="flex items-center gap-1">
                                                 <MapPin className="w-4 h-4" />
-                                                <span>{applicants.location}</span>
+                                                <span>{formatLocationForDisplay(applicants.location)}</span>
                                             </div>
                                         )}
                                         <div className="flex items-center gap-1">

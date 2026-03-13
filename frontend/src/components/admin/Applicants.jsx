@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setAllApplicants } from '@/redux/applicationSlice';
 import { Users, ArrowLeft, Calendar, Building, MapPin } from 'lucide-react';
 import { Badge } from '../ui/badge';
+import { formatLocationForDisplay } from '../../utils/locationUtils';
 
 const Applicants = () => {
     const params = useParams();
@@ -106,7 +107,7 @@ const Applicants = () => {
                                         {applicants.location && (
                                             <div className="flex items-center gap-1">
                                                 <MapPin className="w-4 h-4" />
-                                                <span>{applicants.location}</span>
+                                                <span>{formatLocationForDisplay(applicants.location)}</span>
                                             </div>
                                         )}
                                         <div className="flex items-center gap-1">

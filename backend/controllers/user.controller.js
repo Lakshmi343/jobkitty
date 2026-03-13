@@ -341,11 +341,12 @@ export const login = async (req, res) => {
 
 
 export const logout = async (req, res) => {
-	try {
-		return res.status(200).json({
-			message: "Logged out successfully.",
-			success: true
-		});
+    try {
+        return res.status(200).cookie("token", "", { maxAge: 0 }).cookie("refreshToken", "", { maxAge: 0 }).json({
+            message: "Logged out successfully.",
+            success: true
+        });
+
 	} catch (error) {
 		console.error(error);
 		res.status(500).json({ message: "Server error", success: false });

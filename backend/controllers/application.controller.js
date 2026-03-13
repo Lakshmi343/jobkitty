@@ -116,7 +116,7 @@ export const getApplicants = async (req, res) => {
         const { status } = req.query;
 
         // Check if job exists and user has permission
-        const job = await Job.findById(jobId);
+        const job = await Job.findById(jobId).populate('company');
         if (!job) {
             return res.status(404).json({
                 success: false,
@@ -125,7 +125,7 @@ export const getApplicants = async (req, res) => {
         }
 
         // Check if user is the employer of this job or admin
-        if (job.postedBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+        if (job.created_by.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
             return res.status(403).json({
                 success: false,
                 message: 'Not authorized to view applicants for this job'
@@ -145,22 +145,15 @@ export const getApplicants = async (req, res) => {
             .populate({
                 path: 'applicant',
                 select: 'fullname email profile',
-                populate: {
-                    path: 'profile',
-                    select: 'resume skills experience education'
-                }
+                // Removed redundant nested populate on profile since it's an embedded object
             })
             .select('-__v -updatedAt');
 
         return res.status(200).json({
             success: true,
             count: applications.length,
-            data: {
-                job: {
-                    _id: job._id,
-                    title: job.title,
-                    location: job.location
-                },
+            job: {
+                ...job._doc,
                 applications
             }
         });
@@ -199,7 +192,7 @@ export const updateStatus = async (req, res) => {
         
         // Find and update application
         const application = await Application.findById(id)
-            .populate('job', 'title company postedBy')
+            .populate('job', 'title company created_by')
             .populate('applicant', 'email fullname');
             
         if (!application) {
@@ -210,7 +203,7 @@ export const updateStatus = async (req, res) => {
         }
         
         // Check if user has permission to update this application
-        if (application.job.postedBy.toString() !== userId.toString() && req.user.role !== 'admin') {
+        if (application.job.created_by.toString() !== userId.toString() && req.user.role !== 'admin') {
             return res.status(403).json({
                 success: false,
                 message: "Not authorized to update this application"
