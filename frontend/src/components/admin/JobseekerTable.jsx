@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import axios from 'axios';
 import { USER_API_END_POINT, ADMIN_API_END_POINT } from '../../utils/constant';
 import { toast } from 'sonner';
@@ -13,6 +15,7 @@ import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const JobseekerTable = () => {
+  const navigate = useNavigate();
   const [jobseekers, setJobseekers] = useState([]);
   const [filteredJobseekers, setFilteredJobseekers] = useState([]);
   const [selectedJobseeker, setSelectedJobseeker] = useState(null);
@@ -106,12 +109,12 @@ const JobseekerTable = () => {
       const searchTermLower = searchTerm.toLowerCase();
       filtered = filtered.filter(jobseeker => {
         // Basic fields
-        const basicMatch = 
+        const basicMatch =
           (jobseeker.fullname?.toLowerCase().includes(searchTermLower) || '') ||
           (jobseeker.email?.toLowerCase().includes(searchTermLower) || '') ||
           (jobseeker.phoneNumber?.includes(searchTerm) || '') ||
           (jobseeker._id?.toLowerCase().includes(searchTermLower) || '');
-        
+
         // Profile fields
         const profileMatch = jobseeker.profile ? (
           (jobseeker.profile.phoneNumber?.includes(searchTerm) || '') ||
@@ -122,14 +125,14 @@ const JobseekerTable = () => {
         ) : false;
 
         // Education fields
-        const educationMatch = jobseeker.education?.some(edu => 
+        const educationMatch = jobseeker.education?.some(edu =>
           (edu.institution?.toLowerCase().includes(searchTermLower) || '') ||
           (edu.degree?.toLowerCase().includes(searchTermLower) || '') ||
           (edu.fieldOfStudy?.toLowerCase().includes(searchTermLower) || '')
         ) || false;
 
         // Skills
-        const skillsMatch = jobseeker.skills?.some(skill => 
+        const skillsMatch = jobseeker.skills?.some(skill =>
           skill.toLowerCase().includes(searchTermLower)
         ) || false;
 
@@ -153,7 +156,7 @@ const JobseekerTable = () => {
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
       const monthAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-      
+
       filtered = filtered.filter(jobseeker => {
         const createdDate = new Date(jobseeker.createdAt);
         switch (dateFilter) {
@@ -207,7 +210,7 @@ const JobseekerTable = () => {
       params.append('page', String(page));
       params.append('limit', '10');
       if (status && status !== 'all') params.append('status', status);
-      const res = await axios.get(`${ADMIN_API_END_POINT}/applications?${params.toString()}` , {
+      const res = await axios.get(`${ADMIN_API_END_POINT}/applications?${params.toString()}`, {
         withCredentials: true,
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -237,19 +240,19 @@ const JobseekerTable = () => {
     }
   };
 
-  
+
   const viewCV = (user) => {
     if (user.profile?.resume) window.open(user.profile.resume, "_blank");
   };
 
-  
+
   const previewCV = (user) => {
     if (user.profile?.resume) {
       setResumeDialog({ open: true, url: user.profile.resume });
     }
   };
 
-  
+
   const downloadCV = (user) => {
     if (user.profile?.resume) {
       const link = document.createElement("a");
@@ -265,21 +268,21 @@ const JobseekerTable = () => {
       const response = await axios.patch(
         `${ADMIN_API_END_POINT}/users/${id}/status`,
         { status },
-        { 
+        {
           withCredentials: true,
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         }
       );
-      
+
       if (response.data.success) {
-        setJobseekers(jobseekers.map(jobseeker => 
+        setJobseekers(jobseekers.map(jobseeker =>
           jobseeker._id === id ? { ...jobseeker, status } : jobseeker
         ));
-        
+
         const statusAction = status === 'active' ? 'activated' : 'blocked';
         toast.success(`Jobseeker ${statusAction} successfully`);
       }
-      
+
       setActionDialog({ open: false, action: '', title: '', description: '', userId: null });
     } catch (error) {
       console.error("Failed to update status:", error);
@@ -291,13 +294,13 @@ const JobseekerTable = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const response = await axios.delete(
-        `${ADMIN_API_END_POINT}/users/${id}`, 
-        { 
+        `${ADMIN_API_END_POINT}/users/${id}`,
+        {
           withCredentials: true,
           headers: token ? { Authorization: `Bearer ${token}` } : {}
         }
       );
-      
+
       if (response.data.success) {
         setJobseekers(jobseekers.filter(jobseeker => jobseeker._id !== id));
         if (selectedJobseeker && selectedJobseeker._id === id) {
@@ -305,7 +308,7 @@ const JobseekerTable = () => {
         }
         toast.success("Jobseeker deleted successfully");
       }
-      
+
       setActionDialog({ open: false, action: '', title: '', description: '', userId: null });
     } catch (error) {
       console.error("Failed to delete jobseeker:", error);
@@ -316,8 +319,8 @@ const JobseekerTable = () => {
   const confirmAction = (action, jobseeker) => {
     let title = '';
     let description = '';
-    
-    switch(action) {
+
+    switch (action) {
       case 'activate':
         title = 'Activate Jobseeker Account';
         description = `Are you sure you want to activate ${jobseeker.fullname}'s account?`;
@@ -333,7 +336,7 @@ const JobseekerTable = () => {
       default:
         return;
     }
-    
+
     setActionDialog({
       open: true,
       action,
@@ -345,7 +348,7 @@ const JobseekerTable = () => {
 
   const executeAction = () => {
     const { action, userId } = actionDialog;
-    switch(action) {
+    switch (action) {
       case 'activate':
         handleStatusUpdate(userId, 'active');
         break;
@@ -407,61 +410,61 @@ const JobseekerTable = () => {
           </div>
         </div>
 
-<Card>
-<CardContent className="p-4 sm:p-6">
-<div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
-<div className="flex-1">
-<div className="relative w-full max-w-md">
-<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-<Input
-type="text"
-placeholder="Search by name, email, phone, location, skills..."
-className="pl-10 w-full pr-10"
-value={searchTerm}
-onChange={(e) => setSearchTerm(e.target.value)}
-/>
-{searchTerm ? (
-<Button
-variant="ghost"
-size="sm"
-className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
-onClick={() => setSearchTerm('')}
->
-<span className="sr-only">Clear search</span>
-<X className="h-4 w-4" />
-</Button>
-) : (
-<div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">
-{filteredJobseekers.length} results
-</div>
-)}
-</div>
-</div>
-<Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); }}>
-<SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
-<Filter className="w-4 h-4 mr-2" />
-<SelectValue placeholder="Filter by status" />
-</SelectTrigger>
-<SelectContent>
-  <SelectItem value="all">All Status</SelectItem>
-  <SelectItem value="active">Active</SelectItem>
-  <SelectItem value="blocked">Blocked</SelectItem>
-  <SelectItem value="inactive">Inactive</SelectItem>
-</SelectContent>
-</Select>
+        <Card>
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
+              <div className="flex-1">
+                <div className="relative w-full max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="text"
+                    placeholder="Search by name, email, phone, location, skills..."
+                    className="pl-10 w-full pr-10"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 text-gray-500 hover:text-gray-700"
+                      onClick={() => setSearchTerm('')}
+                    >
+                      <span className="sr-only">Clear search</span>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  ) : (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400">
+                      {filteredJobseekers.length} results
+                    </div>
+                  )}
+                </div>
+              </div>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); }}>
+                <SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="blocked">Blocked</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
 
-<Select value={dateFilter} onValueChange={(v) => { setDateFilter(v); }}>
-<SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
-<Calendar className="w-4 h-4 mr-2" />
-<SelectValue placeholder="Date Joined" />
-</SelectTrigger>
-<SelectContent>
-  <SelectItem value="all">All Time</SelectItem>
-  <SelectItem value="today">Today</SelectItem>
-  <SelectItem value="week">This Week</SelectItem>
-  <SelectItem value="month">This Month</SelectItem>
-</SelectContent>
-</Select>
+              <Select value={dateFilter} onValueChange={(v) => { setDateFilter(v); }}>
+                <SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Date Joined" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Time</SelectItem>
+                  <SelectItem value="today">Today</SelectItem>
+                  <SelectItem value="week">This Week</SelectItem>
+                  <SelectItem value="month">This Month</SelectItem>
+                </SelectContent>
+              </Select>
 
               <Select value={resumeFilter} onValueChange={(v) => { setResumeFilter(v); }}>
                 <SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
@@ -474,7 +477,7 @@ onClick={() => setSearchTerm('')}
                   <SelectItem value="without">Without Resume</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-full sm:w-48 h-10 sm:h-11">
                   <ChevronDown className="w-4 h-4 mr-2" />
@@ -570,7 +573,7 @@ onClick={() => setSearchTerm('')}
           </DialogContent>
         </Dialog>
 
-      
+
         <Card className="shadow-lg">
           <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
             <CardTitle className="text-xl flex items-center gap-2">
@@ -579,7 +582,7 @@ onClick={() => setSearchTerm('')}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-        
+
             <div className="hidden lg:block rounded-lg border">
               <Table>
                 <TableHeader>
@@ -687,10 +690,10 @@ onClick={() => setSearchTerm('')}
                       </TableCell>
                       <TableCell className="text-right align-top">
                         <div className="flex items-center justify-end gap-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setSelectedJobseeker(user)}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/profile/${user._id}`)}
                             className="bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
                           >
                             <Eye className="h-4 w-4 mr-1" />
@@ -776,15 +779,14 @@ onClick={() => setSearchTerm('')}
                           <div className="text-xs text-gray-500">ID: {user._id.substring(0, 8)}...</div>
                         </div>
                       </div>
-                      <Badge className={`text-xs ${
-                        user.status === 'active' ? 'bg-green-100 text-green-800' : 
-                        user.status === 'blocked' ? 'bg-red-100 text-red-800' : 
-                        'bg-gray-100 text-gray-800'
-                      }`}>
+                      <Badge className={`text-xs ${user.status === 'active' ? 'bg-green-100 text-green-800' :
+                        user.status === 'blocked' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
                         <span className="capitalize">{user.status}</span>
                       </Badge>
                     </div>
-                    
+
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2 text-sm">
                         <Mail className="h-4 w-4 text-gray-500 flex-shrink-0" />
@@ -820,20 +822,20 @@ onClick={() => setSearchTerm('')}
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="flex flex-col sm:flex-row gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        onClick={() => setSelectedJobseeker(user)}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/profile/${user._id}`)}
                         className="flex-1 bg-green-50 text-green-600 border-green-200 hover:bg-green-100"
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         View
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
+                      <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => openApplications(user)}
                         className="flex-1 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
                       >
@@ -841,9 +843,9 @@ onClick={() => setSearchTerm('')}
                         Applications
                       </Button>
                       {user.profile?.resume && (
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => previewCV(user)}
                           className="flex-1 bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100"
                         >
@@ -921,7 +923,7 @@ onClick={() => setSearchTerm('')}
           </div>
         </div>
 
-      
+
         <Dialog open={!!selectedJobseeker} onOpenChange={() => setSelectedJobseeker(null)}>
           <DialogContent className="max-w-xl">
             <DialogHeader>
@@ -933,7 +935,7 @@ onClick={() => setSearchTerm('')}
                 <p><strong>Email:</strong> {selectedJobseeker.email}</p>
                 <p><strong>Phone:</strong> {selectedJobseeker.phoneNumber}</p>
                 <p><strong>Place:</strong> {selectedJobseeker.profile?.place || 'N/A'}</p>
-                <p><strong>Skills:</strong> {selectedJobseeker.profile?.skills?.map((s,i) => <Badge key={i} className="mr-1">{s}</Badge>)}</p>
+                <p><strong>Skills:</strong> {selectedJobseeker.profile?.skills?.map((s, i) => <Badge key={i} className="mr-1">{s}</Badge>)}</p>
                 <p><strong>Education:</strong> {selectedJobseeker.profile?.education ? `${selectedJobseeker.profile.education.degree}, ${selectedJobseeker.profile.education.institution}, ${selectedJobseeker.profile.education.yearOfCompletion}` : 'N/A'}</p>
                 <p><strong>Experience:</strong> {selectedJobseeker.profile?.experience ? `${selectedJobseeker.profile.experience.years} yrs, ${selectedJobseeker.profile.experience.field}` : 'N/A'}</p>
                 <p><strong>Bio:</strong> {selectedJobseeker.profile?.bio || 'N/A'}</p>
@@ -946,16 +948,16 @@ onClick={() => setSearchTerm('')}
           </DialogContent>
         </Dialog>
 
-     
+
         <Dialog open={resumeDialog.open} onOpenChange={() => setResumeDialog({ open: false, url: '' })}>
           <DialogContent className="max-w-4xl h-[90vh]">
             <DialogHeader>
               <DialogTitle>Resume Preview</DialogTitle>
             </DialogHeader>
             {resumeDialog.url ? (
-              <iframe 
-                src={resumeDialog.url} 
-                className="w-full h-[75vh] border rounded" 
+              <iframe
+                src={resumeDialog.url}
+                className="w-full h-[75vh] border rounded"
                 title="Resume Preview"
               />
             ) : (
@@ -969,7 +971,7 @@ onClick={() => setSearchTerm('')}
           </DialogContent>
         </Dialog>
 
-    
+
         <Dialog open={actionDialog.open} onOpenChange={() => setActionDialog({ open: false, action: '', title: '', description: '', userId: null })}>
           <DialogContent>
             <DialogHeader>
@@ -979,18 +981,18 @@ onClick={() => setSearchTerm('')}
               {actionDialog.description}
             </p>
             <DialogFooter>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setActionDialog({ open: false, action: '', title: '', description: '', userId: null })}
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={executeAction}
                 className={actionDialog.action === 'delete' || actionDialog.action === 'block' ? 'bg-red-600 hover:bg-red-700' : ''}
               >
-                {actionDialog.action === 'activate' ? 'Activate' : 
-                 actionDialog.action === 'block' ? 'Block' : 'Delete'}
+                {actionDialog.action === 'activate' ? 'Activate' :
+                  actionDialog.action === 'block' ? 'Block' : 'Delete'}
               </Button>
             </DialogFooter>
           </DialogContent>

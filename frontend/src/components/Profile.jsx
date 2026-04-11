@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "./shared/Navbar";
 import { Avatar, AvatarImage, AvatarFallback } from "./ui/avatar";
 import { Button } from "./ui/button";
-import {Contact,Mail,Pen,Building,Globe,MapPin,Briefcase,FileDown,Award,GraduationCap,Phone,AlertCircle,} from "lucide-react";
+import { Contact, Mail, Pen, Building, Globe, MapPin, Briefcase, FileDown, Award, GraduationCap, Phone, AlertCircle, } from "lucide-react";
 import { Badge } from "./ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { useSelector } from "react-redux";
@@ -10,9 +10,10 @@ import UpdateProfileDialog from "./UpdateProfileDialog";
 import AppliedJobTable from "./AppliedJobTable";
 import IframePdfViewer from "./IframePdfViewer";
 import useGetAppliedJobs from "../hooks/useGetAppliedJobs";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import ResumeUpload from "./jobseeker/ResumeUpload";
 import axios from "axios";
+import { ADMIN_API_END_POINT } from "../utils/constant";
 
 const Profile = () => {
   const [open, setOpen] = useState(false);
@@ -20,14 +21,48 @@ const Profile = () => {
   const [companyData, setCompanyData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
-  const { user } = useSelector((store) => store.auth);
+  const { user: authUser } = useSelector((store) => store.auth);
+  const [profileUser, setProfileUser] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+
+  const user = id ? profileUser : authUser;
+  const isViewingSelf = !id || id === authUser?._id;
+  const isAdminViewing = (authUser?.role === 'admin' || authUser?.role === 'super_admin') && !isViewingSelf;
+
   const initialStepFromQuery = (() => {
-  const s = searchParams.get("step");
+    const s = searchParams.get("step");
     if (!s) return undefined;
     return s.toLowerCase();
   })();
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!id) {
+        setLoadingProfile(false);
+        return;
+      }
+
+      try {
+        setLoadingProfile(true);
+        const token = localStorage.getItem('adminToken');
+        const res = await axios.get(`${ADMIN_API_END_POINT}/jobseekers/${id}`, {
+          withCredentials: true,
+          headers: token ? { Authorization: `Bearer ${token}` } : {}
+        });
+        if (res.data.success) {
+          setProfileUser(res.data.jobseeker);
+        }
+      } catch (error) {
+        console.error("Error fetching jobseeker profile:", error);
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    fetchUserProfile();
+  }, [id]);
 
   useGetAppliedJobs();
   const isProfileComplete = useMemo(() => {
@@ -90,14 +125,32 @@ const Profile = () => {
     fetchCompanyProfile();
   }, [user]);
 
+  if (loadingProfile && id) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
   return (
     <div>
-     
+      {/* Back button for admins */}
+      {isAdminViewing && (
+        <div className="bg-white border-b border-gray-200 py-2">
+          <div className="max-w-6xl mx-auto px-4">
+            <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="gap-2">
+              <ChevronDown className="w-4 h-4 rotate-90" /> Back to List
+            </Button>
+          </div>
+        </div>
+      )}
+
       {user?.role === "Jobseeker" && (
         <div className="min-h-screen bg-gray-50">
           <Navbar />
           <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6">
-            
+
             {(() => {
               const pending =
                 typeof window !== "undefined"
@@ -177,13 +230,15 @@ const Profile = () => {
                       </div>
                     </div>
                   </div>
-                  <Button
-                    onClick={() => setOpen(true)}
-                    variant="outline"
-                    className="gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base w-full md:w-auto"
-                  >
-                    <Pen size={14} /> Edit Profile
-                  </Button>
+                  {isViewingSelf && (
+                    <Button
+                      onClick={() => setOpen(true)}
+                      variant="outline"
+                      className="gap-2 px-3 py-2 sm:px-4 text-sm sm:text-base w-full md:w-auto"
+                    >
+                      <Pen size={14} /> Edit Profile
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
             </Card>
@@ -202,11 +257,13 @@ const Profile = () => {
                       size="sm"
                       className="text-blue-600 hover:bg-blue-50"
                       onClick={() => {
-                        setInitialStepOverride("skills");
-                        setOpen(true);
+                        if (isViewingSelf) {
+                          setInitialStepOverride("skills");
+                          setOpen(true);
+                        }
                       }}
                     >
-                      <Pen size={14} className="mr-1" /> Edit
+                      {isViewingSelf && <><Pen size={14} className="mr-1" /> Edit</>}
                     </Button>
                   </CardHeader>
                   <CardContent className="p-4 sm:p-6 bg-white">
@@ -241,11 +298,13 @@ const Profile = () => {
                       size="sm"
                       className="text-blue-600 hover:bg-blue-50"
                       onClick={() => {
-                        setInitialStepOverride("education");
-                        setOpen(true);
+                        if (isViewingSelf) {
+                          setInitialStepOverride("education");
+                          setOpen(true);
+                        }
                       }}
                     >
-                      <Pen size={14} className="mr-1" /> Edit
+                      {isViewingSelf && <><Pen size={14} className="mr-1" /> Edit</>}
                     </Button>
                   </CardHeader>
                   <CardContent className="p-4 sm:p-6 bg-white">
@@ -284,11 +343,13 @@ const Profile = () => {
                       size="sm"
                       className="text-blue-600 hover:bg-blue-50"
                       onClick={() => {
-                        setInitialStepOverride("experience");
-                        setOpen(true);
+                        if (isViewingSelf) {
+                          setInitialStepOverride("experience");
+                          setOpen(true);
+                        }
                       }}
                     >
-                      <Pen size={14} className="mr-1" /> Edit
+                      {isViewingSelf && <><Pen size={14} className="mr-1" /> Edit</>}
                     </Button>
                   </CardHeader>
                   <CardContent className="p-4 sm:p-6 bg-white">
@@ -349,7 +410,7 @@ const Profile = () => {
               </CardContent>
             </Card>
 
-            
+
             <IframePdfViewer
               pdfUrl={user?.profile?.resume}
               isOpen={pdfViewerOpen}
@@ -357,7 +418,7 @@ const Profile = () => {
               fileName={user?.profile?.resumeOriginalName}
             />
 
-           
+
             <UpdateProfileDialog
               open={open}
               setOpen={setOpen}
@@ -367,7 +428,7 @@ const Profile = () => {
         </div>
       )}
 
-      
+
       {user?.role === "Employer" && (
         <div className="min-h-screen bg-gray-50">
           <Navbar />
@@ -428,6 +489,87 @@ const Profile = () => {
                   <div className="flex items-center gap-2 text-sm sm:text-base">
                     <Contact size={14} />{" "}
                     <span>{user?.phoneNumber || "No phone added"}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+      {["admin", "super_admin", "moderator"].includes(user?.role) && (
+        <div className="min-h-screen bg-gray-50">
+          <Navbar />
+          <div className="max-w-4xl mx-auto p-4 sm:p-8">
+            <Card className="shadow-lg rounded-2xl border-none">
+              <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-t-2xl p-8">
+                <div className="flex flex-col sm:flex-row items-center gap-6">
+                  <Avatar className="w-24 h-24 border-4 border-white/20 shadow-xl">
+                    <AvatarImage src={user?.profile?.profilePhoto} alt="Admin" />
+                    <AvatarFallback className="bg-white/10 text-white text-2xl">
+                      {getInitials(user?.fullname || user?.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="text-center sm:text-left">
+                    <CardTitle className="text-3xl font-bold mb-1">
+                      {user?.fullname || user?.name || "Administrator"}
+                    </CardTitle>
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-2">
+                      <Badge className="bg-white/20 hover:bg-white/30 text-white border-none px-3 py-1">
+                        {user?.role?.replace('_', ' ').toUpperCase()}
+                      </Badge>
+                      <Badge className="bg-green-400 text-green-900 border-none px-3 py-1">
+                        System Access Active
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Account Information</h3>
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <Mail className="w-5 h-5 text-indigo-500" />
+                          <span>{user?.email}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <Phone className="w-5 h-5 text-indigo-500" />
+                          <span>{user?.phoneNumber || "No phone linked"}</span>
+                        </div>
+                        <div className="flex items-center gap-3 text-gray-700">
+                          <Calendar className="w-5 h-5 text-indigo-500" />
+                          <span>Member since {new Date(user?.createdAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Authorized Permissions</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {user?.permissions?.length > 0 ? (
+                          user.permissions.map((perm, idx) => (
+                            <Badge key={idx} variant="secondary" className="bg-indigo-50 text-indigo-700 border-indigo-100">
+                              {perm.replace('_', ' ')}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-gray-400 italic">Standard Admin Access</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="pt-4 border-t border-gray-100">
+                      <Button
+                        variant="outline"
+                        className="w-full text-indigo-600 border-indigo-200 hover:bg-indigo-50"
+                        onClick={() => navigate('/admin/dashboard')}
+                      >
+                        Go to Admin Panel
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

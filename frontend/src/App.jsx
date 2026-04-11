@@ -191,10 +191,10 @@ const appRouter = createBrowserRouter([
     )
   },
   {
-    path: "/profile",
+    path: "/profile/:id?",
     element: (
       <Layout>
-        <ProtectedRoute allowedRoles={['Jobseeker']}>
+        <ProtectedRoute allowedRoles={['Jobseeker', 'admin', 'super_admin', 'moderator']}>
           <Profile />
         </ProtectedRoute>
       </Layout>
@@ -289,7 +289,7 @@ const appRouter = createBrowserRouter([
     )
   },
 
-  
+
   {
     path: "/admin/login",
     element: <AdminLogin />

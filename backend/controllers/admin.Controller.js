@@ -1,4 +1,5 @@
 
+import mongoose from "mongoose";
 import { Admin } from '../models/admin.model.js';
 import { User } from '../models/user.model.js';
 import { Company } from '../models/company.model.js';
@@ -45,18 +46,32 @@ export const getAllJobseekers = async (req, res) => {
   }
 };
 
+export const getJobseekerById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const jobseeker = await User.findById(id).select('-password');
+    if (!jobseeker) {
+      return res.status(404).json({ message: 'Jobseeker not found', success: false });
+    }
+    res.status(200).json({ success: true, jobseeker });
+  } catch (error) {
+    console.error('Error fetching jobseeker by ID:', error);
+    res.status(500).json({ message: 'Server error', success: false });
+  }
+};
+
 export const getJobseekerStats = async (req, res) => {
   try {
     const totalJobseekers = await User.countDocuments({ role: 'jobseeker' });
-    const activeJobseekers = await User.countDocuments({ 
+    const activeJobseekers = await User.countDocuments({
       role: 'jobseeker',
       status: { $ne: 'blocked' }
     });
-    const blockedJobseekers = await User.countDocuments({ 
+    const blockedJobseekers = await User.countDocuments({
       role: 'jobseeker',
-      status: 'blocked' 
+      status: 'blocked'
     });
-    const jobseekersWithResume = await User.countDocuments({ 
+    const jobseekersWithResume = await User.countDocuments({
       role: 'jobseeker',
       resume: { $exists: true, $ne: null }
     });
@@ -2267,13 +2282,13 @@ export const getAllApplications = async (req, res) => {
     const pageNum = Math.max(1, parseInt(page));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit))); // Cap at 100 items per page
     const skip = (pageNum - 1) * limitNum;
-    
+
     console.log(`Processing page ${pageNum} with ${limitNum} items per page, skip ${skip}`);
 
     // Build the base query with lean for better performance
     let query = Application.find().lean();
     let countQuery = Application.countDocuments();
-    
+
     // Base filters
     let filter = {};
     if (status) {
@@ -2292,25 +2307,42 @@ export const getAllApplications = async (req, res) => {
     // Search functionality
     if (search) {
       const searchRegex = new RegExp(search, 'i');
-      const searchFieldsArray = searchFields ? searchFields.split(',') : [
-        'applicant.fullname',
-        'applicant.email',
-        'job.title',
-        'job.company.name'
-      ];
 
-      const orConditions = searchFieldsArray.map(field => {
-        const [model, fieldName] = field.split('.');
-        if (model === 'applicant') {
-          return { [`${model}.${fieldName}`]: searchRegex };
-        } else if (model === 'job') {
-          return { [`${model}.${fieldName}`]: searchRegex };
-        }
-        return null;
-      }).filter(Boolean);
+      // 1. Find matching users
+      const matchingUsers = await User.find({
+        $or: [
+          { fullname: searchRegex },
+          { email: searchRegex }
+        ]
+      }).select('_id');
+      const userIds = matchingUsers.map(u => u._id);
+
+      // 2. Find matching companies
+      const matchingCompanies = await Company.find({
+        name: searchRegex
+      }).select('_id');
+      const companyIds = matchingCompanies.map(c => c._id);
+
+      // 3. Find matching jobs
+      const matchingJobs = await Job.find({
+        $or: [
+          { title: searchRegex },
+          { company: { $in: companyIds } }
+        ]
+      }).select('_id');
+      const jobIds = matchingJobs.map(j => j._id);
+
+      // 4. Build orConditions for Application
+      const orConditions = [];
+      if (userIds.length > 0) orConditions.push({ applicant: { $in: userIds } });
+      if (jobIds.length > 0) orConditions.push({ job: { $in: jobIds } });
 
       if (orConditions.length > 0) {
         filter.$or = orConditions;
+      } else {
+        // If search was provided but no users/jobs matched, ensure we return no results
+        // Use a dummy filter that won't match anything
+        filter._id = new mongoose.Types.ObjectId();
       }
     }
 
@@ -2342,30 +2374,40 @@ export const getAllApplications = async (req, res) => {
     if (jobTitle) jobMatch.title = new RegExp(jobTitle, 'i');
     if (category) jobMatch.category = category;
     if (companyName) jobMatch['company.name'] = new RegExp(companyName, 'i');
-    
+
     if (Object.keys(jobMatch).length > 0) {
       populateOptions[1].match = jobMatch;
     }
 
     console.log('Final filter object:', JSON.stringify(filter, null, 2));
-    
+
     console.log('Population options:', JSON.stringify(populateOptions, null, 2));
-    
+
     try {
       // Execute queries in parallel
-      const [total, applications] = await Promise.all([
-        countQuery,
+      const [total, applications, statusSummary] = await Promise.all([
+        Application.countDocuments(filter),
         query
           .populate(populateOptions)
           .sort({ createdAt: -1 })
           .skip(skip)
           .limit(limitNum)
           .lean()
-          .exec()
+          .exec(),
+        Application.aggregate([
+          { $match: filter },
+          { $group: { _id: '$status', count: { $sum: 1 } } }
+        ])
       ]);
-      
+
+      // Format status summary into a friendly object
+      const stats = statusSummary.reduce((acc, curr) => {
+        acc[curr._id] = curr.count;
+        return acc;
+      }, { pending: 0, accepted: 0, rejected: 0 });
+
       console.log(`Found ${total} total applications, returning ${applications.length} applications`);
-      
+
       // Filter out applications where either applicant or job is null after population
       const filteredApplications = applications.filter(app => {
         const isValid = app.applicant && app.job;
@@ -2374,12 +2416,16 @@ export const getAllApplications = async (req, res) => {
         }
         return isValid;
       });
-      
+
       console.log(`After filtering, returning ${filteredApplications.length} valid applications`);
-      
+
       const responseData = {
         success: true,
         applications: filteredApplications,
+        stats: {
+          totalApplications: total,
+          ...stats
+        },
         pagination: {
           currentPage: pageNum,
           totalPages: Math.ceil(total / limitNum),
@@ -2388,18 +2434,18 @@ export const getAllApplications = async (req, res) => {
           hasPrev: pageNum > 1
         }
       };
-      
+
       console.log(`Sending response with ${filteredApplications.length} applications`);
       return res.status(200).json(responseData);
-      
+
     } catch (dbError) {
       console.error('Database query error:', dbError);
       throw dbError; // This will be caught by the outer try-catch
     }
   } catch (error) {
     console.error('Get applications error:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Failed to fetch applications',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -2441,11 +2487,11 @@ export const updateApplicationStatus = async (req, res) => {
     // Convert status to lowercase and validate
     status = status.toLowerCase();
     const allowedStatuses = ['pending', 'accepted', 'rejected'];
-    
+
     if (!allowedStatuses.includes(status)) {
-      return res.status(400).json({ 
-        message: 'Invalid status. Must be one of: pending, accepted, rejected', 
-        success: false 
+      return res.status(400).json({
+        message: 'Invalid status. Must be one of: pending, accepted, rejected',
+        success: false
       });
     }
 
@@ -2462,20 +2508,20 @@ export const updateApplicationStatus = async (req, res) => {
 
     // Log activity with consistent status format
     await logActivity(
-      admin._id, 
-      'application_status_updated', 
-      'application', 
-      applicationId, 
+      admin._id,
+      'application_status_updated',
+      'application',
+      applicationId,
       `Status changed to ${status}`
     );
 
-    res.status(200).json({ 
-      message: 'Application status updated successfully', 
-      success: true, 
+    res.status(200).json({
+      message: 'Application status updated successfully',
+      success: true,
       application: {
         ...application.toObject(),
         status: status // Ensure consistent status format in response
-      } 
+      }
     });
   } catch (error) {
     console.error('Update application status error:', error);
@@ -2618,7 +2664,7 @@ export const forgotPassword = async (req, res) => {
     const resetLink = `${frontendUrl}/admin/reset-password?token=${resetToken}`;
     console.log(`Generated admin reset link: ${resetLink}`); // For debugging
 
-    
+
     const emailResult = await sendAdminPasswordResetEmail(admin.email, resetLink);
     if (!emailResult.success) {
       console.error('Failed to send admin password reset email:', emailResult.error);
@@ -2636,9 +2682,9 @@ export const forgotPassword = async (req, res) => {
 
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({ 
-      message: 'Failed to send password reset instructions', 
-      success: false 
+    res.status(500).json({
+      message: 'Failed to send password reset instructions',
+      success: false
     });
   }
 };

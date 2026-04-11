@@ -1,6 +1,7 @@
 import express from "express";
-import { loginAdmin, registerAdmin, createAdmin, getDashboardStats, getAnalytics, getAllUsers, updateUserStatus, deleteUser, getUserResume, getAllJobs, approveJob, rejectJob, deleteJob, getJobByIdAdmin,
-updateJobDetailsAdmin, postJobAdmin, getJobForEdit, updateJobAdmin, getAllCompanies, getCompanyByIdAdmin, updateCompanyDetailsAdmin, updateCompanyStatus, deleteCompany,
+import {
+    loginAdmin, registerAdmin, createAdmin, getDashboardStats, getAnalytics, getAllUsers, updateUserStatus, deleteUser, getUserResume, getAllJobs, approveJob, rejectJob, deleteJob, getJobByIdAdmin,
+    updateJobDetailsAdmin, postJobAdmin, getJobForEdit, updateJobAdmin, getAllCompanies, getCompanyByIdAdmin, updateCompanyDetailsAdmin, updateCompanyStatus, deleteCompany,
     createCompanyAdmin,
     getAllCategories,
     createCategory,
@@ -13,6 +14,7 @@ updateJobDetailsAdmin, postJobAdmin, getJobForEdit, updateJobAdmin, getAllCompan
     toggleAdminStatus,
     bulkApproveJobs,
     getAllJobseekers,
+    getJobseekerById,
     getJobseekerStats,
     getAllEmployers,
     checkJobQuality,
@@ -33,7 +35,7 @@ import { singleUpload } from "../middlewares/mutler.js";
 import { adminAuth } from "../middlewares/adminAuth.js";
 const router = express.Router();
 router.post('/login', loginAdmin);
-router.post('/register', registerAdmin); 
+router.post('/register', registerAdmin);
 router.post('/create-admin', adminAuth, createAdmin);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
@@ -44,6 +46,7 @@ router.patch('/users/:userId/status', adminAuth, updateUserStatus);
 router.delete('/users/:userId', adminAuth, deleteUser);
 router.get('/users/:userId/resume', adminAuth, getUserResume);
 router.get("/jobseekers", adminAuth, getAllJobseekers);
+router.get("/jobseekers/:id", adminAuth, getJobseekerById);
 router.get("/jobseekers/stats", adminAuth, getJobseekerStats);
 router.get("/employers", adminAuth, getAllEmployers);
 router.get('/users/:userId/activity', adminAuth, getUserActivity);

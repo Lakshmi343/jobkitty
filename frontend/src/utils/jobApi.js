@@ -14,15 +14,15 @@ export const adminJobApi = {
     if (!token) {
       throw new Error('No admin token found');
     }
-    
+
     const response = await axios.get(`${ADMIN_API_END_POINT}/jobs`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    
+
     if (!response.data.success) {
       throw new Error('Failed to fetch jobs');
     }
-    
+
     return response.data.jobs;
   },
 
@@ -32,15 +32,15 @@ export const adminJobApi = {
     if (!token) {
       throw new Error('No admin token found');
     }
-    
+
     const response = await axios.get(`${ADMIN_API_END_POINT}/jobs/${jobId}/applications`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    
+
     if (!response.data.success) {
       throw new Error('Failed to fetch applications');
     }
-    
+
     return response.data.applications;
   },
 
@@ -50,17 +50,17 @@ export const adminJobApi = {
     if (!token) {
       throw new Error('No admin token found');
     }
-    
+
     const response = await axios.patch(
       `${ADMIN_API_END_POINT}/jobs/${jobId}/status`,
       { status, reason },
       { headers: { Authorization: `Bearer ${token}` } }
     );
-    
+
     if (!response.data.success) {
       throw new Error('Failed to update job status');
     }
-    
+
     return response.data;
   },
 
@@ -70,27 +70,27 @@ export const adminJobApi = {
     if (!token) {
       throw new Error('No admin token found');
     }
-    
+
     const response = await axios.delete(`${ADMIN_API_END_POINT}/jobs/${jobId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    
+
     if (!response.data.success) {
       throw new Error('Failed to delete job');
     }
-    
+
     return response.data;
   },
-  
+
   // Fetch all applications (admin only)
   fetchAllApplications: async (filters = {}) => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
       throw new Error('No admin token found');
     }
-    
-    const { page = 1, limit = 10, status, jobId, applicantId, sortBy = 'createdAt', sortOrder = 'desc' } = filters;
-    
+
+    const { page = 1, limit = 10, status, jobId, applicantId, search, sortBy = 'createdAt', sortOrder = 'desc' } = filters;
+
     const params = new URLSearchParams({
       page,
       limit,
@@ -98,29 +98,30 @@ export const adminJobApi = {
       sortOrder,
       ...(status && { status }),
       ...(jobId && { jobId }),
-      ...(applicantId && { applicantId })
+      ...(applicantId && { applicantId }),
+      ...(search && { search })
     });
-    
+
     const response = await axios.get(`${ADMIN_API_END_POINT}/applications/all?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    
+
     return response.data;
   },
-  
+
   // Update application status (admin only)
   updateApplicationStatus: async (applicationId, { status, rejectionReason, notes }) => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
       throw new Error('No admin token found');
     }
-    
+
     const response = await axios.put(
       `${ADMIN_API_END_POINT}/applications/${applicationId}/status`,
       { status, rejectionReason, notes },
       { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } }
     );
-    
+
     return response.data;
   }
 };
@@ -132,11 +133,11 @@ export const employerJobApi = {
     const response = await axios.get(`${JOB_API_END_POINT}/employer/jobs`, {
       withCredentials: true
     });
-    
+
     if (!response.data.success) {
       throw new Error('Failed to fetch jobs');
     }
-    
+
     return response.data.jobs;
   },
 
@@ -145,11 +146,11 @@ export const employerJobApi = {
     const response = await axios.post(`${JOB_API_END_POINT}/post`, jobData, {
       withCredentials: true
     });
-    
+
     if (!response.data.success) {
       throw new Error('Failed to create job');
     }
-    
+
     return response.data.job;
   },
 
@@ -158,11 +159,11 @@ export const employerJobApi = {
     const response = await axios.put(`${JOB_API_END_POINT}/update/${jobId}`, jobData, {
       withCredentials: true
     });
-    
+
     if (!response.data.success) {
       throw new Error('Failed to update job');
     }
-    
+
     return response.data.job;
   },
 
@@ -171,11 +172,11 @@ export const employerJobApi = {
     const response = await axios.delete(`${JOB_API_END_POINT}/delete/${jobId}`, {
       withCredentials: true
     });
-    
+
     if (!response.data.success) {
       throw new Error('Failed to delete job');
     }
-    
+
     return response.data;
   }
 };
@@ -187,34 +188,34 @@ export const publicJobApi = {
     const response = await axios.get(`${JOB_API_END_POINT}/get/${jobId}`, {
       withCredentials: true
     });
-    
+
     if (!response.data.success) {
       throw new Error('Failed to fetch job details');
     }
-    
+
     return response.data.job;
   },
 
- 
+
   fetchAllJobs: async (filters = {}) => {
     const params = new URLSearchParams();
-    
+
     if (filters.keyword) params.append('keyword', filters.keyword);
     if (filters.location) params.append('location', filters.location);
     if (filters.jobType) params.append('jobType', filters.jobType);
     if (filters.salary) params.append('salary', filters.salary);
-    
+
     const queryString = params.toString();
     const url = queryString ? `${JOB_API_END_POINT}/get?${queryString}` : `${JOB_API_END_POINT}/get`;
-    
+
     const response = await axios.get(url, {
       withCredentials: true
     });
-    
+
     if (!response.data.success) {
       throw new Error('Failed to fetch jobs');
     }
-    
+
     return response.data.jobs;
   }
 };
@@ -222,9 +223,9 @@ export const publicJobApi = {
 
 export const handleApiError = (error, navigate = null) => {
   console.error('API Error:', error);
-  
+
   if (error.response?.status === 401) {
- 
+
     if (window.location.pathname.includes('/admin')) {
       toast.error('Session expired. Please login again.');
       localStorage.removeItem('adminToken');
